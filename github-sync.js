@@ -40,8 +40,24 @@ if (!teacher) {
 }
 document.title='교사용 알림장';
 const panel=document.createElement('section'); panel.className='step';
-panel.innerHTML='<h2>학생 링크에 과제 저장</h2><p class="hint">여기서 수정하고 저장하면 두 학생의 휴대폰 링크에 반영돼요. 게시까지 보통 몇 분 걸릴 수 있어요.</p><details><summary>처음 한 번: GitHub 저장 권한 준비</summary><p>GitHub에서 이 저장소만 선택한 Fine-grained personal access token을 만드세요. Repository access: Only select repositories → alrim, Repository permissions: Contents → Read and write로 설정하세요. 유효 기간이 끝나면 새로 연결하면 됩니다.</p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub 권한 만들기</a><p class="hint">아래 입력란에 넣으세요. 권한 값은 GitHub에 저장할 때만 전송되며 이 탭을 닫으면 사라져요.</p></details><label>GitHub 저장 권한<input id="githubToken" type="password" autocomplete="off" spellcheck="false" placeholder="GitHub에서 만든 권한 값"></label>';
+panel.innerHTML='<h2>학생 링크에 과제 저장</h2><p class="hint">여기서 수정하고 저장하면 두 학생의 휴대폰 링크에 반영돼요. 게시까지 보통 몇 분 걸릴 수 있어요.</p><details><summary>처음 한 번: GitHub 저장 권한 준비</summary><p>GitHub에서 이 저장소만 선택한 Fine-grained personal access token을 만드세요. Repository access: Only select repositories → alrim, Repository permissions: Contents → Read and write로 설정하세요. 유효 기간이 끝나면 새로 연결하면 됩니다.</p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub 권한 만들기</a><p class="hint">아래 입력란에 넣으세요. 권한 값은 이 브라우저에 저장되어 다음 접속 때 자동으로 연결돼요. 연결 해제를 누르면 삭제돼요.</p></details><label>GitHub 저장 권한<input id="githubToken" type="password" autocomplete="off" spellcheck="false" placeholder="GitHub에서 만든 권한 값"></label>';
 panel.append(status);
+const tokenInput=document.getElementById('githubToken');
+const tokenKey='alrim:github-save-token';
+const tokenStatus=document.createElement('p'); tokenStatus.className='hint';
+function rememberToken() {
+  try {
+    const value=tokenInput.value.trim();
+    if(value) localStorage.setItem(tokenKey,value); else localStorage.removeItem(tokenKey);
+    tokenStatus.textContent=value?'이 브라우저에 저장했어요. 다음 접속 때 자동으로 불러와요.':'GitHub 저장 권한을 입력하면 이 브라우저에 기억해요.';
+  } catch (_) { tokenStatus.textContent='브라우저가 저장을 차단했어요. 일반 창에서 저장을 허용해 주세요.'; }
+}
+try { tokenInput.value=localStorage.getItem(tokenKey)||''; } catch (_) {}
+tokenInput.addEventListener('input',rememberToken);
+const disconnect=document.createElement('button'); disconnect.type='button'; disconnect.textContent='GitHub 연결 해제';
+disconnect.onclick=()=>{tokenInput.value='';rememberToken();tokenInput.focus();};
+panel.append(tokenStatus,disconnect); rememberToken();
+
 document.querySelector('#teacherView .steps').prepend(panel);
 const publish=document.getElementById('publish');
 publish.textContent='두 학생 과제 저장하기';
