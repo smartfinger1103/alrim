@@ -42,7 +42,7 @@ document.title='교사용 알림장';
 const panel=document.createElement('section'); panel.className='step';
 panel.innerHTML='<h2>학생 링크에 과제 저장</h2><p class="hint">여기서 수정하고 저장하면 두 학생의 휴대폰 링크에 반영돼요. 게시까지 보통 몇 분 걸릴 수 있어요.</p><details><summary>처음 한 번: GitHub 저장 권한 준비</summary><p>GitHub에서 이 저장소만 선택한 Fine-grained personal access token을 만드세요. Repository access: Only select repositories → alrim, Repository permissions: Contents → Read and write로 설정하세요. 유효 기간이 끝나면 새로 연결하면 됩니다.</p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub 권한 만들기</a><p class="hint">아래 입력란에 넣으세요. 권한 값은 이 브라우저에 저장되어 다음 접속 때 자동으로 연결돼요. 연결 해제를 누르면 삭제돼요.</p></details><label>GitHub 저장 권한<input id="githubToken" type="password" autocomplete="off" spellcheck="false" placeholder="GitHub에서 만든 권한 값"></label>';
 panel.append(status);
-const tokenInput=document.getElementById('githubToken');
+const tokenInput=panel.querySelector('#githubToken');
 const tokenKey='alrim:github-save-token';
 const tokenStatus=document.createElement('p'); tokenStatus.className='hint';
 function rememberToken() {
@@ -115,3 +115,4 @@ publish.onclick=async()=>{
   finally{saving=false;publish.disabled=false;}
 };
 })();
+
