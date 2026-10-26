@@ -2497,18 +2497,6 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     // 학생 링크(#1, #2)로 열면 학생이 보는 화면 그대로 보여요
     if (state.mode === 'student' && !studentFromHash()) enterTeacher();
   });
-  window.alrimSync = {
-    snapshot,
-    receive(seed) {
-      if (!seed || typeof seed.data !== 'string') throw new Error('잘못된 과제 데이터');
-      const parsed = JSON.parse(seed.data);
-      if (!Array.isArray(parsed.students) || !Array.isArray(parsed.entries)) throw new Error('잘못된 과제 데이터');
-      SEED = seed; applyValues(seed); markTheme();
-      if (location.pathname.endsWith('/teacher.html')) { state.cls = state.tab = names()[0] || ''; showMode('teacher'); }
-      else { state.cls = seed.fixed; showMode('student'); }
-    }
-  };
-
 })();
 </script>
-<script src="github-sync.js?v=1"></script></body></html>
+</body></html>
