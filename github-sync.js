@@ -26,9 +26,17 @@ if (!teacher) {
     if (busy || document.hidden) return;
     busy=true;
     try {
-      const response=await fetch(dataUrl.href+'?t='+Date.now(), {cache:'no-store'});
-      if (!response.ok) throw new Error();
-      const body=validate(await response.json()), seed=body.students[id];
+      let body;
+      try {
+        const response=await fetch(endpoint+'?ref=main&t='+Date.now(), {cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+        if (!response.ok) throw new Error();
+        body=validate(decode((await response.json()).content));
+      } catch (_) {
+        const response=await fetch(dataUrl.href+'?t='+Date.now(), {cache:'no-store'});
+        if (!response.ok) throw new Error();
+        body=validate(await response.json());
+      }
+      const seed=body.students[id];
       if(seed.updated!==last) { app.receive(seed); last=seed.updated; }
       status.textContent='최신 과제를 확인했어요. · 1분마다 자동 확인';
     } catch (_) { status.textContent='최신 과제를 불러오지 못했어요. 현재 표시된 과제를 유지하고 다시 연결할게요.'; }
