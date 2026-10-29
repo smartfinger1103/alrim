@@ -475,6 +475,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <label>과목<input type="text" id="fSubject" list="subjects" placeholder="단어, 본문, 문법…"></label>
           <input type="hidden" id="fDue">
           <label class="wide">과제 내용<textarea id="fTask" placeholder="예: Lesson 4 단어 20개 3번씩 쓰고 뜻 외우기"></textarea></label>
+          <p class="hint wide">{빨강:강조}처럼 적으면 학생 화면에서 그 글자만 빨간색으로 보여요. 색은 빨강·파랑 두 가지를 쓸 수 있어요.</p>
           <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
           <label>준비물 (선택)<input type="text" id="fNote"></label>
           <div class="wide wordbox">
@@ -1343,7 +1344,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const d = isDone(it);
         const row = el('div', 'nb-item' + (d ? ' done' : ''));
         row.append(el('span', 'nb-dot', d ? '✓' : '•'));
-        const tx = el('div', 'nb-t'); tx.append(el('span', 't', it.task));
+        const tx = el('div', 'nb-t'); tx.append(taskSpan(it.task));
         const mt = [it.range, it.note ? '준비물 ' + it.note : ''].filter(Boolean).join(' · ');
         if (mt) tx.append(el('small', null, mt));
         const ws = it.words ? parseWords(it.words, '') : [];
@@ -2133,6 +2134,14 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   const quiz = { open: false, only: null, words: [], units: [], sets: [], set: null, chunk: '', unit: '', dir: 'en', queue: [], total: 0, known: 0, miss: new Map(), full: false, completed: false, studyList: [] };
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  const TASK_COLORS = { 빨강: '#C62828', 파랑: '#1E5BD8' };
+  function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function formatTaskHtml(s) {
+    let h = escHtml(String(s || ''));
+    h = h.replace(/\{([^{}:]{1,6}):([^{}]+?)\}/g, (m, c, t) => { const hex = TASK_COLORS[c.trim()]; return hex ? ('<span style="color:' + hex + '">' + t + '</span>') : m; });
+    return h;
+  }
+  function taskSpan(text) { const sp = document.createElement('span'); sp.className = 't'; sp.innerHTML = formatTaskHtml(text); return sp; }
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const canSpeak = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance === 'function';
   function speak(text) {
