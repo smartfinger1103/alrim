@@ -1101,7 +1101,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const date = $('wtDate').value || todayStr();
     let e = D.entries.find(x => x.date === date && x.who === who && x.retake);
     const merged = new Map();
-    (e ? parseWords(e.words, '') : []).forEach(w => merged.set(wkey(w), w));
+    // 같은 날 다시 채점하면, 이번 시험 단어는 이번에 체크한 것만 남겨요
+    const tested = new Set(cur.words.map(wkey));
+    (e ? parseWords(e.words, '') : []).forEach(w => { if (!tested.has(wkey(w))) merged.set(wkey(w), w); });
     wrong.forEach(w => merged.set(wkey(w), w));
     const list = [...merged.values()].sort((a, b) => (mm[wkey(b)] || 0) - (mm[wkey(a)] || 0));
     const text = list.map(w => w.en + ' - ' + w.ko).join('\n');
