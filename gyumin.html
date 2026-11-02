@@ -2048,6 +2048,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const { data } = await ocrWorker.recognize(c);
       String(data.text || '').split(/\r?\n/).forEach(l => {
         l = l.replace(/[|｜]/g, ' ').trim(); if (!l) return;
+        // OCR이 한글 글자 사이에 넣은 빈칸을 없애요 (사 교 적 인 → 사교적인)
+        l = l.replace(/([가-힣]) (?=[가-힣])/g, '$1');
         // 한글이 시작되는 곳에서 영어/뜻을 나눠요
         const m = l.match(/^[\d.)\s]*([A-Za-z][A-Za-z\s'’\-~().,/]*?)\s*[:\-–=]?\s*((?:[가-힣]|~(?=\S*[가-힣])).*)$/);
         if (m) rows.push([m[1].trim(), m[2].trim()]); else rows.push(l.split(/\s{2,}|\t/));
