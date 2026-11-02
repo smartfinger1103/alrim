@@ -2052,7 +2052,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   function fwCount(msg) {
     const n = parseWords($('fWords').value, '').length;
-    $('fwCount').textContent = msg || (n ? `단어 ${n}개` + (n > CHUNK ? ` · 학생은 ${CHUNK}개씩 나눠서 공부해요` : '') : '');
+    $('fwCount').textContent = msg || (n ? `단어 ${n}개` : '');
   }
   $('fWords').addEventListener('input', () => fwCount());
   // 캡처 이미지를 붙여넣거나 끌어다 놓으면 단어를 찾아 넣어요
@@ -2161,6 +2161,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     }));
     const units = [...new Set(quiz.words.map(w => w.unit))];
     units.forEach(u => sets.push({ key: 'u:' + u, label: u || '단어장', words: quiz.words.filter(w => w.unit === u) }));
+    // 단어 시험에서 틀렸던 단어만 모아서 다시 공부할 수 있어요
+    const wrong = quiz.words.filter(w => missLv(state.cls, w) >= 1);
+    if (wrong.length) sets.unshift({ key: 'wrong', label: `틀린 단어 모아보기 (${wrong.length}개)`, words: wrong });
     return sets;
   }
   function setupQuiz() {
@@ -2184,7 +2187,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     // 과제 내용을 눌렀으면 아직 못 외운 단어부터 바로 무작위로 공부를 시작해요
     if (direct && set) {
       const mem = memSet(set.key), left = set.words.filter(w => !mem.has(wkey(w)));
-      startStudy((left.length ? left : set.words).slice(0, CHUNK), 0);
+      startStudy(left.length ? left : set.words, 0);
     }
     $('qClose').focus({ preventScroll: true });
   }
@@ -2228,16 +2231,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       chunkSel.textContent = '';
       const left = ws.filter(w => !mem.has(wkey(w))).length;
       if (left && n) chunkSel.append(new Option(`아직 못 외운 단어 (${left}개)`, 'left'));
-      for (let i = 0; i < ws.length; i += CHUNK) {
-        const part = ws.slice(i, i + CHUNK), done = part.every(w => mem.has(wkey(w)));
-        chunkSel.append(new Option(`${i + 1}~${i + part.length}번` + (done ? ' ✓ 다 외움' : ''), String(i)));
-      }
-      if (ws.length > CHUNK) chunkSel.append(new Option(`전체 ${ws.length}개`, 'all'));
-      // 처음 못 외운 묶음을 골라 둬요
-      const firstLeft = [...chunkSel.options].find(o => /^\d+$/.test(o.value) && !o.text.includes('✓'));
-      if (quiz.chunk && [...chunkSel.options].some(o => o.value === quiz.chunk) && !(quiz.chunk !== 'all' && quiz.chunk !== 'left' && chunkSel.querySelector(`option[value="${quiz.chunk}"]`).text.includes('✓'))) chunkSel.value = quiz.chunk;
-      else if (firstLeft) chunkSel.value = firstLeft.value;
-      chunkSel.hidden = ws.length <= CHUNK && !(left && n);
+      chunkSel.append(new Option(`전체 ${ws.length}개`, 'all'));
+      // 단어는 항상 전체를 한 번에 공부해요 (20개씩 끊지 않아요)
+      if (quiz.chunk && [...chunkSel.options].some(o => o.value === quiz.chunk)) chunkSel.value = quiz.chunk;
+      else if (left && n) chunkSel.value = 'left';
+      chunkSel.hidden = !(left && n);
     };
     sel.onchange = () => { quiz.chunk = ''; fillChunks(); };
     fillChunks();
@@ -2247,7 +2245,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const ws = quiz.set.words, v = chunkSel.value, mem = memSet(quiz.set.key);
       if (chunkSel.hidden || v === 'all') return ws;
       if (v === 'left') return ws.filter(w => !mem.has(wkey(w)));
-      return ws.slice(+v, +v + CHUNK);
+      return ws;
     };
     const acts = el('div', 'q-acts');
     const st = el('button', null, '하나씩 공부하기'); st.type = 'button';
@@ -2352,8 +2350,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (hard.length) { const r = el('button', 'primary', '헷갈린 단어만 다시'); r.type = 'button'; r.onclick = () => startCards(hard.map(x => x[0]), false); row.append(r); }
     if (quiz.set && !allDone) {
       const mem = memSet(quiz.set.key), left = setAll.filter(w => !mem.has(wkey(w)));
-      const nx = el('button', hard.length ? null : 'primary', `다음 단어 ${Math.min(CHUNK, left.length)}개 이어서 공부`); nx.type = 'button';
-      nx.onclick = () => startStudy(left.slice(0, CHUNK), 0); row.append(nx);
+      const nx = el('button', hard.length ? null : 'primary', `못 외운 단어 ${left.length}개 이어서 공부`); nx.type = 'button';
+      nx.onclick = () => startStudy(left, 0); row.append(nx);
     }
     const all = el('button', null, '목록으로'); all.type = 'button'; all.onclick = quizHome; row.append(all);
     b.append(row);
