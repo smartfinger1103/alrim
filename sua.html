@@ -1369,14 +1369,6 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           b.setAttribute('aria-label', (d ? '완료 취소: ' : '완료: ') + it.task);
           b.onclick = () => setDone([it], !d); act.append(b);
         }
-        // 어휘 과제는 과제 내용을 눌러도 단어 학습으로 가요
-        const goKey = ws.length ? 't:' + it.id : (isWordTask(it) && quiz.sets.length ? 'all' : '');
-        if (goKey) {
-          tx.classList.add('nb-go'); tx.tabIndex = 0; tx.setAttribute('role', 'button');
-          tx.setAttribute('aria-label', it.task + ' 단어 학습 열기');
-          tx.onclick = () => openSet(goKey, true);
-          tx.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSet(goKey, true); } };
-        }
         row.append(tx, act); sec.append(row);
       });
       const gn = dayNotes().filter(x => x.subject === g.subject);
@@ -1390,7 +1382,6 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const foot = el('div', 'nb-foot');
     const url = $('submitUrl').value.trim();
     if (/^https:\/\/\S+$/i.test(url) && list.length) { const a = el('a', 'nb-link', '과제 사진 올리기'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; foot.append(a); }
-    if (quiz.sets.length) { const nw = quiz.sets.reduce((a, x) => a + x.words.length, 0); const b = el('button', 'nb-link ghost', `단어 공부하기 (${nw}개)`); b.type = 'button'; b.onclick = () => openSet('all'); foot.append(b); }
 
     if (foot.childNodes.length) nb.append(foot);
   }
