@@ -2022,12 +2022,37 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   async function rowsFromImages(blobs) {
     const smp = await use('sample');
     const lim = smp ? await smp.limits().catch(() => null) : null;
-    if (!smp || !lim || !lim.images) throw new Error('이 화면에서는 사진을 읽을 수 없어요. 단어를 직접 붙여넣어 주세요.');
+    if (!smp || !lim || !lim.images) return rowsFromImagesOCR(blobs);
     const rows = [];
     for (const blob of blobs) {   // 한 장씩 읽어야 단어가 많아도 빠지지 않아요
       const res = await smp.json('이 이미지는 영어 단어장이에요. 보이는 영어 단어(또는 숙어)와 한국어 뜻을 위에서부터 순서대로 하나도 빠짐없이 모두 찾아, 짧은 키를 쓴 JSON 배열로만 답하세요. 예: [{"e":"apple","k":"사과"},{"e":"look after","k":"돌보다"}]. 뜻이 안 보이면 k는 빈 문자열로 두세요.',
         { images: [blob] });
       if (Array.isArray(res)) res.forEach(x => rows.push([String(x.e || x.en || ''), String(x.k || x.ko || '')]));
+    }
+    if (!rows.length) throw new Error('이미지에서 단어를 찾지 못했어요.');
+    return rows;
+  }
+  // Claude를 쓸 수 없는 곳(GitHub 페이지)에서는 브라우저 안에서 글자를 읽어요 (Tesseract OCR)
+  let ocrWorker = null;
+  async function rowsFromImagesOCR(blobs) {
+    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+    if (!window.Tesseract) throw new Error('글자 읽기 도구를 불러오지 못했어요. 단어를 직접 붙여넣어 주세요.');
+    if (!ocrWorker) ocrWorker = await Tesseract.createWorker(['eng', 'kor']);
+    const rows = [];
+    for (const blob of blobs) {
+      // 작은 캡처는 2배로 키우면 더 잘 읽어요
+      const bmp = await createImageBitmap(blob);
+      const sc = bmp.width < 1400 ? 2 : 1;
+      const c = document.createElement('canvas'); c.width = bmp.width * sc; c.height = bmp.height * sc;
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      g.imageSmoothingQuality = 'high'; g.drawImage(bmp, 0, 0, c.width, c.height);
+      const { data } = await ocrWorker.recognize(c);
+      String(data.text || '').split(/\r?\n/).forEach(l => {
+        l = l.replace(/[|｜]/g, ' ').trim(); if (!l) return;
+        // 한글이 시작되는 곳에서 영어/뜻을 나눠요
+        const m = l.match(/^[\d.)\s]*([A-Za-z][A-Za-z\s'’\-~().,/]*?)\s*[:\-–=]?\s*((?:[가-힣]|~(?=\S*[가-힣])).*)$/);
+        if (m) rows.push([m[1].trim(), m[2].trim()]); else rows.push(l.split(/\s{2,}|\t/));
+      });
     }
     if (!rows.length) throw new Error('이미지에서 단어를 찾지 못했어요.');
     return rows;
