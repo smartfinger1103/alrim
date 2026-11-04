@@ -2291,7 +2291,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   async function rowsFromImagesOCR(blobs) {
     await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
     if (!window.Tesseract) throw new Error('글자 읽기 도구를 불러오지 못했어요. 단어를 직접 붙여넣어 주세요.');
-    if (!ocrWorker) ocrWorker = await Tesseract.createWorker(['eng', 'kor']);
+    if (!ocrWorker) ocrWorker = Tesseract.createWorker(['eng', 'kor']).catch(e => { ocrWorker = null; throw e; });   // 여러 장을 연달아 붙여넣어도 도구는 한 번만 불러와요
+    await ocrWorker;
     const rows = [];
     for (const blob of blobs) {
       // 작은 캡처는 2배로 키우면 더 잘 읽어요
@@ -2300,7 +2301,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const c = document.createElement('canvas'); c.width = bmp.width * sc; c.height = bmp.height * sc;
       const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
       g.imageSmoothingQuality = 'high'; g.drawImage(bmp, 0, 0, c.width, c.height);
-      const { data } = await ocrWorker.recognize(c);
+      const { data } = await (await ocrWorker).recognize(c);
       String(data.text || '').split(/\r?\n/).forEach(l => {
         l = l.replace(/[|｜]/g, ' ').trim(); if (!l) return;
         // OCR이 한글 글자 사이에 넣은 빈칸을 없애요 (사 교 적 인 → 사교적인)
@@ -2353,7 +2354,22 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (after) after();
   }
   function wireCapture(zone, ta, msg, after) {
-    const run = async (files) => { if (!files.length) return; zone.classList.add('busy'); try { await addWordFiles(files, ta, msg, after); } finally { zone.classList.remove('busy'); } };
+    // 캡처를 연달아 여러 장 붙여넣을 수 있어요: 한 장씩 줄을 세워 차례로 읽어요
+    let chain = Promise.resolve(), pending = 0, doneN = 0, addedN = 0;
+    const run = (files) => {
+      if (!files.length) return;
+      zone.classList.add('busy'); pending += files.length;
+      files.forEach(f => {
+        chain = chain.then(async () => {
+          const before = parseWords(ta.value, '').length;
+          try { await addWordFiles([f], ta, () => {}, after); } catch (e) {}
+          pending--; doneN++; addedN += Math.max(0, parseWords(ta.value, '').length - before);
+          msg(`이미지 ${doneN}장 읽음 · 단어 ${addedN}개 추가 (모두 ${parseWords(ta.value, '').length}개)` + (pending ? ` · 읽는 중… 대기 ${pending}장` : ' · 다음 캡처도 계속 Ctrl+V로 붙여넣으세요.'));
+          if (!pending) { zone.classList.remove('busy'); }
+        });
+      });
+      msg(`읽는 중… 대기 ${pending}장`);
+    };
     const onPaste = (e) => { const fs = imgFiles(e.clipboardData); if (fs.length) { e.preventDefault(); run(fs); } };
     zone.addEventListener('paste', onPaste); ta.addEventListener('paste', onPaste);
     zone.addEventListener('click', (e) => { if (e.target.closest('label')) return; zone.focus(); msg('이제 Ctrl+V로 캡처를 붙여넣으세요.'); });
