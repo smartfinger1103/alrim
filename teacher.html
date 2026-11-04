@@ -2510,7 +2510,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     // 과제 내용을 눌렀으면 아직 못 외운 단어부터 바로 무작위로 공부를 시작해요
     if (direct && set) {
       const mem = memSet(set.key), left = set.words.filter(w => !mem.has(wkey(w)));
-      startStudy(left.length ? left : set.words, 0);
+      startStudy(set.words, 0);
     }
     $('qClose').focus({ preventScroll: true });
   }
@@ -2557,7 +2557,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       chunkSel.append(new Option(`전체 ${ws.length}개`, 'all'));
       // 단어는 항상 전체를 한 번에 공부해요 (20개씩 끊지 않아요)
       if (quiz.chunk && [...chunkSel.options].some(o => o.value === quiz.chunk)) chunkSel.value = quiz.chunk;
-      else if (left && n) chunkSel.value = 'left';
+      else chunkSel.value = 'all';
       chunkSel.hidden = !(left && n);
     };
     sel.onchange = () => { quiz.chunk = ''; fillChunks(); };
