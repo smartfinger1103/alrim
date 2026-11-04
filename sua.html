@@ -426,6 +426,17 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         <div class="ovdetail" id="ovDetail"></div>
       </section>
 
+      <section class="step" aria-labelledby="hLs">
+        <h2 id="hLs">듣기 숙제 결과</h2>
+        <p class="hint">학생이 앱에서 듣기를 풀면 여기에 쌓여요. 과제에 <b>듣기 18회</b>처럼 적으면 학생 화면에 풀기 버튼이 생겨요. 틀린 문제는 버튼 하나로 다음 수업 과제로 넘길 수 있어요.</p>
+        <div class="row">
+          <label class="lab" style="flex-direction:row;align-items:center;gap:6px">넣을 수업 날짜<input type="date" id="lsDate" style="width:auto"></label>
+          <button type="button" class="small" id="lsReload">결과 새로고침</button>
+        </div>
+        <div id="lsBox"></div>
+        <div class="msg" id="lsMsg" role="status"></div>
+      </section>
+
       <section class="step" aria-labelledby="hWt">
         <h2 id="hWt">수업 중 단어 테스트</h2>
         <div class="row">
@@ -1118,6 +1129,196 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   };
   $$('.tnav [data-go]').forEach(b => b.onclick = () => $(b.dataset.go).scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
+  /* ---------- 듣기 숙제 ---------- */
+  function lsCfg() { return {
+    form: 'https://docs.google.com/forms/d/e/1FAIpQLSc3YEkC4jNqU5miO11o-ARavNxWT26SdJ3kDIcqkaZlOUZ8MA/formResponse',
+    f: { who: 'entry.244615247', test: 'entry.816323988', score: 'entry.850227121', wrong: 'entry.868148427', picks: 'entry.951348712' },
+    csv: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLxPMv8ZjsjgjtdfT2nVmMCzd7zo8nMvgE2ZN4R9GxWeL5VxPucJHH8QyFY31YThBVQbCXzIrWntJZ/pub?gid=1047918653&single=true&output=csv',
+    base: 'https://toptutor_mp3.service.concdn.com/4hischool/16RV_H1_ENG_LC_24/'
+  }; }
+  function listenOf(it) {
+    if (it.listen && it.listen.test) return it.listen;
+    const m = /듣기\s*(\d{1,2})\s*회/.exec(it.task || ''); return m ? { test: +m[1] } : null;
+  }
+  let lsKeys = null;
+  async function lsLoadKeys() {
+    if (lsKeys) return lsKeys;
+    try { lsKeys = await (await fetch(new URL('data/listening.json', location.href).href + '?_=' + Date.now())).json(); } catch (e) { lsKeys = {}; }
+    return lsKeys;
+  }
+  function lsStyle() {
+    if (document.getElementById('lsCss')) return;
+    const st = document.createElement('style'); st.id = 'lsCss';
+    st.textContent = `.ls-ov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:12px}
+.ls-box{background:var(--panel,#fff);color:var(--ink,#1D2A26);width:100%;max-width:520px;border-radius:16px;padding:18px 16px 20px;margin:auto 0;font:inherit;display:grid;gap:12px}
+.ls-box h2{margin:0;font-size:20px}.ls-box p{margin:0;color:var(--muted,#5E6D67)}
+.ls-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ls-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ls-chip{min-width:34px;height:34px;border-radius:8px;border:1px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;cursor:pointer}
+.ls-chip.ans{background:var(--soft,#E6EFEA)}.ls-chip.cur{outline:2px solid var(--accent,#2E6B57)}
+.ls-chip.ok{background:#d9efe1}.ls-chip.ng{background:#f8d9d4}
+.ls-player{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line,#DCE3DE);border-radius:12px}
+.ls-player b{display:block}.ls-player small{color:var(--muted,#5E6D67)}
+.ls-round{width:52px;height:52px;border-radius:50%;border:0;background:var(--accent,#2E6B57);color:var(--accent-ink,#fff);font:inherit;font-size:20px;cursor:pointer;flex:none}
+.ls-speed{display:flex;gap:6px;align-items:center}
+.ls-speed button,.ls-btn{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;cursor:pointer}
+.ls-speed button[aria-pressed=true],.ls-btn.primary{background:var(--accent,#2E6B57);color:var(--accent-ink,#fff);border-color:transparent}
+.ls-btn:disabled{opacity:.4;cursor:default}
+.ls-opts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.ls-opt{height:56px;border-radius:12px;border:2px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;font-size:22px;cursor:pointer}
+.ls-opt[aria-pressed=true]{border-color:var(--accent,#2E6B57);background:var(--soft,#E6EFEA)}
+.ls-nav{display:flex;gap:8px}.ls-nav .ls-btn{flex:1}
+.ls-score{font-size:34px;font-weight:700}
+.ls-wrong{display:grid;gap:4px}.ls-wrong div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line,#DCE3DE)}`;
+    document.head.append(st);
+  }
+  async function openListening(it) {
+    const L = listenOf(it); if (!L) return;
+    lsStyle();
+    const keys = await lsLoadKeys(), key = keys[String(L.test)], cfg = lsCfg();
+    const prevOv = document.body.style.overflow; document.body.style.overflow = 'hidden';
+    const ov = el('div', 'ls-ov'), box = el('div', 'ls-box'); ov.append(box); document.body.append(ov);
+    const AU = new Audio(); AU.preload = 'auto';
+    const close = () => { try { AU.pause(); } catch (e) {} ov.remove(); document.body.style.overflow = prevOv; document.removeEventListener('keydown', onKey); renderNotebook(); };
+    const onKey = (ev) => { if (ev.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    if (!key) {
+      box.innerHTML = `<h2>듣기 ${L.test}회</h2><p>이 회차의 정답표가 아직 없어요. 선생님께 알려 주세요.</p><button class="ls-btn primary" id="lsX">닫기</button>`;
+      box.querySelector('#lsX').onclick = close; return;
+    }
+    const nums = L.only && L.only.length ? L.only : key.map((_, i) => i + 1);
+    const pick = {}; let idx = 0, mode = 'start', playing = false, plays = 0, speed = +store.get('ls:speed') || 1, sent = 'no';
+    if (![1, 1.2, 1.5].includes(speed)) speed = 1;
+    const C = ['①', '②', '③', '④', '⑤'];
+    const url = (n) => cfg.base + 'H1_edu_' + String(L.test).padStart(2, '0') + '_' + String(n).padStart(2, '0') + '.mp3';
+    const Q = (s) => box.querySelector(s);
+    function paintP() {
+      const p = Q('.ls-player'); if (!p) return;
+      Q('#lsPT').textContent = playing ? '재생 중…' : plays ? '다시 듣기' : '눌러서 듣기';
+      Q('#lsPS').textContent = (plays ? plays + '번 들었어요 · ' : '미국식 발음 · ') + speed + '배속';
+      Q('#lsPlay').textContent = playing ? '↻' : '▶'; Q('#lsStop').disabled = !playing;
+      box.querySelectorAll('.ls-speed button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.sp === speed)));
+    }
+    function play() {
+      try { AU.pause(); AU.src = url(nums[idx]); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; plays++; playing = true;
+        AU.play().catch(() => { playing = false; paintP(); }); } catch (e) { playing = false; }
+      paintP();
+    }
+    AU.onended = AU.onerror = () => { playing = false; paintP(); };
+    function chips(res) {
+      return '<div class="ls-chips">' + nums.map((n, i) => {
+        let c = 'ls-chip';
+        if (res) c += pick[n] === key[n - 1] ? ' ok' : ' ng'; else { if (pick[n]) c += ' ans'; if (i === idx) c += ' cur'; }
+        return `<button class="${c}" data-i="${i}">${n}</button>`;
+      }).join('') + '</div>';
+    }
+    function go(i) { idx = i; plays = 0; render(); play(); }
+    function render() {
+      try { if (mode !== 'quiz') AU.pause(); } catch (e) {} if (mode !== 'quiz') playing = false;
+      const head = `<div class="ls-top"><h2>듣기 ${L.test}회${L.only ? ' · 틀린 문제 다시' : ''}</h2><button class="ls-btn" id="lsX">닫기</button></div>`;
+      if (mode === 'start') {
+        box.innerHTML = head + `<p>${nums.length}문제 · 한 문제씩 듣고 답을 골라요. 문제지(책)를 옆에 두세요.</p>
+          <p>다음 문제로 넘어가면 소리가 자동으로 나와요. 멈추기, 속도(1 · 1.2 · 1.5배), 다시 듣기도 할 수 있어요.</p>
+          <button class="ls-btn primary" id="lsGo">${nums[0]}번부터 시작하기</button>`;
+        Q('#lsGo').onclick = () => { mode = 'quiz'; go(0); };
+      } else if (mode === 'quiz') {
+        const n = nums[idx], last = idx === nums.length - 1;
+        box.innerHTML = head + chips(false) + `<div><b style="font-size:22px">${n}번</b> <small style="color:var(--muted,#5E6D67)">${idx + 1} / ${nums.length}</small></div>
+          <div class="ls-player"><button class="ls-round" id="lsPlay" aria-label="듣기">▶</button><div style="flex:1"><b id="lsPT"></b><small id="lsPS"></small></div><button class="ls-btn" id="lsStop">멈춤</button></div>
+          <div class="ls-speed"><span>속도</span>${[1, 1.2, 1.5].map(s => `<button data-sp="${s}" aria-pressed="${s === speed}">${s}배</button>`).join('')}</div>
+          <div class="ls-opts">${C.map((c, j) => `<button class="ls-opt" data-o="${j + 1}" aria-pressed="${pick[n] === j + 1}" aria-label="${j + 1}번">${c}</button>`).join('')}</div>
+          <div class="ls-nav"><button class="ls-btn" id="lsPrev" ${idx ? '' : 'disabled'}>이전</button><button class="ls-btn primary" id="lsNext" ${pick[n] ? '' : 'disabled'}>${last ? '다 풀었어요 · 채점' : '다음 문제'}</button></div>`;
+        Q('#lsPlay').onclick = () => { plays = Math.max(plays, 0); play(); };
+        Q('#lsStop').onclick = () => { try { AU.pause(); AU.currentTime = 0; } catch (e) {} playing = false; paintP(); };
+        box.querySelectorAll('.ls-speed button').forEach(b => b.onclick = () => { speed = +b.dataset.sp; store.set('ls:speed', String(speed)); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; paintP(); });
+        box.querySelectorAll('.ls-opt').forEach(b => b.onclick = () => { pick[n] = +b.dataset.o; const keepPlaying = playing; const t = AU.currentTime; render(); if (keepPlaying) { try { AU.currentTime = t; AU.play(); playing = true; } catch (e) {} } paintP(); });
+        Q('#lsPrev').onclick = () => go(idx - 1);
+        Q('#lsNext').onclick = () => { if (last) { mode = 'done'; finish(); } else go(idx + 1); };
+        paintP();
+      }
+      if (mode !== 'done') { Q('#lsX').onclick = close; box.querySelectorAll('.ls-chip').forEach(b => b.onclick = () => go(+b.dataset.i)); }
+    }
+    async function send(res) {
+      if (state.mode === 'teacher') { sent = 'preview'; return; }
+      const f = cfg.f, fd = new URLSearchParams();
+      fd.set(f.who, res.who); fd.set(f.test, res.test); fd.set(f.score, res.score); fd.set(f.wrong, res.wrong); fd.set(f.picks, res.picks);
+      try { await fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd }); sent = 'ok'; } catch (e) { sent = 'fail'; }
+    }
+    async function finish() {
+      const wrong = nums.filter(n => pick[n] !== key[n - 1]);
+      const res = { who: state.cls || '', test: String(L.test) + (L.only ? '재' : ''), score: (nums.length - wrong.length) + '/' + nums.length,
+        wrong: wrong.join(','), picks: nums.map(n => n + ':' + (pick[n] || '-')).join(',') };
+      const paint = () => {
+        box.innerHTML = `<div class="ls-top"><h2>채점 결과</h2><button class="ls-btn" id="lsX">닫기</button></div>
+          <div class="ls-score">${nums.length - wrong.length} / ${nums.length}</div>${chips(true)}
+          ${wrong.length ? `<div class="ls-wrong">${wrong.map(n => `<div><span>${n}번</span><span>내 답 ${pick[n] ? C[pick[n] - 1] : '-'} · 정답 ${C[key[n - 1] - 1]}</span></div>`).join('')}</div><p>틀린 문제는 선생님이 다음 시간 과제로 다시 내 줘요.</p>` : '<p>모두 맞혔어요!</p>'}
+          <p>${sent === 'ok' ? '선생님께 결과를 보냈어요 ✓' : sent === 'preview' ? '(미리보기라서 전송하지 않았어요)' : sent === 'fail' ? '전송에 실패했어요. 인터넷을 확인하고 다시 보내 주세요.' : '보내는 중…'}</p>
+          ${sent === 'fail' ? '<button class="ls-btn primary" id="lsRe">다시 보내기</button>' : ''}`;
+        Q('#lsX').onclick = close;
+        if (Q('#lsRe')) Q('#lsRe').onclick = async () => { sent = 'no'; paint(); await send(res); paint(); };
+        box.querySelectorAll('.ls-chip').forEach(b => b.onclick = () => { mode = 'quiz'; go(+b.dataset.i); });
+      };
+      sent = 'no'; paint(); await send(res);
+      if (sent === 'ok' || sent === 'preview') { if (sent === 'ok') setDone([it], true); }
+      paint();
+    }
+    render();
+  }
+
+  // 선생님: 학생 듣기 결과 보기 + 틀린 문제를 다음 과제로
+  function csvParse(t) {
+    const rows = []; let r = [], f = '', q = false;
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ',') { r.push(f); f = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; r.push(f); f = ''; rows.push(r); r = []; }
+      else f += c;
+    }
+    if (f || r.length) { r.push(f); rows.push(r); }
+    return rows;
+  }
+  async function lsLoad() {
+    const box = $('lsBox'); if (!box) return;
+    if (!$('lsDate').value) $('lsDate').value = ($('wtDate') && $('wtDate').value) || todayStr();
+    $('lsMsg').textContent = '';
+    box.textContent = ''; box.append(el('p', 'hint', '불러오는 중…'));
+    let rows;
+    try { rows = csvParse(await (await fetch(lsCfg().csv + '&_=' + Date.now())).text()).slice(1); }
+    catch (e) { box.textContent = ''; box.append(el('p', 'hint', '결과를 불러오지 못했어요. 인터넷을 확인하고 다시 눌러 보세요.')); return; }
+    const list = rows.map(r => ({ ts: (r[0] || '').trim(), who: (r[1] || '').trim(), test: (r[2] || '').trim(), score: (r[3] || '').trim(), wrong: (r[4] || '').trim(), picks: (r[5] || '').trim() }))
+      .filter(r => r.who && parseInt(r.test) > 0).reverse().slice(0, 40);
+    box.textContent = '';
+    if (!list.length) { box.append(el('p', 'hint', '아직 학생이 푼 기록이 없어요.')); return; }
+    list.forEach(r => {
+      const n = parseInt(r.test), only = r.wrong ? r.wrong.split(',').map(Number).filter(Boolean) : [];
+      const row = el('div', 'row'); row.style.cssText = 'justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0';
+      const tx = el('div'); tx.append(el('b', null, `${r.who} · 듣기 ${n}회${/재/.test(r.test) ? '(다시)' : ''} · ${r.score}`), el('small', null, ' ' + (only.length ? '틀린 번호 ' + only.join(', ') : '모두 맞음') + ' · ' + r.ts));
+      row.append(tx);
+      if (only.length) {
+        const done = D.entries.some(x => x.who === r.who && x.lsRetake && x.listen && x.listen.test === n && (x.listen.only || []).join(',') === only.join(',') && x.date === $('lsDate').value);
+        const b = el('button', 'small' + (done ? '' : ' primary'), done ? '넘김 ✓' : '틀린 문제 다음 과제로'); b.type = 'button'; b.disabled = done;
+        b.onclick = () => lsCarry(r.who, n, only);
+        row.append(b);
+      }
+      box.append(row);
+    });
+  }
+  function lsCarry(who, test, only) {
+    if (!names().includes(who)) { $('lsMsg').textContent = `"${who}" 학생이 목록에 없어요. 학생 이름을 확인해 주세요.`; return; }
+    const date = $('lsDate').value || todayStr();
+    const task = `듣기 ${test}회 틀린 문제 다시 듣기 (${only.join(', ')}번)`;
+    const e = D.entries.find(x => x.date === date && x.who === who && x.lsRetake && x.listen && x.listen.test === test);
+    if (e) { e.task = task; e.listen = { test, only }; }
+    else D.entries.push({ id: uid(), date, who, subject: '듣기', task, range: '', due: '', note: '', lsRetake: true, listen: { test, only } });
+    $('lsMsg').textContent = `${who} ${kShort(date)} 과제에 "${task}"를 넣었어요. 학생 링크에 올리면 바로 풀 수 있어요.`;
+    changed(); lsLoad();
+  }
+  if ($('lsReload')) $('lsReload').onclick = lsLoad;
+  if ($('lsDate')) $('lsDate').onchange = lsLoad;
+  setTimeout(() => { if (state.mode === 'teacher') lsLoad(); }, 1500);
+
   /* ---------- 수업 노트 사진 ---------- */
   let assetsCap = null;
   const noteSrc = (n) => (SEED && SEED.notesData && SEED.notesData[n.aid]) || '/_blob/' + n.aid;
@@ -1365,6 +1566,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           }
           const wb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '단어 다시 보기' : '단어 공부'); wb.type = 'button';
           wb.onclick = () => openSet('t:' + it.id); act.append(wb);
+        } else if (listenOf(it)) {
+          const lb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '다시 듣기' : '듣기 풀기'); lb.type = 'button';
+          lb.onclick = () => openListening(it); act.append(lb);
         } else {
           const b = el('button', 'nb-btn' + (d ? ' undo' : ''), d ? '완료 취소' : '완료'); b.type = 'button';
           b.setAttribute('aria-pressed', d ? 'true' : 'false');
