@@ -1173,21 +1173,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 .ls-speed button,.ls-btn{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;cursor:pointer}
 .ls-speed button[aria-pressed=true],.ls-btn.primary{background:var(--accent,#2E6B57);color:var(--accent-ink,#fff);border-color:transparent}
 .ls-btn:disabled{opacity:.4;cursor:default}
-.ls-q{width:100%;border:1px solid var(--line,#DCE3DE);border-radius:10px;background:#fff;cursor:zoom-in}.ls-hint{margin:-6px 0 0;font-size:12px;color:var(--muted,#5E6D67);text-align:right}.ls-zoom{position:fixed;inset:0;z-index:10000;background:#fff;display:flex;flex-direction:column}.ls-zbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #ddd;font-size:13px;color:#555}.ls-zwrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}.ls-zwrap img{display:block;width:max(900px,100vw);height:auto}@media(max-width:560px){.ls-ov{padding:6px}.ls-box{padding:14px 10px 16px;border-radius:12px}}.ls-opts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.ls-q{width:100%;border:1px solid var(--line,#DCE3DE);border-radius:10px;background:#fff}@media(max-width:560px){.ls-ov{padding:6px}.ls-box{padding:14px 10px 16px;border-radius:12px}}.ls-seekrow{display:flex;align-items:center;gap:10px}.ls-seekrow input{flex:1;min-width:0;accent-color:var(--accent,#2E6B57)}.ls-seekrow span{font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap;color:var(--muted,#5E6D67)}.ls-opts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .ls-opt{height:56px;border-radius:12px;border:2px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;font-size:22px;cursor:pointer}
 .ls-opt[aria-pressed=true]{border-color:var(--accent,#2E6B57);background:var(--soft,#E6EFEA)}
 .ls-nav{display:flex;gap:8px;position:sticky;bottom:0;background:var(--panel,#fff);padding:8px 0 2px}.ls-nav .ls-btn{flex:1}
 .ls-score{font-size:34px;font-weight:700}
 .ls-wrong{display:grid;gap:4px}.ls-wrong div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line,#DCE3DE)}`;
     document.head.append(st);
-  }
-  function lsZoom(src) {
-    const z = el('div', 'ls-zoom'); z.setAttribute('role', 'dialog');
-    const bar = el('div', 'ls-zbar'); bar.append(el('span', null, '확대해서 보는 중 · 손가락으로 밀어서 이동'));
-    const cb = el('button', 'ls-btn primary', '닫기'); cb.type = 'button'; bar.append(cb);
-    const wrap = el('div', 'ls-zwrap'); const im = el('img'); im.src = src; im.alt = '문제 확대'; wrap.append(im);
-    z.append(bar, wrap); document.body.append(z);
-    const off = () => z.remove(); cb.onclick = off; wrap.onclick = (e) => { if (e.target === wrap) off(); };
   }
   function lsDoneSet(it) { try { return JSON.parse(store.get('lsdone:' + it.id) || '[]'); } catch (e) { return []; } }
   function lsMarkDone(it, ts) {
@@ -1221,19 +1213,28 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const C = ['①', '②', '③', '④', '⑤'];
     const url = (x) => book.base + book.prefix + String(x.test).padStart(2, '0') + '_' + String(x.n).padStart(2, '0') + '.mp3';
     const Q = (s) => box.querySelector(s);
+    const fmt = (t) => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+    let seeking = false, loaded = -1;
     function paintP() {
       const p = Q('.ls-player'); if (!p) return;
-      Q('#lsPT').textContent = playing ? '재생 중…' : plays ? '다시 듣기' : '눌러서 듣기';
+      playing = !AU.paused && !AU.ended;
+      Q('#lsPT').textContent = playing ? '재생 중…' : (AU.currentTime > 0 && !AU.ended && loaded === idx ? '일시정지' : plays ? '다시 듣기' : '눌러서 듣기');
       Q('#lsPS').textContent = (plays ? plays + '번 들었어요 · ' : '미국식 발음 · ') + speed + '배속';
-      Q('#lsPlay').textContent = playing ? '↻' : '▶'; Q('#lsStop').disabled = !playing;
+      Q('#lsPlay').textContent = playing ? '❚❚' : '▶'; Q('#lsPlay').setAttribute('aria-label', playing ? '일시정지' : '듣기');
+      const d = AU.duration || 0, sk = Q('#lsSeek');
+      if (sk && !seeking) sk.value = d && loaded === idx ? Math.round(AU.currentTime / d * 1000) : 0;
+      Q('#lsTime').textContent = fmt(loaded === idx ? AU.currentTime : 0) + ' / ' + fmt(loaded === idx ? d : 0);
       box.querySelectorAll('.ls-speed button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.sp === speed)));
     }
-    function play() {
-      try { AU.pause(); AU.src = url(items[idx]); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; plays++; playing = true;
-        AU.play().catch(() => { playing = false; paintP(); }); } catch (e) { playing = false; }
+    function play() {   // 처음부터 듣기
+      try { AU.pause(); AU.src = url(items[idx]); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; loaded = idx; plays++;
+        AU.play().catch(() => paintP()); } catch (e) {}
       paintP();
     }
-    AU.onended = AU.onerror = () => { playing = false; paintP(); };
+    function toggle() {   // 재생 / 일시정지 (멈춘 자리에서 계속)
+      if (loaded !== idx || AU.ended) play(); else if (AU.paused) AU.play().catch(() => {}); else AU.pause();
+    }
+    ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata', 'error'].forEach(ev => AU.addEventListener(ev, paintP));
     const pk = (i) => pick[i];
     function chips(res) {
       return '<div class="ls-chips">' + items.map((x, i) => {
@@ -1255,16 +1256,17 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       } else if (mode === 'quiz') {
         const x = items[idx], last = idx === items.length - 1;
         box.innerHTML = head + chips(false) + `<div><b style="font-size:22px">${lab(x)}</b> <small style="color:var(--muted,#5E6D67)">${idx + 1} / ${items.length}</small></div>
-          <div class="ls-player"><button class="ls-round" id="lsPlay" aria-label="듣기">▶</button><div style="flex:1"><b id="lsPT"></b><small id="lsPS"></small></div><button class="ls-btn" id="lsStop">멈춤</button></div>
+          <div class="ls-player"><button class="ls-round" id="lsPlay" aria-label="듣기">▶</button><div style="flex:1"><b id="lsPT"></b><small id="lsPS"></small></div><button class="ls-btn" id="lsStop">처음부터</button></div>
+          <div class="ls-seekrow"><input type="range" id="lsSeek" min="0" max="1000" value="0" step="1" aria-label="재생 위치"><span id="lsTime">0:00 / 0:00</span></div>
           <div class="ls-speed"><span>속도</span>${[1, 1.2, 1.5].map(s => `<button data-sp="${s}" aria-pressed="${s === speed}">${s}배</button>`).join('')}</div>
-          ${(book.imgs || []).includes(x.test) ? `<img class="ls-q" alt="문제" src="data/q/${book.id}/${x.test}/${String(x.n).padStart(2, '0')}.jpg" onerror="this.style.display='none'"><div class="ls-hint">그림을 누르면 크게 보여요</div>` : ''}
+          ${(book.imgs || []).includes(x.test) ? `<img class="ls-q" alt="문제" src="data/q/${book.id}/${x.test}/${String(x.n).padStart(2, '0')}.jpg" onerror="this.style.display='none'">` : ''}
           <div class="ls-opts">${C.map((c, j) => `<button class="ls-opt" data-o="${j + 1}" aria-pressed="${pick[idx] === j + 1}" aria-label="${j + 1}번">${c}</button>`).join('')}</div>
           <div class="ls-nav"><button class="ls-btn" id="lsPrev" ${idx ? '' : 'disabled'}>이전</button><button class="ls-btn primary" id="lsNext">${last ? '다 풀었어요 · 채점' : (pick[idx] ? '다음 문제' : '건너뛰기')}</button></div>`;
-        box.querySelectorAll('.ls-q').forEach(im => { im.onclick = () => lsZoom(im.src); });
-        Q('#lsPlay').onclick = play;
-        Q('#lsStop').onclick = () => { try { AU.pause(); AU.currentTime = 0; } catch (e) {} playing = false; paintP(); };
+        Q('#lsPlay').onclick = toggle;
+        { const sk = Q('#lsSeek'); sk.oninput = () => { seeking = true; const d = AU.duration || 0; if (d && loaded === idx) { AU.currentTime = sk.value / 1000 * d; Q('#lsTime').textContent = fmt(AU.currentTime) + ' / ' + fmt(d); } }; sk.onchange = () => { seeking = false; paintP(); }; }
+        Q('#lsStop').onclick = () => { if (loaded !== idx) play(); else { AU.currentTime = 0; AU.play().catch(() => {}); } };
         box.querySelectorAll('.ls-speed button').forEach(b => b.onclick = () => { speed = +b.dataset.sp; store.set('ls:speed', String(speed)); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; paintP(); });
-        box.querySelectorAll('.ls-opt').forEach(b => b.onclick = () => { pick[idx] = +b.dataset.o; saveP(); const keep = playing, t = AU.currentTime; render(); if (keep) { try { AU.currentTime = t; AU.play(); playing = true; } catch (e) {} } paintP(); });
+        box.querySelectorAll('.ls-opt').forEach(b => b.onclick = () => { pick[idx] = +b.dataset.o; saveP(); render(); });
         Q('#lsPrev').onclick = () => go(idx - 1);
         Q('#lsNext').onclick = () => { if (last) { const un = items.filter((x, i) => !pick[i]).length; if (un && !confirm(`안 푼 문제가 ${un}개 있어요. 그래도 채점할까요?`)) { go(items.findIndex((x, i) => !pick[i])); return; } mode = 'done'; finish(); } else go(idx + 1); };
         paintP();
