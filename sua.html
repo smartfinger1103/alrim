@@ -1133,19 +1133,22 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   function lsCfg() { return {
     form: 'https://docs.google.com/forms/d/e/1FAIpQLSc3YEkC4jNqU5miO11o-ARavNxWT26SdJ3kDIcqkaZlOUZ8MA/formResponse',
     f: { who: 'entry.244615247', test: 'entry.816323988', score: 'entry.850227121', wrong: 'entry.868148427', picks: 'entry.951348712' },
-    csv: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLxPMv8ZjsjgjtdfT2nVmMCzd7zo8nMvgE2ZN4R9GxWeL5VxPucJHH8QyFY31YThBVQbCXzIrWntJZ/pub?gid=1047918653&single=true&output=csv',
-    base: 'https://toptutor_mp3.service.concdn.com/4hischool/16RV_H1_ENG_LC_24/'
+    csv: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLxPMv8ZjsjgjtdfT2nVmMCzd7zo8nMvgE2ZN4R9GxWeL5VxPucJHH8QyFY31YThBVQbCXzIrWntJZ/pub?gid=1047918653&single=true&output=csv'
   }; }
+  const LS_RETAKE = '틀린문제 다시듣기';
+  // 듣기 과제 읽기: 일반 과제는 "듣기 18회", 틀린문제 과제는 listen.sets
   function listenOf(it) {
-    if (it.listen && it.listen.test) return it.listen;
-    const m = /듣기\s*(\d{1,2})\s*회/.exec(it.task || ''); return m ? { test: +m[1] } : null;
+    if (it.listen && it.listen.sets && it.listen.sets.length) return { retake: true, sets: it.listen.sets };
+    if (it.listen && it.listen.test) return { retake: !!it.lsRetake, sets: [{ test: it.listen.test, only: it.listen.only }] };
+    const m = /듣기\s*(\d{1,2})\s*회/.exec(it.task || ''); return m ? { retake: false, sets: [{ test: +m[1] }] } : null;
   }
-  let lsKeys = null;
-  async function lsLoadKeys() {
-    if (lsKeys) return lsKeys;
-    try { lsKeys = await (await fetch(new URL('data/listening.json', location.href).href + '?_=' + Date.now())).json(); } catch (e) { lsKeys = {}; }
-    return lsKeys;
+  let lsData = null;
+  async function lsLoadData() {
+    if (lsData) return lsData;
+    try { lsData = await (await fetch(new URL('data/listening.json', location.href).href + '?_=' + Date.now())).json(); } catch (e) { lsData = {}; }
+    return lsData;
   }
+  function lsBook(J, who) { const id = (J.students || {})[who] || ''; return (J.books || {})[id] || null; }
   function lsStyle() {
     if (document.getElementById('lsCss')) return;
     const st = document.createElement('style'); st.id = 'lsCss';
@@ -1175,22 +1178,25 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   async function openListening(it) {
     const L = listenOf(it); if (!L) return;
     lsStyle();
-    const keys = await lsLoadKeys(), key = keys[String(L.test)], cfg = lsCfg();
+    const J = await lsLoadData(), book = lsBook(J, state.cls || ''), cfg = lsCfg();
     const prevOv = document.body.style.overflow; document.body.style.overflow = 'hidden';
     const ov = el('div', 'ls-ov'), box = el('div', 'ls-box'); ov.append(box); document.body.append(ov);
     const AU = new Audio(); AU.preload = 'auto';
     const close = () => { try { AU.pause(); } catch (e) {} ov.remove(); document.body.style.overflow = prevOv; document.removeEventListener('keydown', onKey); renderNotebook(); };
     const onKey = (ev) => { if (ev.key === 'Escape') close(); };
     document.addEventListener('keydown', onKey);
-    if (!key) {
-      box.innerHTML = `<h2>듣기 ${L.test}회</h2><p>이 회차의 정답표가 아직 없어요. 선생님께 알려 주세요.</p><button class="ls-btn primary" id="lsX">닫기</button>`;
+    const items = [];   // 풀 문제들: { test, n, ans }
+    if (book) L.sets.forEach(st => { const key = (book.keys || {})[String(st.test)]; if (!key) return; (st.only && st.only.length ? st.only : key.map((_, i) => i + 1)).forEach(n => items.push({ test: st.test, n, ans: key[n - 1] })); });
+    if (!items.length) {
+      box.innerHTML = `<h2>듣기</h2><p>이 회차의 정답표가 아직 없어요. 선생님께 알려 주세요.</p><button class="ls-btn primary" id="lsX">닫기</button>`;
       box.querySelector('#lsX').onclick = close; return;
     }
-    const nums = L.only && L.only.length ? L.only : key.map((_, i) => i + 1);
+    const multi = new Set(items.map(x => x.test)).size > 1;
+    const lab = (x) => (multi || L.retake ? x.test + '회 ' : '') + x.n + '번';
     const pick = {}; let idx = 0, mode = 'start', playing = false, plays = 0, speed = +store.get('ls:speed') || 1, sent = 'no';
     if (![1, 1.2, 1.5].includes(speed)) speed = 1;
     const C = ['①', '②', '③', '④', '⑤'];
-    const url = (n) => cfg.base + 'H1_edu_' + String(L.test).padStart(2, '0') + '_' + String(n).padStart(2, '0') + '.mp3';
+    const url = (x) => book.base + book.prefix + String(x.test).padStart(2, '0') + '_' + String(x.n).padStart(2, '0') + '.mp3';
     const Q = (s) => box.querySelector(s);
     function paintP() {
       const p = Q('.ls-player'); if (!p) return;
@@ -1200,66 +1206,74 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       box.querySelectorAll('.ls-speed button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.sp === speed)));
     }
     function play() {
-      try { AU.pause(); AU.src = url(nums[idx]); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; plays++; playing = true;
+      try { AU.pause(); AU.src = url(items[idx]); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; plays++; playing = true;
         AU.play().catch(() => { playing = false; paintP(); }); } catch (e) { playing = false; }
       paintP();
     }
     AU.onended = AU.onerror = () => { playing = false; paintP(); };
+    const pk = (i) => pick[i];
     function chips(res) {
-      return '<div class="ls-chips">' + nums.map((n, i) => {
+      return '<div class="ls-chips">' + items.map((x, i) => {
         let c = 'ls-chip';
-        if (res) c += pick[n] === key[n - 1] ? ' ok' : ' ng'; else { if (pick[n]) c += ' ans'; if (i === idx) c += ' cur'; }
-        return `<button class="${c}" data-i="${i}">${n}</button>`;
+        if (res) c += pk(i) === x.ans ? ' ok' : ' ng'; else { if (pk(i)) c += ' ans'; if (i === idx) c += ' cur'; }
+        return `<button class="${c}" data-i="${i}" style="${multi || L.retake ? 'min-width:54px' : ''}">${multi || L.retake ? x.test + '-' + x.n : x.n}</button>`;
       }).join('') + '</div>';
     }
     function go(i) { idx = i; plays = 0; render(); play(); }
     function render() {
       try { if (mode !== 'quiz') AU.pause(); } catch (e) {} if (mode !== 'quiz') playing = false;
-      const head = `<div class="ls-top"><h2>듣기 ${L.test}회${L.only ? ' · 틀린 문제 다시' : ''}</h2><button class="ls-btn" id="lsX">닫기</button></div>`;
+      const title = L.retake ? '틀린 문제 다시 듣기' : '듣기 ' + items[0].test + '회';
+      const head = `<div class="ls-top"><h2>${title}</h2><button class="ls-btn" id="lsX">닫기</button></div>`;
       if (mode === 'start') {
-        box.innerHTML = head + `<p>${nums.length}문제 · 한 문제씩 듣고 답을 골라요. 문제지(책)를 옆에 두세요.</p>
+        box.innerHTML = head + `<p>${items.length}문제 · 한 문제씩 듣고 답을 골라요. 문제지(책)를 옆에 두세요.</p>
           <p>다음 문제로 넘어가면 소리가 자동으로 나와요. 멈추기, 속도(1 · 1.2 · 1.5배), 다시 듣기도 할 수 있어요.</p>
-          <button class="ls-btn primary" id="lsGo">${nums[0]}번부터 시작하기</button>`;
+          <button class="ls-btn primary" id="lsGo">${lab(items[0])}부터 시작하기</button>`;
         Q('#lsGo').onclick = () => { mode = 'quiz'; go(0); };
       } else if (mode === 'quiz') {
-        const n = nums[idx], last = idx === nums.length - 1;
-        box.innerHTML = head + chips(false) + `<div><b style="font-size:22px">${n}번</b> <small style="color:var(--muted,#5E6D67)">${idx + 1} / ${nums.length}</small></div>
+        const x = items[idx], last = idx === items.length - 1;
+        box.innerHTML = head + chips(false) + `<div><b style="font-size:22px">${lab(x)}</b> <small style="color:var(--muted,#5E6D67)">${idx + 1} / ${items.length}</small></div>
           <div class="ls-player"><button class="ls-round" id="lsPlay" aria-label="듣기">▶</button><div style="flex:1"><b id="lsPT"></b><small id="lsPS"></small></div><button class="ls-btn" id="lsStop">멈춤</button></div>
           <div class="ls-speed"><span>속도</span>${[1, 1.2, 1.5].map(s => `<button data-sp="${s}" aria-pressed="${s === speed}">${s}배</button>`).join('')}</div>
-          <div class="ls-opts">${C.map((c, j) => `<button class="ls-opt" data-o="${j + 1}" aria-pressed="${pick[n] === j + 1}" aria-label="${j + 1}번">${c}</button>`).join('')}</div>
-          <div class="ls-nav"><button class="ls-btn" id="lsPrev" ${idx ? '' : 'disabled'}>이전</button><button class="ls-btn primary" id="lsNext" ${pick[n] ? '' : 'disabled'}>${last ? '다 풀었어요 · 채점' : '다음 문제'}</button></div>`;
-        Q('#lsPlay').onclick = () => { plays = Math.max(plays, 0); play(); };
+          <div class="ls-opts">${C.map((c, j) => `<button class="ls-opt" data-o="${j + 1}" aria-pressed="${pick[idx] === j + 1}" aria-label="${j + 1}번">${c}</button>`).join('')}</div>
+          <div class="ls-nav"><button class="ls-btn" id="lsPrev" ${idx ? '' : 'disabled'}>이전</button><button class="ls-btn primary" id="lsNext" ${pick[idx] ? '' : 'disabled'}>${last ? '다 풀었어요 · 채점' : '다음 문제'}</button></div>`;
+        Q('#lsPlay').onclick = play;
         Q('#lsStop').onclick = () => { try { AU.pause(); AU.currentTime = 0; } catch (e) {} playing = false; paintP(); };
         box.querySelectorAll('.ls-speed button').forEach(b => b.onclick = () => { speed = +b.dataset.sp; store.set('ls:speed', String(speed)); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; paintP(); });
-        box.querySelectorAll('.ls-opt').forEach(b => b.onclick = () => { pick[n] = +b.dataset.o; const keepPlaying = playing; const t = AU.currentTime; render(); if (keepPlaying) { try { AU.currentTime = t; AU.play(); playing = true; } catch (e) {} } paintP(); });
+        box.querySelectorAll('.ls-opt').forEach(b => b.onclick = () => { pick[idx] = +b.dataset.o; const keep = playing, t = AU.currentTime; render(); if (keep) { try { AU.currentTime = t; AU.play(); playing = true; } catch (e) {} } paintP(); });
         Q('#lsPrev').onclick = () => go(idx - 1);
         Q('#lsNext').onclick = () => { if (last) { mode = 'done'; finish(); } else go(idx + 1); };
         paintP();
       }
       if (mode !== 'done') { Q('#lsX').onclick = close; box.querySelectorAll('.ls-chip').forEach(b => b.onclick = () => go(+b.dataset.i)); }
     }
-    async function send(res) {
+    async function send(rows) {
       if (state.mode === 'teacher') { sent = 'preview'; return; }
-      const f = cfg.f, fd = new URLSearchParams();
-      fd.set(f.who, res.who); fd.set(f.test, res.test); fd.set(f.score, res.score); fd.set(f.wrong, res.wrong); fd.set(f.picks, res.picks);
-      try { await fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd }); sent = 'ok'; } catch (e) { sent = 'fail'; }
+      const f = cfg.f; sent = 'ok';
+      for (const res of rows) {
+        const fd = new URLSearchParams();
+        fd.set(f.who, res.who); fd.set(f.test, res.test); fd.set(f.score, res.score); fd.set(f.wrong, res.wrong); fd.set(f.picks, res.picks);
+        try { await fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd }); } catch (e) { sent = 'fail'; }
+      }
     }
     async function finish() {
-      const wrong = nums.filter(n => pick[n] !== key[n - 1]);
-      const res = { who: state.cls || '', test: String(L.test) + (L.only ? '재' : ''), score: (nums.length - wrong.length) + '/' + nums.length,
-        wrong: wrong.join(','), picks: nums.map(n => n + ':' + (pick[n] || '-')).join(',') };
+      const wrongI = items.map((x, i) => i).filter(i => pick[i] !== items[i].ans);
+      const rows = [...new Set(items.map(x => x.test))].map(t => {
+        const ix = items.map((x, i) => i).filter(i => items[i].test === t), wr = ix.filter(i => pick[i] !== items[i].ans);
+        return { who: state.cls || '', test: String(t) + (L.retake ? '재' : ''), score: (ix.length - wr.length) + '/' + ix.length,
+          wrong: wr.map(i => items[i].n).join(','), picks: ix.map(i => items[i].n + ':' + (pick[i] || '-')).join(',') };
+      });
       const paint = () => {
         box.innerHTML = `<div class="ls-top"><h2>채점 결과</h2><button class="ls-btn" id="lsX">닫기</button></div>
-          <div class="ls-score">${nums.length - wrong.length} / ${nums.length}</div>${chips(true)}
-          ${wrong.length ? `<div class="ls-wrong">${wrong.map(n => `<div><span>${n}번</span><span>내 답 ${pick[n] ? C[pick[n] - 1] : '-'} · 정답 ${C[key[n - 1] - 1]}</span></div>`).join('')}</div><p>틀린 문제는 선생님이 다음 시간 과제로 다시 내 줘요.</p>` : '<p>모두 맞혔어요!</p>'}
+          <div class="ls-score">${items.length - wrongI.length} / ${items.length}</div>${chips(true)}
+          ${wrongI.length ? `<div class="ls-wrong">${wrongI.map(i => `<div><span>${lab(items[i])}</span><span>내 답 ${pick[i] ? C[pick[i] - 1] : '-'} · 정답 ${C[items[i].ans - 1]}</span></div>`).join('')}</div><p>틀린 문제는 선생님이 다음 시간 "틀린문제 다시듣기" 과제로 다시 내 줘요.</p>` : '<p>모두 맞혔어요!</p>'}
           <p>${sent === 'ok' ? '선생님께 결과를 보냈어요 ✓' : sent === 'preview' ? '(미리보기라서 전송하지 않았어요)' : sent === 'fail' ? '전송에 실패했어요. 인터넷을 확인하고 다시 보내 주세요.' : '보내는 중…'}</p>
           ${sent === 'fail' ? '<button class="ls-btn primary" id="lsRe">다시 보내기</button>' : ''}`;
         Q('#lsX').onclick = close;
-        if (Q('#lsRe')) Q('#lsRe').onclick = async () => { sent = 'no'; paint(); await send(res); paint(); };
+        if (Q('#lsRe')) Q('#lsRe').onclick = async () => { sent = 'no'; paint(); await send(rows); paint(); };
         box.querySelectorAll('.ls-chip').forEach(b => b.onclick = () => { mode = 'quiz'; go(+b.dataset.i); });
       };
-      sent = 'no'; paint(); await send(res);
-      if (sent === 'ok' || sent === 'preview') { if (sent === 'ok') setDone([it], true); }
+      sent = 'no'; paint(); await send(rows);
+      if (sent === 'ok') setDone([it], true);
       paint();
     }
     render();
@@ -1297,7 +1311,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const tx = el('div'); tx.append(el('b', null, `${r.who} · 듣기 ${n}회${/재/.test(r.test) ? '(다시)' : ''} · ${r.score}`), el('small', null, ' ' + (only.length ? '틀린 번호 ' + only.join(', ') : '모두 맞음') + ' · ' + r.ts));
       row.append(tx);
       if (only.length) {
-        const done = D.entries.some(x => x.who === r.who && x.lsRetake && x.listen && x.listen.test === n && (x.listen.only || []).join(',') === only.join(',') && x.date === $('lsDate').value);
+        const done = D.entries.some(x => x.who === r.who && x.lsRetake && x.date === $('lsDate').value && ((x.listen && x.listen.sets) || []).some(st => st.test === n && (st.only || []).join(',') === only.join(',')));
         const b = el('button', 'small' + (done ? '' : ' primary'), done ? '넘김 ✓' : '틀린 문제 다음 과제로'); b.type = 'button'; b.disabled = done;
         b.onclick = () => lsCarry(r.who, n, only);
         row.append(b);
@@ -1308,12 +1322,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   function lsCarry(who, test, only) {
     if (!names().includes(who)) { $('lsMsg').textContent = `"${who}" 학생이 목록에 없어요. 학생 이름을 확인해 주세요.`; return; }
     const date = $('lsDate').value || todayStr();
-    const task = `듣기 ${test}회 틀린 문제 다시 듣기 (${only.join(', ')}번)`;
-    const e = D.entries.find(x => x.date === date && x.who === who && x.lsRetake && x.listen && x.listen.test === test);
-    if (e) { e.task = task; e.listen = { test, only }; }
-    else D.entries.push({ id: uid(), date, who, subject: '듣기', task, range: '', due: '', note: '', lsRetake: true, listen: { test, only } });
-    $('lsMsg').textContent = `${who} ${kShort(date)} 과제에 "${task}"를 넣었어요. 학생 링크에 올리면 바로 풀 수 있어요.`;
-    changed(); lsLoad();
+    let e = D.entries.find(x => x.date === date && x.who === who && x.lsRetake);
+    if (!e) { e = { id: uid(), date, who, subject: '듣기', task: LS_RETAKE, range: '', due: '', note: '', lsRetake: true, listen: { sets: [] } }; D.entries.push(e); }
+    e.task = LS_RETAKE; e.listen = e.listen || {}; e.listen.sets = (e.listen.sets || []).filter(st => st.test !== test).concat([{ test, only }]).sort((a, b) => a.test - b.test);
+    delete e.listen.test; delete e.listen.only;
+    e.range = e.listen.sets.map(st => `${st.test}회 ${st.only.join(', ')}번`).join(' · ');
+    const cm = `${who} ${kShort(date)} 과제에 "${LS_RETAKE}"(${e.range})를 넣었어요. 학생 링크에 올리면 바로 풀 수 있어요.`;
+    changed(); lsLoad().then(() => { $('lsMsg').textContent = cm; });
   }
   if ($('lsReload')) $('lsReload').onclick = lsLoad;
   if ($('lsDate')) $('lsDate').onchange = lsLoad;
@@ -1567,7 +1582,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           const wb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '단어 다시 보기' : '단어 공부'); wb.type = 'button';
           wb.onclick = () => openSet('t:' + it.id); act.append(wb);
         } else if (listenOf(it)) {
-          const lb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '다시 듣기' : '듣기 풀기'); lb.type = 'button';
+          const lb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '다시 듣기' : (listenOf(it).retake ? '다시 풀기' : '듣기 풀기')); lb.type = 'button';
           lb.onclick = () => openListening(it); act.append(lb);
         } else {
           const b = el('button', 'nb-btn' + (d ? ' undo' : ''), d ? '완료 취소' : '완료'); b.type = 'button';
