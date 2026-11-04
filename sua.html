@@ -1142,10 +1142,10 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (it.listen && it.listen.test) return { retake: !!it.lsRetake, sets: [{ test: it.listen.test, only: it.listen.only }] };
     // "듣기 18회", "18, 21회", "18회 21회" 모두 알아봐요 (과목이 듣기이거나 글에 '듣기'가 있을 때)
     if (!(it.subject === '듣기' || /듣기/.test(it.task || ''))) return null;
-    const m = /(\d{1,2}(?:\s*회?\s*[,·、/&+및와과~∼-]?\s*\d{1,2})*)\s*회/.exec(it.task || '');
-    const ts = [];
-    if (m) { const rx = /(\d{1,2})(?:\s*[-~∼]\s*(\d{1,2}))?/g; let t;   // "14-15회" = 14회, 15회
-      while ((t = rx.exec(m[1]))) { const a = +t[1], z = t[2] ? +t[2] : a; for (let k = a; k <= Math.max(a, Math.min(z, a + 5)); k++) if (k >= 1 && k <= 24 && !ts.includes(k)) ts.push(k); } }
+    const ts = [], rg = /(\d{1,2}(?:\s*회?\s*[,·、/&+및와과~∼-]?\s*\d{1,2})*)\s*회/g;   // 글에 회차가 여러 번 나와도 모두 읽어요
+    let m;
+    while ((m = rg.exec(it.task || ''))) { const rx = /(\d{1,2})(?:\s*[-~∼]\s*(\d{1,2}))?/g; let t;   // "14-15회" = 14회, 15회
+      while ((t = rx.exec(m[1]))) { const a1 = +t[1], z = t[2] ? +t[2] : a1; for (let k = a1; k <= Math.max(a1, Math.min(z, a1 + 5)); k++) if (k >= 1 && k <= 24 && !ts.includes(k)) ts.push(k); } }
     return ts.length ? { retake: false, sets: ts.map(t => ({ test: t })) } : null;
   }
   let lsData = null;
