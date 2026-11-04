@@ -24,10 +24,10 @@
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141A18; --panel: #1C2422; --ink: #E8EEEA; --muted: #9AA9A3; --line: #2E3A36;
-  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --lv3: #C9A0FF; --sl: 68%; --sbg: 7%; color-scheme: dark; } }
+  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --lv3: #C9A0FF; --sl: 68%; --sbg: 14%; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #141A18; --panel: #1C2422; --ink: #E8EEEA; --muted: #9AA9A3; --line: #2E3A36;
-  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --lv3: #C9A0FF; --sl: 68%; --sbg: 7%; color-scheme: dark; }
+  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --lv3: #C9A0FF; --sl: 68%; --sbg: 14%; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
@@ -248,7 +248,7 @@ section.card h2 { margin: 0; font-family: var(--font-display); font-weight: 400;
 .stab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); background: var(--panel); }
 .stab small { font-family: var(--font-body); font-size: 0.78rem; color: var(--muted); margin-left: 6px; }
 /* 섹션 색 구분 */
-:root { --sl: 36%; --sbg: 5%; }
+:root { --sl: 36%; --sbg: 16%; }
 section.step { --h: 150; --sc: hsl(var(--h) 45% var(--sl)); border-left: 5px solid var(--sc); background: color-mix(in srgb, var(--sc) var(--sbg), var(--panel)); }
 section.step .n { background: var(--sc); color: #fff; }
 section.step h2 { padding-bottom: 8px; border-bottom: 1px solid color-mix(in srgb, var(--sc) 30%, var(--line)); }
@@ -267,9 +267,12 @@ section.step[aria-labelledby="h6s"] { --h: 140; }
 .tnav [data-go="h0s"] { --h: 38; } .tnav [data-go="hOv"] { --h: 205; } .tnav [data-go="hLs"] { --h: 172; }
 .tnav [data-go="hWt"] { --h: 20; } .tnav [data-go="h2s"] { --h: 235; } .tnav [data-go="h3s"] { --h: 275; } .tnav [data-go="h6s"] { --h: 140; }
 .tnav button.primary { background: color-mix(in srgb, var(--sc) 14%, var(--panel)); color: var(--ink); font-weight: 700; }
-.tnav [data-go] { background: color-mix(in srgb, var(--sc) 18%, var(--panel)); border: 1.5px solid var(--sc); color: color-mix(in srgb, var(--sc) 70%, var(--ink)); font-weight: 600; }
+.tnav [data-go] { background: color-mix(in srgb, var(--sc) 30%, var(--panel)); border: 1.5px solid var(--sc); color: color-mix(in srgb, var(--sc) 70%, var(--ink)); font-weight: 600; }
 .tnav [data-go]:hover { background: var(--sc); color: #fff; }
 .tnav button.primary { box-shadow: 0 0 0 2px color-mix(in srgb, var(--sc) 35%, transparent); }
+section.step.flash { animation: secflash 1.3s ease-out; }
+@keyframes secflash { 0% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--sc) 55%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.tnav-float [data-go].primary { color: var(--ink); }
 .tnav .totop { border-left: 1px solid var(--line); text-align: center; font-weight: 600; color: var(--muted); }
 .tnav { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 18px; }
 .tnav button { font-size: 0.88rem; padding: 6px 12px; border-radius: 99px; }
@@ -1155,7 +1158,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (WT.src === 'paste') $('wtPaste').value = '';
     changed();
   };
-  $$('.tnav [data-go]').forEach(b => b.onclick = () => $(b.dataset.go).scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  $$('.tnav [data-go]').forEach(b => b.onclick = () => { const t = $(b.dataset.go); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); const sec = t.closest('section'); if (sec) { sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash'); } });
   $$('.tnav [data-top]').forEach(b => b.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
   /* ---------- 듣기 숙제 ---------- */
