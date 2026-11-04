@@ -1198,6 +1198,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const multi = new Set(items.map(x => x.test)).size > 1;
     const lab = (x) => (multi || L.retake ? x.test + '회 ' : '') + x.n + '번';
     const pick = {}; let idx = 0, mode = 'start', playing = false, plays = 0, speed = +store.get('ls:speed') || 1, sent = 'no';
+    const SK = 'lsprog:' + it.id; let saved = null; try { saved = JSON.parse(store.get(SK) || 'null'); } catch (e) {}
+    if (saved && !(saved.pick && Object.keys(saved.pick).length)) saved = null;
+    const saveP = () => store.set(SK, JSON.stringify({ pick, idx }));
     if (![1, 1.2, 1.5].includes(speed)) speed = 1;
     const C = ['①', '②', '③', '④', '⑤'];
     const url = (x) => book.base + book.prefix + String(x.test).padStart(2, '0') + '_' + String(x.n).padStart(2, '0') + '.mp3';
@@ -1223,7 +1226,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         return `<button class="${c}" data-i="${i}" style="${multi || L.retake ? 'min-width:54px' : ''}">${multi || L.retake ? x.test + '-' + x.n : x.n}</button>`;
       }).join('') + '</div>';
     }
-    function go(i) { idx = i; plays = 0; render(); play(); }
+    function go(i) { idx = i; plays = 0; saveP(); render(); play(); }
     function render() {
       try { if (mode !== 'quiz') AU.pause(); } catch (e) {} if (mode !== 'quiz') playing = false;
       const title = L.retake ? '틀린 문제 다시 듣기' : '듣기 ' + [...new Set(items.map(x => x.test))].join('·') + '회';
@@ -1231,21 +1234,21 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       if (mode === 'start') {
         box.innerHTML = head + `<p>${items.length}문제 · 한 문제씩 듣고 답을 골라요. 문제지(책)를 옆에 두세요.</p>
           <p>다음 문제로 넘어가면 소리가 자동으로 나와요. 멈추기, 속도(1 · 1.2 · 1.5배), 다시 듣기도 할 수 있어요.</p>
-          <button class="ls-btn primary" id="lsGo">${lab(items[0])}부터 시작하기</button>`;
-        Q('#lsGo').onclick = () => { mode = 'quiz'; go(0); };
+          ${saved ? `<button class="ls-btn primary" id="lsResume">이어서 풀기 (${Object.keys(saved.pick).length}/${items.length}문제 푼 상태)</button>` : ''}<button class="ls-btn${saved ? '' : ' primary'}" id="lsGo">${saved ? '처음부터 다시 시작' : lab(items[0]) + '부터 시작하기'}</button>`;
+        Q('#lsGo').onclick = () => { Object.keys(pick).forEach(k => delete pick[k]); store.set(SK, ''); mode = 'quiz'; go(0); }; if (Q('#lsResume')) Q('#lsResume').onclick = () => { Object.assign(pick, saved.pick); mode = 'quiz'; go(Math.min(saved.idx || 0, items.length - 1)); };
       } else if (mode === 'quiz') {
         const x = items[idx], last = idx === items.length - 1;
         box.innerHTML = head + chips(false) + `<div><b style="font-size:22px">${lab(x)}</b> <small style="color:var(--muted,#5E6D67)">${idx + 1} / ${items.length}</small></div>
           <div class="ls-player"><button class="ls-round" id="lsPlay" aria-label="듣기">▶</button><div style="flex:1"><b id="lsPT"></b><small id="lsPS"></small></div><button class="ls-btn" id="lsStop">멈춤</button></div>
           <div class="ls-speed"><span>속도</span>${[1, 1.2, 1.5].map(s => `<button data-sp="${s}" aria-pressed="${s === speed}">${s}배</button>`).join('')}</div>
           <div class="ls-opts">${C.map((c, j) => `<button class="ls-opt" data-o="${j + 1}" aria-pressed="${pick[idx] === j + 1}" aria-label="${j + 1}번">${c}</button>`).join('')}</div>
-          <div class="ls-nav"><button class="ls-btn" id="lsPrev" ${idx ? '' : 'disabled'}>이전</button><button class="ls-btn primary" id="lsNext" ${pick[idx] ? '' : 'disabled'}>${last ? '다 풀었어요 · 채점' : '다음 문제'}</button></div>`;
+          <div class="ls-nav"><button class="ls-btn" id="lsPrev" ${idx ? '' : 'disabled'}>이전</button><button class="ls-btn primary" id="lsNext">${last ? '다 풀었어요 · 채점' : (pick[idx] ? '다음 문제' : '건너뛰기')}</button></div>`;
         Q('#lsPlay').onclick = play;
         Q('#lsStop').onclick = () => { try { AU.pause(); AU.currentTime = 0; } catch (e) {} playing = false; paintP(); };
         box.querySelectorAll('.ls-speed button').forEach(b => b.onclick = () => { speed = +b.dataset.sp; store.set('ls:speed', String(speed)); AU.defaultPlaybackRate = speed; AU.playbackRate = speed; paintP(); });
-        box.querySelectorAll('.ls-opt').forEach(b => b.onclick = () => { pick[idx] = +b.dataset.o; const keep = playing, t = AU.currentTime; render(); if (keep) { try { AU.currentTime = t; AU.play(); playing = true; } catch (e) {} } paintP(); });
+        box.querySelectorAll('.ls-opt').forEach(b => b.onclick = () => { pick[idx] = +b.dataset.o; saveP(); const keep = playing, t = AU.currentTime; render(); if (keep) { try { AU.currentTime = t; AU.play(); playing = true; } catch (e) {} } paintP(); });
         Q('#lsPrev').onclick = () => go(idx - 1);
-        Q('#lsNext').onclick = () => { if (last) { mode = 'done'; finish(); } else go(idx + 1); };
+        Q('#lsNext').onclick = () => { if (last) { const un = items.filter((x, i) => !pick[i]).length; if (un && !confirm(`안 푼 문제가 ${un}개 있어요. 그래도 채점할까요?`)) { go(items.findIndex((x, i) => !pick[i])); return; } mode = 'done'; finish(); } else go(idx + 1); };
         paintP();
       }
       if (mode !== 'done') { Q('#lsX').onclick = close; box.querySelectorAll('.ls-chip').forEach(b => b.onclick = () => go(+b.dataset.i)); }
@@ -1277,7 +1280,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         box.querySelectorAll('.ls-chip').forEach(b => b.onclick = () => { mode = 'quiz'; go(+b.dataset.i); });
       };
       sent = 'no'; paint(); await send(rows);
-      if (sent === 'ok') setDone([it], true);
+      if (sent === 'ok') { setDone([it], true); store.set(SK, ''); }
       paint();
     }
     render();
