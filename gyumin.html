@@ -2327,7 +2327,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             groups.forEach(gp => { if (gp.yc <= kc + gp.h * 0.6) pick = gp; });
             if (pick) pick.ko.push(k.t);
           });
-          groups.forEach(gp => { if (gp.ko.length) rows.push([gp.en, gp.ko.join(' ')]); });
+          groups.forEach(gp => rows.push([gp.en, gp.ko.length ? gp.ko.join(' ') : '(뜻 확인)']));   // 뜻을 못 읽은 단어도 빠지지 않게 표시해요
           done = true;
         }
       }
