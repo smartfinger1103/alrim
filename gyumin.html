@@ -1611,7 +1611,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         } else if (listenOf(it)) {
           const L0 = listenOf(it);
           if (!L0.retake && L0.sets.length > 1) {
-            act.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end';
+            act.style.cssText = 'display:flex;flex-direction:column;gap:6px;align-items:stretch;flex:none';
             L0.sets.forEach(st => { const dn = d || lsDoneSet(it).includes(st.test); const b2 = el('button', 'nb-btn' + (dn ? ' ghost' : ''), st.test + '회 ' + (dn ? '다시 듣기' : '풀기')); b2.type = 'button'; b2.onclick = () => openListening(it, st.test); act.append(b2); });
           } else {
             const lb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '다시 듣기' : (L0.retake ? '다시 풀기' : '듣기 풀기')); lb.type = 'button';
