@@ -2314,7 +2314,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const koC = mk((r, gg, b) => 255 * (1 - clamp(clamp((b - r) / 90) * 1.5)));
         const enC = mk((r, gg, b) => { const bl = clamp((b - r) / 90), lum = (r + gg + b) / 3; return 255 * (1 - clamp((1 - lum / 255) * (1 - bl) * 1.4)); });
         const wk = await ocrWorker;
+        await wk.setParameters({ tessedit_pageseg_mode: '6' });   // 한 덩어리의 줄 목록으로 읽어요
         const dEn = (await wk.recognize(enC)).data, dKo = (await wk.recognize(koC)).data;
+        await wk.setParameters({ tessedit_pageseg_mode: '3' });
         const lines = (d) => (d.lines || []).map(l => ({ t: String(l.text || '').replace(/[|｜]/g, ' ').replace(/([가-힣]) (?=[가-힣])/g, '$1').trim(), y0: l.bbox.y0, y1: l.bbox.y1 })).filter(l => l.t);
         const ens = lines(dEn).map(l => Object.assign(l, { t: l.t.replace(/^[^A-Za-z]+/, '').trim() })).filter(l => /[A-Za-z]{2}/.test(l.t));
         const kos = lines(dKo).filter(l => { const ch = l.t.replace(/[\s,.;:()\[\]~\-–·•]/g, ''); const hg = (ch.match(/[가-힣]/g) || []).length; return ch.length && hg / ch.length >= 0.5; });
