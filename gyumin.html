@@ -2301,12 +2301,39 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const c = document.createElement('canvas'); c.width = bmp.width * sc; c.height = bmp.height * sc;
       const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
       g.imageSmoothingQuality = 'high'; g.drawImage(bmp, 0, 0, c.width, c.height);
+      // 영어는 검정, 뜻은 파란 글씨인 단어장: 색을 나눠서 따로 읽고, 줄 위치로 짝을 맞춰요
+      const id = g.getImageData(0, 0, c.width, c.height), px = id.data;
+      let blue = 0;
+      for (let i = 0; i < px.length; i += 4) if (px[i + 2] - px[i] > 70) blue++;
+      let done = false;
+      if (blue > c.width * c.height * 0.002) {
+        const mk = (fn) => { const cc = document.createElement('canvas'); cc.width = c.width; cc.height = c.height; const gg = cc.getContext('2d'), o = gg.createImageData(c.width, c.height);
+          for (let i = 0; i < px.length; i += 4) { const v = fn(px[i], px[i + 1], px[i + 2]); o.data[i] = o.data[i + 1] = o.data[i + 2] = v; o.data[i + 3] = 255; }
+          gg.putImageData(o, 0, 0); return cc; };
+        const clamp = (x) => Math.max(0, Math.min(1, x));
+        const koC = mk((r, gg, b) => 255 * (1 - clamp(clamp((b - r) / 90) * 1.5)));
+        const enC = mk((r, gg, b) => { const bl = clamp((b - r) / 90), lum = (r + gg + b) / 3; return 255 * (1 - clamp((1 - lum / 255) * (1 - bl) * 1.4)); });
+        const wk = await ocrWorker;
+        const dEn = (await wk.recognize(enC)).data, dKo = (await wk.recognize(koC)).data;
+        const lines = (d) => (d.lines || []).map(l => ({ t: String(l.text || '').replace(/[|｜]/g, ' ').replace(/([가-힣]) (?=[가-힣])/g, '$1').trim(), y0: l.bbox.y0, y1: l.bbox.y1 })).filter(l => l.t);
+        const ens = lines(dEn).map(l => Object.assign(l, { t: l.t.replace(/^[^A-Za-z]+/, '').trim() })).filter(l => /[A-Za-z]{2}/.test(l.t));
+        const kos = lines(dKo).filter(l => { const ch = l.t.replace(/[\s,.;:()\[\]~\-–·•]/g, ''); const hg = (ch.match(/[가-힣]/g) || []).length; return ch.length && hg / ch.length >= 0.5; });
+        if (ens.length) {
+          const groups = ens.map(e => ({ en: e.t, yc: (e.y0 + e.y1) / 2, h: e.y1 - e.y0, ko: [] }));
+          kos.forEach(k => {
+            const kc = (k.y0 + k.y1) / 2; let pick = null;
+            groups.forEach(gp => { if (gp.yc <= kc + gp.h * 0.6) pick = gp; });
+            if (pick) pick.ko.push(k.t);
+          });
+          groups.forEach(gp => { if (gp.ko.length) rows.push([gp.en, gp.ko.join(' ')]); });
+          done = true;
+        }
+      }
+      if (done) continue;
       const { data } = await (await ocrWorker).recognize(c);
       String(data.text || '').split(/\r?\n/).forEach(l => {
-        l = l.replace(/[|｜]/g, ' ').trim(); if (!l) return;
-        // OCR이 한글 글자 사이에 넣은 빈칸을 없애요 (사 교 적 인 → 사교적인)
+        l = l.replace(/[|｜]/g, ' ').replace(/^[^A-Za-z가-힣~(]+/, '').trim(); if (!l) return;
         l = l.replace(/([가-힣]) (?=[가-힣])/g, '$1');
-        // 한글이 시작되는 곳에서 영어/뜻을 나눠요
         const m = l.match(/^[\d.)\s]*([A-Za-z][A-Za-z\s'’\-~().,/]*?)\s*[:\-–=]?\s*((?:[가-힣]|~(?=\S*[가-힣])).*)$/);
         if (m) rows.push([m[1].trim(), m[2].trim()]); else rows.push(l.split(/\s{2,}|\t/));
       });
