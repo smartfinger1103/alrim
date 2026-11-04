@@ -18,15 +18,16 @@
   --warn: #B4532A;
   --lv1: #1E5BD8;
   --lv2: #C62828;
+  --lv3: #7B2FBE;
   --font-display: "Jua", "IBM Plex Sans KR", system-ui, sans-serif;
   --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141A18; --panel: #1C2422; --ink: #E8EEEA; --muted: #9AA9A3; --line: #2E3A36;
-  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --sl: 68%; --sbg: 7%; color-scheme: dark; } }
+  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --lv3: #C9A0FF; --sl: 68%; --sbg: 7%; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #141A18; --panel: #1C2422; --ink: #E8EEEA; --muted: #9AA9A3; --line: #2E3A36;
-  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --sl: 68%; --sbg: 7%; color-scheme: dark; }
+  --accent: #6CC2A2; --accent-ink: #0F1B17; --soft: #23312C; --warn: #F0A07A; --lv1: #8DB4FF; --lv2: #FF8F80; --lv3: #C9A0FF; --sl: 68%; --sbg: 7%; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
@@ -278,22 +279,22 @@ section.step[aria-labelledby="h6s"] { --h: 140; }
 /* 수업 중 단어 테스트 */
 .wt-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.84rem; color: var(--muted); }
 .wt-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; background: var(--ink); }
-.wt-legend i.l1 { background: var(--lv1); } .wt-legend i.l2 { background: var(--lv2); }
+.wt-legend i.l1 { background: var(--lv1); } .wt-legend i.l2 { background: var(--lv2); } .wt-legend i.l3 { background: var(--lv3); }
 .wt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
 .wt-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--bg); cursor: pointer; }
 .wt-row input { width: 20px; height: 20px; accent-color: var(--lv2); margin: 0; }
 .wt-row b { font-weight: 600; overflow-wrap: anywhere; }
 .wt-row small { display: block; color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
-.wt-row.l1 b { color: var(--lv1); } .wt-row.l2 b { color: var(--lv2); }
+.wt-row.l1 b { color: var(--lv1); } .wt-row.l2 b { color: var(--lv2); } .wt-row.l3 b { color: var(--lv3); }
 .wt-row.bad { border-color: var(--lv2); background: color-mix(in srgb, var(--lv2) 10%, var(--bg)); }
 .wt-all { display: flex; gap: 6px; flex-wrap: wrap; }
 .wt-w { font: inherit; text-align: left; padding: 8px 10px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .wt-w b { font-weight: 600; overflow-wrap: anywhere; }
 .wt-w small { color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
-.wt-w.l1 b { color: var(--lv1); } .wt-w.l2 b { color: var(--lv2); }
+.wt-w.l1 b { color: var(--lv1); } .wt-w.l2 b { color: var(--lv2); } .wt-w.l3 b { color: var(--lv3); }
 .wt-w.bad { border-color: var(--lv2); background: color-mix(in srgb, var(--lv2) 12%, var(--bg)); }
 .wt-w.bad b::after { content: "  ✗ 틀림"; color: var(--lv2); font-size: 0.8rem; }
-.lv1 { color: var(--lv1) !important; } .lv2 { color: var(--lv2) !important; }
+.lv1 { color: var(--lv1) !important; } .lv2 { color: var(--lv2) !important; } .lv3 { color: var(--lv3) !important; }
 .lv-tag { font-size: 0.8rem; font-weight: 600; }
 /* 수업 노트 */
 .notes { display: flex; flex-direction: column; gap: 8px; border: 1px dashed var(--line); border-radius: 10px; padding: 10px; }
@@ -480,7 +481,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           </div>
           <textarea class="mono" id="wtPaste" spellcheck="false" aria-label="테스트할 단어" placeholder="apple - 사과&#10;look after - 돌보다"></textarea>
         </div>
-        <div class="wt-legend"><span><i></i>새 단어</span><span><i class="l1"></i>지난 시간에 틀린 단어</span><span><i class="l2"></i>2번 이상 틀린 단어</span></div>
+        <div class="wt-legend"><span><i></i>새 단어</span><span><i class="l1"></i>1번 틀린 단어</span><span><i class="l2"></i>2번 틀린 단어</span><span><i class="l3"></i>3번 이상 틀린 단어</span></div>
         <div class="wt-grid" id="wtGrid"></div>
         <div class="row">
           <b id="wtCount"></b>
@@ -1056,8 +1057,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   $('calToday').onclick = () => { OV.month = todayStr().slice(0, 7); renderOverview(); };
 
   /* ---------- 틀린 단어 단계: 0 새 단어(검정) · 1 지난 시간 틀림(파랑) · 2+ 두 번 이상(빨강) ---------- */
-  const missLv = (who, w) => { const n = ((D.miss || {})[who] || {})[wkey(w)] || 0; return n >= 2 ? 2 : n; };
-  const LV_TXT = ['', '지난 시간에 틀린 단어', '2번 이상 틀린 단어'];
+  const missLv = (who, w) => { const n = ((D.miss || {})[who] || {})[wkey(w)] || 0; return n >= 3 ? 3 : n; };
+  const LV_TXT = ['', '1번 틀린 단어', '2번 틀린 단어', '3번 이상 틀린 단어'];
 
   /* ---------- 수업 중 단어 테스트 ---------- */
   const WT = { who: '', src: '', wrong: new Set() };
@@ -1595,7 +1596,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   function renderNotebook() {
     const nb = $('nb'); nb.textContent = '';
     const T = THEMES[state.theme] || THEMES.note;
-    Object.entries({ bg: T.bg, line: T.line, margin: T.margin, ink: T.ink, sub: T.sub, acc: T.accent, chip: T.chipBg, badge: T.badgeInk, box: T.box, hot: T.hot, lv1: T.lv1, lv2: T.lv2 })
+    Object.entries({ bg: T.bg, line: T.line, margin: T.margin, ink: T.ink, sub: T.sub, acc: T.accent, chip: T.chipBg, badge: T.badgeInk, box: T.box, hot: T.hot, lv1: T.lv1, lv2: T.lv2, lv3: T.lv3 })
       .forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
     const list = currentItems();
     const hv = $('heading').value.trim();
@@ -1626,11 +1627,12 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           // 단어가 붙은 과제는 단어를 다 외워야 완료돼요
           const m = memCount('t:' + it.id, ws);
           if (!d) tx.append(el('small', 'nb-prog', `단어 ${m}/${ws.length}개 외움 · 다 외우면 자동으로 완료`));
-          const lvc = [0, 0, 0]; ws.forEach(w => lvc[missLv(state.cls, w)]++);
-          if (lvc[1] || lvc[2]) {
+          const lvc = [0, 0, 0, 0]; ws.forEach(w => lvc[missLv(state.cls, w)]++);
+          if (lvc[1] || lvc[2] || lvc[3]) {
             const lv = el('small', 'nb-lv');
-            if (lvc[2]) lv.append(el('b', 'lv2', `2번 이상 틀림 ${lvc[2]}`));
-            if (lvc[1]) lv.append(el('b', 'lv1', `지난 시간 틀림 ${lvc[1]}`));
+            if (lvc[3]) lv.append(el('b', 'lv3', `3번 이상 틀림 ${lvc[3]}`));
+            if (lvc[2]) lv.append(el('b', 'lv2', `2번 틀림 ${lvc[2]}`));
+            if (lvc[1]) lv.append(el('b', 'lv1', `1번 틀림 ${lvc[1]}`));
             if (lvc[0]) lv.append(el('b', null, `새 단어 ${lvc[0]}`));
             tx.append(lv);
           }
@@ -1676,9 +1678,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     board: { name: '칠판', bg: '#244A3D', line: 'rgba(255,255,255,0.05)', margin: 'rgba(255,255,255,0.18)', ink: '#F4F2E8', sub: '#CBD9CF', accent: '#F5D46E', chipBg: 'rgba(245,212,110,0.16)', chipInk: '#F5D46E', badgeInk: '#244A3D', box: 'rgba(255,255,255,0.07)', hot: '#FFB199' },
     memo:  { name: '포스트잇', bg: '#FFEFA1', line: 'rgba(140,100,20,0.10)', margin: 'rgba(214,96,48,0.45)', ink: '#3A2E12', sub: '#62502A', accent: '#C9531F', chipBg: 'rgba(214,96,48,0.14)', chipInk: '#A9431A', badgeInk: '#FFFFFF', box: 'rgba(255,255,255,0.5)', hot: '#B5281C' }
   };
-  Object.assign(THEMES.note, { lv1: '#1E5BD8', lv2: '#C62828' });
-  Object.assign(THEMES.board, { lv1: '#9CC3FF', lv2: '#FF9A8A' });
-  Object.assign(THEMES.memo, { lv1: '#1E4FC0', lv2: '#B3261E' });
+  Object.assign(THEMES.note, { lv1: '#1E5BD8', lv2: '#C62828', lv3: '#7B2FBE' });
+  Object.assign(THEMES.board, { lv1: '#9CC3FF', lv2: '#FF9A8A', lv3: '#D3B0FF' });
+  Object.assign(THEMES.memo, { lv1: '#1E4FC0', lv2: '#B3261E', lv3: '#7B2FBE' });
   const FD = 'Jua, "IBM Plex Sans KR", sans-serif';
   const FB = '"Gowun Dodum", "IBM Plex Sans KR", sans-serif';
   function wrap(ctx, text, maxW) {
