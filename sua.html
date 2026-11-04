@@ -1179,8 +1179,14 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 .ls-wrong{display:grid;gap:4px}.ls-wrong div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line,#DCE3DE)}`;
     document.head.append(st);
   }
-  async function openListening(it) {
-    const L = listenOf(it); if (!L) return;
+  function lsDoneSet(it) { try { return JSON.parse(store.get('lsdone:' + it.id) || '[]'); } catch (e) { return []; } }
+  function lsMarkDone(it, ts) {
+    const s = new Set(lsDoneSet(it)); ts.forEach(t => s.add(t)); store.set('lsdone:' + it.id, JSON.stringify([...s]));
+    const L = listenOf(it); if (L && L.sets.every(st => s.has(st.test))) setDone([it], true);
+  }
+  async function openListening(it, onlyTest) {
+    let L = listenOf(it); if (!L) return;
+    if (onlyTest) L = { ...L, sets: L.sets.filter(s => s.test === onlyTest) };
     lsStyle();
     const J = await lsLoadData(), book = lsBook(J, state.cls || ''), cfg = lsCfg();
     const prevOv = document.body.style.overflow; document.body.style.overflow = 'hidden';
@@ -1198,7 +1204,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const multi = new Set(items.map(x => x.test)).size > 1;
     const lab = (x) => (multi || L.retake ? x.test + '회 ' : '') + x.n + '번';
     const pick = {}; let idx = 0, mode = 'start', playing = false, plays = 0, speed = +store.get('ls:speed') || 1, sent = 'no';
-    const SK = 'lsprog:' + it.id; let saved = null; try { saved = JSON.parse(store.get(SK) || 'null'); } catch (e) {}
+    const SK = 'lsprog:' + it.id + (onlyTest ? ':' + onlyTest : ''); let saved = null; try { saved = JSON.parse(store.get(SK) || 'null'); } catch (e) {}
     if (saved && !(saved.pick && Object.keys(saved.pick).length)) saved = null;
     const saveP = () => store.set(SK, JSON.stringify({ pick, idx }));
     if (![1, 1.2, 1.5].includes(speed)) speed = 1;
@@ -1280,7 +1286,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         box.querySelectorAll('.ls-chip').forEach(b => b.onclick = () => { mode = 'quiz'; go(+b.dataset.i); });
       };
       sent = 'no'; paint(); await send(rows);
-      if (sent === 'ok') { setDone([it], true); store.set(SK, ''); }
+      if (sent === 'ok') { lsMarkDone(it, items.map(x => x.test)); store.set(SK, ''); }
       paint();
     }
     render();
@@ -1589,8 +1595,14 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           const wb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '단어 다시 보기' : '단어 공부'); wb.type = 'button';
           wb.onclick = () => openSet('t:' + it.id); act.append(wb);
         } else if (listenOf(it)) {
-          const lb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '다시 듣기' : (listenOf(it).retake ? '다시 풀기' : '듣기 풀기')); lb.type = 'button';
-          lb.onclick = () => openListening(it); act.append(lb);
+          const L0 = listenOf(it);
+          if (!L0.retake && L0.sets.length > 1) {
+            act.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end';
+            L0.sets.forEach(st => { const dn = d || lsDoneSet(it).includes(st.test); const b2 = el('button', 'nb-btn' + (dn ? ' ghost' : ''), st.test + '회 ' + (dn ? '다시 듣기' : '풀기')); b2.type = 'button'; b2.onclick = () => openListening(it, st.test); act.append(b2); });
+          } else {
+            const lb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '다시 듣기' : (L0.retake ? '다시 풀기' : '듣기 풀기')); lb.type = 'button';
+            lb.onclick = () => openListening(it); act.append(lb);
+          }
         } else {
           const b = el('button', 'nb-btn' + (d ? ' undo' : ''), d ? '완료 취소' : '완료'); b.type = 'button';
           b.setAttribute('aria-pressed', d ? 'true' : 'false');
