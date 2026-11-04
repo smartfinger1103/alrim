@@ -1174,7 +1174,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 .ls-opts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .ls-opt{height:56px;border-radius:12px;border:2px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;font-size:22px;cursor:pointer}
 .ls-opt[aria-pressed=true]{border-color:var(--accent,#2E6B57);background:var(--soft,#E6EFEA)}
-.ls-nav{display:flex;gap:8px}.ls-nav .ls-btn{flex:1}
+.ls-nav{display:flex;gap:8px;position:sticky;bottom:0;background:var(--panel,#fff);padding:8px 0 2px}.ls-nav .ls-btn{flex:1}
 .ls-score{font-size:34px;font-weight:700}
 .ls-wrong{display:grid;gap:4px}.ls-wrong div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line,#DCE3DE)}`;
     document.head.append(st);
