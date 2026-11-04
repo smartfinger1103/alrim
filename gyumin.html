@@ -1152,7 +1152,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     try { lsData = await (await fetch(new URL('data/listening.json', location.href).href + '?_=' + Date.now())).json(); } catch (e) { lsData = {}; }
     return lsData;
   }
-  function lsBook(J, who) { const id = (J.students || {})[who] || ''; return (J.books || {})[id] || null; }
+  function lsBook(J, who) { const id = (J.students || {})[who] || ''; const b = (J.books || {})[id]; return b ? { ...b, id } : null; }
   function lsStyle() {
     if (document.getElementById('lsCss')) return;
     const st = document.createElement('style'); st.id = 'lsCss';
@@ -1171,7 +1171,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 .ls-speed button,.ls-btn{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;cursor:pointer}
 .ls-speed button[aria-pressed=true],.ls-btn.primary{background:var(--accent,#2E6B57);color:var(--accent-ink,#fff);border-color:transparent}
 .ls-btn:disabled{opacity:.4;cursor:default}
-.ls-opts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.ls-q{width:100%;border:1px solid var(--line,#DCE3DE);border-radius:10px;background:#fff}.ls-opts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .ls-opt{height:56px;border-radius:12px;border:2px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;font-size:22px;cursor:pointer}
 .ls-opt[aria-pressed=true]{border-color:var(--accent,#2E6B57);background:var(--soft,#E6EFEA)}
 .ls-nav{display:flex;gap:8px;position:sticky;bottom:0;background:var(--panel,#fff);padding:8px 0 2px}.ls-nav .ls-btn{flex:1}
@@ -1247,6 +1247,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         box.innerHTML = head + chips(false) + `<div><b style="font-size:22px">${lab(x)}</b> <small style="color:var(--muted,#5E6D67)">${idx + 1} / ${items.length}</small></div>
           <div class="ls-player"><button class="ls-round" id="lsPlay" aria-label="듣기">▶</button><div style="flex:1"><b id="lsPT"></b><small id="lsPS"></small></div><button class="ls-btn" id="lsStop">멈춤</button></div>
           <div class="ls-speed"><span>속도</span>${[1, 1.2, 1.5].map(s => `<button data-sp="${s}" aria-pressed="${s === speed}">${s}배</button>`).join('')}</div>
+          ${(book.imgs || []).includes(x.test) ? `<img class="ls-q" alt="문제" src="data/q/${book.id}/${x.test}/${String(x.n).padStart(2, '0')}.jpg" onerror="this.style.display='none'">` : ''}
           <div class="ls-opts">${C.map((c, j) => `<button class="ls-opt" data-o="${j + 1}" aria-pressed="${pick[idx] === j + 1}" aria-label="${j + 1}번">${c}</button>`).join('')}</div>
           <div class="ls-nav"><button class="ls-btn" id="lsPrev" ${idx ? '' : 'disabled'}>이전</button><button class="ls-btn primary" id="lsNext">${last ? '다 풀었어요 · 채점' : (pick[idx] ? '다음 문제' : '건너뛰기')}</button></div>`;
         Q('#lsPlay').onclick = play;
