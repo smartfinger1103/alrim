@@ -1547,6 +1547,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   const wkey = (w) => w.en.toLowerCase() + '|' + w.ko;
   const memSet = (key) => new Set(MEM[key] || []);
   function memAdd(key, w) { const s = memSet(key); if (s.has(wkey(w))) return; s.add(wkey(w)); MEM[key] = [...s]; store.set('mem', JSON.stringify(MEM)); }
+  function memDel(key, w) { const s = memSet(key); if (!s.delete(wkey(w))) return; MEM[key] = [...s]; store.set('mem', JSON.stringify(MEM)); }
   const memCount = (key, words) => { const s = memSet(key); return words.filter(w => s.has(wkey(w))).length; };
   // 같은 과목끼리 묶어요 (처음 나온 순서대로)
   function groupBySubject(list) {
@@ -2526,6 +2527,53 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const go = el('button', 'primary', '카드로 외우기'); go.type = 'button';
     go.onclick = () => { const list = pick(); if (list.length) startCards(list, true); };
     acts.append(st, go); b.append(acts);
+    const ls = el('button', null, '전체 단어 한눈에 보기'); ls.type = 'button'; ls.style.marginTop = '8px';
+    ls.onclick = () => { quiz.set = cur(); quiz.dir = dir.value; showList(false); };
+    b.append(ls);
+  }
+  // 전체 단어 한눈에 보기: 모든 단어를 한 화면에 펼쳐 놓고, 외운 것은 체크해서 못 외운 단어만 남겨요
+  function showList(onlyLeft, hideKo) {
+    const set = quiz.set, b = $('qBody'); b.textContent = '';
+    if (!set) return quizHome();
+    const key = set.key, ws = set.words, mem = memSet(key), n = memCount(key, ws), left = ws.length - n;
+    b.append(el('div', 'q-prog', `${set.label} · ${ws.length}개 중 ${n}개 외웠어요` + (left ? ` · 못 외운 단어 ${left}개` : ' · 모두 외웠어요!')));
+    const bar = el('div', 'q-bar'); const fill = el('i'); fill.style.width = (ws.length ? n / ws.length * 100 : 0) + '%'; bar.append(fill); b.append(bar);
+    const tabs = el('div', 'row');
+    const t1 = el('button', onlyLeft ? null : 'on', `전체 ${ws.length}개`); t1.type = 'button'; t1.onclick = () => showList(false, hideKo);
+    const t2 = el('button', onlyLeft ? 'on' : null, `못 외운 단어만 ${left}개`); t2.type = 'button'; t2.onclick = () => showList(true, hideKo);
+    const hk = el('button', hideKo ? 'on' : null, hideKo ? '뜻 가리는 중' : '뜻 가리기'); hk.type = 'button'; hk.onclick = () => showList(onlyLeft, !hideKo);
+    tabs.append(t1, t2, hk); b.append(tabs);
+    const shown = ws.filter(w => !onlyLeft || !mem.has(wkey(w)));
+    if (!shown.length) b.append(el('p', 'hint', '못 외운 단어가 없어요. 모두 외웠어요!'));
+    const ul = el('ul', 'q-wrong');
+    shown.forEach(w => {
+      const lv = missLv(state.cls, w), got = mem.has(wkey(w));
+      const li = el('li'); li.style.alignItems = 'center'; li.style.flexWrap = 'nowrap';
+      const tx = el('div'); tx.style.minWidth = '0'; tx.style.flex = '1';
+      const en = el('b', lv ? 'lv' + lv : null, w.en); en.style.display = 'block'; en.style.overflowWrap = 'anywhere';
+      const ko = el('span', null, hideKo ? '(눌러서 뜻 보기)' : w.ko); ko.style.color = 'var(--muted)'; ko.style.fontSize = '0.9rem'; ko.style.display = 'block';
+      if (hideKo) { ko.style.cursor = 'pointer'; ko.onclick = () => { ko.textContent = w.ko; ko.onclick = null; }; }
+      tx.append(en, ko);
+      if (lv) { const tg = el('small', 'lv-tag lv' + lv, LV_TXT[lv]); tx.append(tg); }
+      const ac = el('div'); ac.style.display = 'flex'; ac.style.gap = '6px'; ac.style.flex = 'none';
+      if (canSpeak) { const sp = el('button', 'small', '🔊'); sp.type = 'button'; sp.setAttribute('aria-label', w.en + ' 발음 듣기'); sp.onclick = () => speak(w.en); ac.append(sp); }
+      const ck = el('button', got ? 'small primary' : 'small', got ? '✓ 외움' : '외웠어요'); ck.type = 'button';
+      ck.onclick = () => {
+        if (got) memDel(key, w); else memAdd(key, w);
+        if (set.task && memCount(key, ws) >= ws.length && !isDone(set.task)) setDone([set.task], true);
+        renderTodo(); showList(onlyLeft, hideKo);
+      };
+      ac.append(ck); li.append(tx, ac); ul.append(li);
+    });
+    b.append(ul);
+    const row = el('div', 'row');
+    const lw = ws.filter(w => !mem.has(wkey(w)));
+    if (lw.length) {
+      const c = el('button', 'primary', `못 외운 단어 ${lw.length}개 카드로 외우기`); c.type = 'button'; c.onclick = () => startCards(lw, false); row.append(c);
+      const s2 = el('button', null, '하나씩 공부하기'); s2.type = 'button'; s2.onclick = () => startStudy(lw, 0); row.append(s2);
+    }
+    const back = el('button', null, '목록으로'); back.type = 'button'; back.onclick = quizHome; row.append(back);
+    b.append(row);
   }
   // 하나씩 공부하기: 단어와 뜻을 한 장씩 넘겨 보며 발음 듣기
   function startStudy(list, i) {
@@ -2587,7 +2635,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     };
     again.onclick = () => {
       quiz.miss.set(w, (quiz.miss.get(w) || 0) + 1);
-      quiz.queue.shift(); quiz.queue.splice(Math.min(3, quiz.queue.length), 0, w);
+      quiz.queue.shift(); quiz.queue.push(w);
       showCard();
     };
     got.onclick = () => { if (quiz.set) memAdd(quiz.set.key, w); quiz.queue.shift(); quiz.known++; quiz.queue.length ? showCard() : showDone(); };
