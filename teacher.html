@@ -288,6 +288,7 @@ section.step.flash { animation: secflash 1.3s ease-out; }
 .wt-row input { width: 20px; height: 20px; accent-color: var(--lv2); margin: 0; }
 .wt-row b { font-weight: 600; overflow-wrap: anywhere; }
 .wt-row small { display: block; color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
+.wt-row small.ipa { color: var(--accent); font-size: 0.86rem; font-family: "Noto Sans", "Segoe UI", system-ui, sans-serif; letter-spacing: .02em; }
 .wt-row.l1 b { color: var(--lv1); } .wt-row.l2 b { color: var(--lv2); } .wt-row.l3 b { color: var(--lv3); }
 .wt-row.bad { border-color: var(--lv2); background: color-mix(in srgb, var(--lv2) 10%, var(--bg)); }
 .wt-all { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -1087,7 +1088,17 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     out.push({ key: 'paste', label: '직접 넣기 (붙여넣기 · 파일)' + (pw.length ? ` (${pw.length}개)` : ''), words: pw });
     return out;
   }
+  // 발음기호: data/ipa.json(미국식, CMU 사전)을 처음 필요할 때 한 번 불러옴
+  let IPA = null, IPAp = null;
+  function ipaOf(en) {
+    if (!IPA) return '';
+    const ts = (en || '').toLowerCase().replace(/\b(sb|sth|one's|oneself)\b/g, ' ').match(/[a-z]+/g);
+    if (!ts) return '';
+    const parts = ts.map(t => IPA[t] || (IPA[t.replace(/'s$/, '')] || '?'));
+    return parts.every(p => p === '?') ? '' : '[' + parts.join(' ') + ']';
+  }
   function renderWT() {
+    if (!IPAp) IPAp = fetch('data/ipa.json').then(r => r.json()).then(j => { IPA = j; renderWT(); }).catch(() => { IPA = {}; });
     if (state.mode !== 'teacher') return;
     const ws = $('wtWho'); ws.textContent = '';
     names().forEach(n => ws.append(new Option(n, n)));
@@ -1109,7 +1120,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const cb = el('input'); cb.type = 'checkbox'; cb.id = 'wt' + i; cb.checked = bad;
       cb.setAttribute('aria-label', w.en + ' 못 외움');
       cb.onchange = () => { cb.checked ? WT.wrong.add(k) : WT.wrong.delete(k); renderWT(); };
-      const tx = el('span'); tx.append(el('b', null, w.en), el('small', null, w.ko + (lv ? ' · ' + LV_TXT[lv] : '')));
+      const tx = el('span'); tx.append(el('b', null, w.en), ...(ipaOf(w.en) ? [el('small', 'ipa', ipaOf(w.en))] : []), el('small', null, w.ko + (lv ? ' · ' + LV_TXT[lv] : '')));
       row.append(cb, tx); g.append(row);
     });
     const nw = cur.words.filter(w => WT.wrong.has(wkey(w))).length;
