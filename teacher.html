@@ -249,6 +249,15 @@ section.card h2 { margin: 0; font-family: var(--font-display); font-weight: 400;
 .stab:hover { color: var(--ink); background: var(--soft); }
 .stab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); background: var(--panel); }
 .stab small { font-family: var(--font-body); font-size: 0.78rem; color: var(--muted); margin-left: 6px; }
+/* 학생별 색: 김규민 파랑 · 조수아 핑크 */
+.stab { --st: 150; border-bottom-color: hsl(var(--st) 60% 60%); background: hsl(var(--st) 70% 92% / .55); color: var(--ink); }
+:root[data-theme="dark"] .stab { background: hsl(var(--st) 40% 30% / .5); }
+.stab[data-stu="gyumin"] { --st: 214; } .stab[data-stu="sua"] { --st: 330; }
+.stab:hover { background: hsl(var(--st) 70% 88%); color: var(--ink); }
+.stab[aria-selected="true"] { background: hsl(var(--st) 75% 82%); border-bottom-color: hsl(var(--st) 70% 45%); color: var(--ink); font-weight: 700; }
+:root[data-theme="dark"] .stab[aria-selected="true"] { background: hsl(var(--st) 50% 38%); }
+body.tmode::before { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 6px; z-index: 60; background: hsl(var(--cur, 150) 70% 55%); }
+body[data-stu="gyumin"] { --cur: 214; } body[data-stu="sua"] { --cur: 330; }
 /* 섹션 색 구분 */
 :root { --sl: 36%; --sbg: 16%; }
 section.step { --h: 150; --sc: hsl(var(--h) 45% var(--sl)); border-left: 5px solid var(--sc); background: color-mix(in srgb, var(--sc) var(--sbg), var(--panel)); }
@@ -1568,11 +1577,12 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     state.cls = t;
   }
   function renderTabs() {
-    const box = $('stuTabs'); box.textContent = '';
+    const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : '';
     names().forEach(n => {
       const b = el('button', 'stab'); b.type = 'button'; b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', n === state.tab ? 'true' : 'false');
       const si = sessionAt(n, todayStr());
+      b.dataset.stu = slugOf(n);
       b.append(document.createTextNode(shortName(n)));
       if (si) b.append(el('small', null, si.k + '/' + CYCLE + '회'));
       b.onclick = () => setTab(n);
@@ -1582,7 +1592,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   function setTab(n) {
     if (state.editing) stopEdit();
-    state.tab = n; store.set('tab', n); store.set('cls', n);
+    state.tab = n; store.set('tab', n); store.set('cls', n); document.body.dataset.stu = slugOf(n);
     state.auto = true; state.off.clear();
     $('fWho').value = n; $('wordWho').value = n; loadWordEdit(); $('ttWho').value = n;
     rebuild();
