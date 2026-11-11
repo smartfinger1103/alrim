@@ -276,6 +276,23 @@ section.step.flash { animation: secflash 1.3s ease-out; }
 @keyframes secflash { 0% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--sc) 55%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .tnav-float [data-go].primary { color: var(--ink); }
 .tnav .tobottom { background: color-mix(in srgb, hsl(50 70% var(--sl)) 30%, var(--panel)); border: 1.5px solid hsl(50 60% var(--sl)); font-weight: 600; }
+section.step[aria-labelledby="hDic"] { --h: 95; }
+.tnav [data-go="hDic"] { --h: 95; }
+.dic-res { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+.dic-res h3 { margin: 0 0 4px; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dic-res .ipa { color: var(--accent); font-weight: 400; font-size: 0.95rem; }
+.dic-res .own { color: var(--ink); font-weight: 600; }
+.dic-res .auto { color: var(--muted); }
+.dic-tag { font-size: 0.74rem; border-radius: 999px; padding: 1px 8px; margin-right: 6px; background: color-mix(in srgb, var(--sc) 22%, var(--panel)); color: var(--ink); }
+.dic-pass { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 10px 0; line-height: 2; font-size: 1.02rem; }
+.dic-pass .w { cursor: pointer; border-bottom: 1px dotted var(--muted); }
+.dic-pass .w.own { background: color-mix(in srgb, #f2c14e 45%, transparent); border-bottom: 0; border-radius: 4px; padding: 0 2px; }
+.dic-pass .w.hit { outline: 2px solid var(--sc); border-radius: 4px; }
+.dic-tbl { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
+.dic-tbl th, .dic-tbl td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.dic-tbl td.ipa { color: var(--accent); white-space: nowrap; }
+.dic-tbl td.en { font-weight: 600; white-space: nowrap; }
+.dic-tbl td.ko .auto { color: var(--muted); }
 .tnav .totop { border-left: 1px solid var(--line); text-align: center; font-weight: 600; color: var(--muted); }
 .tnav { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 18px; }
 .tnav button { font-size: 0.88rem; padding: 6px 12px; border-radius: 99px; }
@@ -409,6 +426,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="h0s">선생님 할 일</button>
     <button type="button" data-go="hOv">과제 한눈에 보기</button>
     <button type="button" data-go="hLs">듣기 숙제 결과</button>
+    <button type="button" data-go="hDic">단어 사전 · 지문 해설</button>
     <button type="button" data-go="hWt" class="primary">단어 테스트 · 틀린 단어 체크</button>
     <button type="button" data-go="h2s">과제 적기</button>
     <button type="button" data-go="h3s">알림장 만들기</button>
@@ -419,6 +437,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="h0s" data-s="할 일">선생님 할 일</button>
     <button type="button" data-go="hOv" data-s="한눈에">과제 한눈에 보기</button>
     <button type="button" data-go="hLs" data-s="듣기">듣기 숙제 결과</button>
+    <button type="button" data-go="hDic" data-s="사전">단어 사전 · 지문 해설</button>
     <button type="button" data-go="hWt" data-s="단어" class="primary">단어 테스트 · 틀린 단어 체크</button>
     <button type="button" data-go="h2s" data-s="적기">과제 적기</button>
     <button type="button" data-go="h3s" data-s="알림장">알림장 만들기</button>
@@ -467,6 +486,23 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <div class="cal" id="calGrid"></div>
         </div>
         <div class="ovdetail" id="ovDetail"></div>
+      </section>
+
+      <section class="step" aria-labelledby="hDic">
+        <h2 id="hDic">단어 사전 · 지문 해설</h2>
+        <p class="hint">단어를 검색하면 발음기호와 뜻이 나와요. 독해 지문을 <b>캡처해서 붙여넣으면</b> 바로 교사용 해설(단어 뜻·발음)이 아래에 만들어져요. 노란색 단어는 내 단어장에 있는 단어예요.</p>
+        <div class="row">
+          <input type="text" id="dicQ" placeholder="영어 단어 검색 (예: reluctant)" autocomplete="off" style="flex:1;min-width:200px">
+          <button type="button" class="primary" id="dicGo">검색</button>
+        </div>
+        <div id="dicRes"></div>
+        <label class="lab" style="margin-top:12px">독해 지문
+          <div class="capzone" id="dicCap" tabindex="0" style="min-height:70px"><b>지문 캡처를 여기에 붙여넣기 (Ctrl+V)</b><br><span class="hint">캡처(Win+Shift+S) 후 이 칸을 누르고 Ctrl+V. 아래 칸에 글을 직접 붙여넣어도 돼요.</span></div>
+          <textarea id="dicText" rows="6" placeholder="지문 영어 글을 붙여넣으세요"></textarea>
+        </label>
+        <div class="row"><button type="button" class="primary" id="dicMake">교사용 해설 만들기</button><button type="button" class="small" id="dicCopy">단어표 복사</button></div>
+        <div class="msg" id="dicMsg" role="status"></div>
+        <div id="dicOut"></div>
       </section>
 
       <section class="step" aria-labelledby="hLs">
@@ -2938,6 +2974,121 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     // 학생 링크(#1, #2)로 열면 학생이 보는 화면 그대로 보여요
     if (state.mode === 'student' && !studentFromHash()) enterTeacher();
   });
+  // ---------- 단어 사전 · 지문 해설 (교사용) ----------
+  const DIC_STOP = new Set(('the a an and or but if then than that this these those there here with without from into onto over under about above below after before again against between through during while where when which what who whom whose why how all any both each few more most other some such only own same than too very can will just should could would might must shall have has had having does did doing done is are was were been being be am not nor for out off per via yet also even ever still much many one two three four five first second said say says like likes liked get gets got made make makes take takes took taken give gives gave given go goes went gone come comes came see sees saw seen know knows knew known think thinks thought want wants wanted use uses used using find finds found tell tells told ask asks asked work works worked seem seems seemed feel feels felt try tries tried leave leaves left call calls called their them they you your yours our ours his her hers its him she who let lets put puts well back down away now new old good long great little right big high small large next early young important able often always never every another because however although though whether either neither rather quite really almost already together within upon among around along across behind beyond toward towards until since once during').split(/\s+/));
+  const dicCache = (() => { let m = {}; try { m = JSON.parse(store.get('dic') || '{}'); } catch (e) {} return { get: k => m[k], set: (k, v) => { m[k] = v; try { store.set('dic', JSON.stringify(m)); } catch (e) {} } }; })();
+  let dicStock = null;
+  function dicBuildStock() {
+    const mp = new Map(); const add = (txt) => { try { parseWords(txt, '').forEach(w => { const k = (w.en || '').toLowerCase().trim(); if (!k || !w.ko) return; const a = mp.get(k) || []; if (!a.includes(w.ko)) a.push(w.ko); mp.set(k, a); }); } catch (e) {} };
+    Object.values(D.words || {}).forEach(add); (D.entries || []).forEach(e => e.words && add(e.words));
+    dicStock = mp; return mp;
+  }
+  const dicForms = (w) => [...new Set([w, w.replace(/ies$/, 'y'), w.replace(/(es|s)$/, ''), w.replace(/(ed|d)$/, ''), w.replace(/ing$/, ''), w.replace(/ing$/, 'e'), w.replace(/ly$/, '')])].filter(x => x && x.length > 1);
+  function dicOwn(w) { if (!dicStock) dicBuildStock(); for (const f of dicForms(w)) { const a = dicStock.get(f); if (a) return a; } return null; }
+  async function dicAuto(w) {
+    const c = dicCache.get(w); if (c) return c;
+    try {
+      const r = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(w) + '&langpair=en|ko'); const j = await r.json();
+      let t = String((j.responseData && j.responseData.translatedText) || '').trim();
+      const alt = (j.matches || []).map(m => String(m.translation || '').trim()).filter(x => x && /[가-힣]/.test(x) && x.toLowerCase() !== w);
+      if (!/[가-힣]/.test(t)) t = alt[0] || '';
+      const out = [...new Set([t, ...alt].filter(x => x && /[가-힣]/.test(x)))].slice(0, 2).join(' / ');
+      if (out) dicCache.set(w, out); return out;
+    } catch (e) { return ''; }
+  }
+  function dicIpa(w) { if (!IPA) return ''; for (const f of dicForms(w)) if (IPA[f]) return '[' + IPA[f] + ']'; return ''; }
+  function dicLoadIpa() { if (!IPAp) IPAp = fetch('data/ipa.json').then(r => r.json()).then(j => { IPA = j; }).catch(() => { IPA = {}; }); return IPAp; }
+  async function dicSearch(q) {
+    q = String(q || '').toLowerCase().replace(/[^a-z' -]/g, '').trim(); const box = $('dicRes'); box.textContent = '';
+    if (!q) return;
+    await dicLoadIpa(); dicBuildStock();
+    const card = el('div', 'dic-res'); const h = el('h3'); h.append(document.createTextNode(q));
+    const ip = dicIpa(q); if (ip) h.append(el('span', 'ipa', ip));
+    if (canSpeak) { const sp = el('button', 'small', '🔊'); sp.type = 'button'; sp.onclick = () => speak(q); h.append(sp); }
+    card.append(h);
+    const own = dicOwn(q);
+    if (own) { const p = el('p'); p.append(el('span', 'dic-tag', '내 단어장'), el('span', 'own', own.join(' / '))); card.append(p); }
+    const ap = el('p'); ap.append(el('span', 'dic-tag', '자동 번역(참고)'), el('span', 'auto', '찾는 중…')); card.append(ap);
+    box.append(card);
+    const a = await dicAuto(q); ap.lastChild.textContent = a || '뜻을 찾지 못했어요. 단어 표기를 확인해 주세요.';
+    if (!ip) card.append(el('p', 'hint', '발음기호가 사전에 없는 단어예요.'));
+  }
+  async function dicMake() {
+    const text = $('dicText').value.replace(/\r/g, '').trim(), out = $('dicOut'), msg = $('dicMsg'); out.textContent = '';
+    if (!text) { msg.textContent = '지문을 붙여넣어 주세요.'; return; }
+    await dicLoadIpa(); dicBuildStock();
+    const pass = el('div', 'dic-pass');
+    const seen = new Map(), order = [];
+    text.split(/\n{2,}|\n/).forEach((para, pi) => {
+      const p = el('p'); p.style.margin = '0 0 8px';
+      para.split(/([A-Za-z][A-Za-z'’-]*)/).forEach(tok => {
+        if (/^[A-Za-z]/.test(tok)) {
+          const lw = tok.toLowerCase().replace(/’/g, "'"), sp = el('span', 'w', tok);
+          const own = dicOwn(lw.replace(/'s$/, ''));
+          if (own) { sp.classList.add('own'); sp.title = own.join(' / '); }
+          sp.onclick = () => { $('dicQ').value = lw.replace(/'s$/, ''); dicSearch($('dicQ').value); };
+          p.append(sp);
+          const base = lw.replace(/'s$/, '');
+          if (base.length >= 4 && !DIC_STOP.has(base) && !seen.has(base)) { seen.set(base, tok); order.push(base); }
+        } else p.append(document.createTextNode(tok));
+      });
+      pass.append(p);
+    });
+    out.append(pass);
+    const tbl = el('table', 'dic-tbl'); const th = el('tr'); ['단어', '발음', '뜻'].forEach(t => th.append(el('th', null, t))); tbl.append(th);
+    const rows = [];
+    order.forEach(w => {
+      const tr = el('tr'), own = dicOwn(w);
+      tr.append(el('td', 'en', seen.get(w)), el('td', 'ipa', dicIpa(w)));
+      const ko = el('td', 'ko');
+      if (own) { ko.append(el('span', 'dic-tag', '내 단어장'), document.createTextNode(own.join(' / '))); }
+      else ko.append(Object.assign(el('span', 'auto'), { textContent: '…' }));
+      tr.append(ko); tbl.append(tr); rows.push({ w, own, ko, tr });
+    });
+    out.append(tbl);
+    msg.textContent = `지문 단어 ${order.length}개 · 내 단어장에 있는 단어 ${rows.filter(r => r.own).length}개 (노란색). 모르는 단어의 뜻은 자동 번역을 가져오는 중이에요…`;
+    let done = 0; const todo = rows.filter(r => !r.own), cap = 80;
+    const worker = async () => { while (todo.length) { const r = todo.shift(); if (++done > cap) { r.ko.firstChild.textContent = '(눌러서 검색)'; continue; } const a = await dicAuto(r.w); r.ko.firstChild.textContent = a || '-'; r.tr.dataset.auto = a; } };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    msg.textContent = `지문 단어 ${order.length}개 정리 완료. 자동 번역은 참고용이에요. 문맥에 맞는지 확인해 주세요.`;
+    out._rows = rows;
+  }
+  function dicCopy() {
+    const rows = ($('dicOut')._rows || []).map(r => `${r.w} - ${r.own ? r.own.join(' / ') : (r.tr.dataset.auto || '')}`).join('\n');
+    if (!rows) { $('dicMsg').textContent = '먼저 해설을 만들어 주세요.'; return; }
+    (navigator.clipboard ? navigator.clipboard.writeText(rows) : Promise.reject()).then(() => { $('dicMsg').textContent = '단어표를 복사했어요. 단어 입력 칸에 붙여넣으면 돼요.'; }, () => { $('dicMsg').textContent = '복사하지 못했어요.'; });
+  }
+  async function dicOcr(blob) {
+    const msg = $('dicMsg'); msg.textContent = '지문을 읽는 중… (처음엔 도구를 내려받느라 몇 초 걸려요)';
+    try {
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+      if (!window.Tesseract) throw new Error('도구를 불러오지 못했어요');
+      if (!ocrWorker) ocrWorker = Tesseract.createWorker(['eng', 'kor']).catch(e => { ocrWorker = null; throw e; });
+      const wk = await ocrWorker;
+      const bmp = await createImageBitmap(blob), sc = bmp.width < 1400 ? 2 : 1;
+      const c = document.createElement('canvas'); c.width = bmp.width * sc; c.height = bmp.height * sc;
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.imageSmoothingQuality = 'high'; g.drawImage(bmp, 0, 0, c.width, c.height);
+      await wk.setParameters({ tessedit_pageseg_mode: '6' });
+      const t = (await wk.recognize(c)).data.text; await wk.setParameters({ tessedit_pageseg_mode: '3' });
+      const txt = String(t || '').split(/\r?\n/).map(l => l.replace(/[|｜]/g, ' ').replace(/[가-힣]+/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ').replace(/(\w)- (?=[a-z])/g, '$1');
+      const ta = $('dicText'); ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + txt;
+      await dicMake();
+    } catch (e) { msg.textContent = '지문을 읽지 못했어요. 글을 직접 붙여넣어 주세요. (' + (e.message || e) + ')'; }
+  }
+  function dicInit() {
+    if (!$('dicQ')) return;
+    $('dicGo').onclick = () => dicSearch($('dicQ').value);
+    $('dicQ').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); dicSearch($('dicQ').value); } });
+    $('dicMake').onclick = dicMake; $('dicCopy').onclick = dicCopy;
+    const zone = $('dicCap');
+    const pick = (dt) => [...(dt.files || [])].filter(f => /^image\//.test(f.type));
+    zone.addEventListener('paste', e => { const fs = pick(e.clipboardData || {}); if (fs.length) { e.preventDefault(); fs.forEach(f => dicOcr(f)); } });
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', e => { const fs = pick(e.dataTransfer || {}); if (fs.length) { e.preventDefault(); fs.forEach(f => dicOcr(f)); } });
+    $('dicText').addEventListener('paste', e => { const fs = pick(e.clipboardData || {}); if (fs.length) { e.preventDefault(); fs.forEach(f => dicOcr(f)); } });
+  }
+  dicInit();
+
   window.alrimSync = {
     snapshot,
     receive(seed) {
