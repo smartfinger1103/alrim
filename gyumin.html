@@ -1571,6 +1571,17 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const T = THEMES[state.theme] || THEMES.note;
     Object.entries({ bg: T.bg, line: T.line, margin: T.margin, ink: T.ink, sub: T.sub, acc: T.accent, chip: T.chipBg, badge: T.badgeInk, box: T.box, hot: T.hot, lv1: T.lv1, lv2: T.lv2, lv3: T.lv3 })
       .forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
+    if (state.mode === 'student') {   // 학생별 색: 규민 파랑 · 조수아 핑크
+      const H = ({ '김규민': 214, '조수아': 330 })[state.cls];
+      if (H) {
+        const dk = document.documentElement.dataset.theme === 'dark' || (document.documentElement.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        const R = document.documentElement.style;
+        R.setProperty('--bg', `hsl(${H} ${dk ? 30 : 80}% ${dk ? 12 : 91}%)`); R.setProperty('--soft', `hsl(${H} ${dk ? 30 : 75}% ${dk ? 20 : 85}%)`);
+        R.setProperty('--accent', `hsl(${H} ${dk ? 70 : 60}% ${dk ? 70 : 40}%)`); R.setProperty('--line', `hsl(${H} 45% ${dk ? 28 : 78}%)`);
+        document.body.style.background = `hsl(${H} ${dk ? 30 : 80}% ${dk ? 12 : 91}%)`;
+        if (state.theme === 'board') { nb.style.setProperty('--p-bg', `hsl(${H} 55% 30%)`); nb.style.setProperty('--p-badge', `hsl(${H} 55% 25%)`); }
+      }
+    }
     const list = currentItems();
     const hv = $('heading').value.trim();
     nb.append(el('div', 'nb-top', [hv, state.cls].filter(Boolean).join(' · ')), el('div', 'nb-date', kLong(state.date)));
