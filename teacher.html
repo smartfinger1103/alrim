@@ -293,6 +293,16 @@ section.step[aria-labelledby="hDic"] { --h: 95; }
 .dic-tbl td.ipa { color: var(--accent); white-space: nowrap; }
 .dic-tbl td.en { font-weight: 600; white-space: nowrap; }
 .dic-tbl td.ko .auto { color: var(--muted); }
+section.step[aria-labelledby="hLib"] { --h: 55; }
+.tnav [data-go="hLib"] { --h: 55; }
+.lib-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.lib-item { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.lib-item b { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.lib-item small { color: var(--muted); white-space: nowrap; }
+.lib-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0; }
+.lib-bar input[type=number] { width: 72px; }
+.lib-view { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 8px; overflow: auto; max-height: 80vh; text-align: center; }
+.lib-view canvas, .lib-view img { max-width: none; height: auto; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.2); }
 .tnav .totop { border-left: 1px solid var(--line); text-align: center; font-weight: 600; color: var(--muted); }
 .tnav { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 18px; }
 .tnav button { font-size: 0.88rem; padding: 6px 12px; border-radius: 99px; }
@@ -427,6 +437,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="hOv">과제 한눈에 보기</button>
     <button type="button" data-go="hLs">듣기 숙제 결과</button>
     <button type="button" data-go="hDic">단어 사전 · 지문 해설</button>
+    <button type="button" data-go="hLib">자료함 (책 · 답지)</button>
     <button type="button" data-go="hWt" class="primary">단어 테스트 · 틀린 단어 체크</button>
     <button type="button" data-go="h2s">과제 적기</button>
     <button type="button" data-go="h3s">알림장 만들기</button>
@@ -438,6 +449,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="hOv" data-s="한눈에">과제 한눈에 보기</button>
     <button type="button" data-go="hLs" data-s="듣기">듣기 숙제 결과</button>
     <button type="button" data-go="hDic" data-s="사전">단어 사전 · 지문 해설</button>
+    <button type="button" data-go="hLib" data-s="자료">자료함 (책 · 답지)</button>
     <button type="button" data-go="hWt" data-s="단어" class="primary">단어 테스트 · 틀린 단어 체크</button>
     <button type="button" data-go="h2s" data-s="적기">과제 적기</button>
     <button type="button" data-go="h3s" data-s="알림장">알림장 만들기</button>
@@ -486,6 +498,26 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <div class="cal" id="calGrid"></div>
         </div>
         <div class="ovdetail" id="ovDetail"></div>
+      </section>
+
+      <section class="step" aria-labelledby="hLib">
+        <h2 id="hLib">자료함 (책 · 답지)</h2>
+        <p class="hint">책이나 답지 PDF·이미지를 올려 두면 이 창에서 바로 열고 쪽수로 이동할 수 있어요. 파일은 <b>이 컴퓨터의 이 브라우저에만</b> 저장되고 인터넷에 올라가지 않아요. 다른 컴퓨터에서는 다시 올려야 해요.</p>
+        <div class="row"><label class="small" style="cursor:pointer"><input type="file" id="libFile" accept=".pdf,image/*" multiple style="display:none"><span class="btn-like primary" style="display:inline-block;padding:8px 14px;border-radius:9px;background:var(--accent);color:#fff;font-weight:600">파일 올리기</span></label></div>
+        <div class="lib-list" id="libList"></div>
+        <div id="libViewer" hidden>
+          <div class="lib-bar">
+            <b id="libName"></b>
+            <button type="button" class="small" id="libPrev">◀ 이전</button>
+            <input type="number" id="libPage" min="1" value="1"> <span id="libTotal" class="hint"></span>
+            <button type="button" class="small" id="libGo">이동</button>
+            <button type="button" class="small" id="libNext">다음 ▶</button>
+            <button type="button" class="small" id="libZm">－</button><span id="libZoom" class="hint">100%</span><button type="button" class="small" id="libZp">＋</button>
+            <button type="button" class="small" id="libClose">닫기</button>
+          </div>
+          <div class="lib-view" id="libView"></div>
+        </div>
+        <div class="msg" id="libMsg" role="status"></div>
       </section>
 
       <section class="step" aria-labelledby="hDic">
@@ -3088,6 +3120,79 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     $('dicText').addEventListener('paste', e => { const fs = pick(e.clipboardData || {}); if (fs.length) { e.preventDefault(); fs.forEach(f => dicOcr(f)); } });
   }
   dicInit();
+
+  // ---------- 자료함: 책·답지 PDF/이미지를 이 브라우저(IndexedDB)에 보관하고 앱 안에서 열기 ----------
+  const lib = (() => {
+    let dbp = null;
+    const db = () => dbp || (dbp = new Promise((res, rej) => { const r = indexedDB.open('alrim-lib', 1); r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'name' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
+    const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction('files', mode), st = t.objectStore('files'), rq = fn(st); t.oncomplete = () => res(rq && rq.result); t.onerror = () => rej(t.error); }); };
+    return { all: () => tx('readonly', st => st.getAll()), put: (rec) => tx('readwrite', st => st.put(rec)), del: (name) => tx('readwrite', st => st.delete(name)), get: (name) => tx('readonly', st => st.get(name)) };
+  })();
+  const libSt = { pdf: null, name: '', page: 1, zoom: 1, token: 0 };
+  const libSize = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB';
+  async function libRefresh() {
+    const box = $('libList'); box.textContent = '';
+    let items = []; try { items = await lib.all(); } catch (e) { $('libMsg').textContent = '이 브라우저에서는 파일 보관을 쓸 수 없어요. (시크릿 창이면 일반 창에서 열어 주세요)'; return; }
+    items.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    if (!items.length) box.append(el('p', 'hint', '아직 올린 파일이 없어요.'));
+    items.forEach(it => {
+      const row = el('div', 'lib-item'); row.append(el('b', null, it.name), el('small', null, libSize(it.blob.size)));
+      const o = el('button', 'small primary', '열기'); o.type = 'button'; o.onclick = () => libOpen(it.name);
+      const d = el('button', 'small', '삭제'); d.type = 'button'; d.onclick = async () => { if (!confirm(`"${it.name}"을(를) 이 브라우저에서 지울까요? (원본 파일은 그대로예요)`)) return; await lib.del(it.name); if (libSt.name === it.name) libClose(); libRefresh(); };
+      row.append(o, d); box.append(row);
+    });
+  }
+  function libClose() { libSt.pdf = null; libSt.name = ''; $('libViewer').hidden = true; $('libView').textContent = ''; }
+  async function libOpen(name) {
+    const rec = await lib.get(name); if (!rec) return;
+    libSt.name = name; libSt.zoom = 1; $('libName').textContent = name; $('libViewer').hidden = false; $('libMsg').textContent = '';
+    const view = $('libView'); view.textContent = '';
+    if (/^image\//.test(rec.blob.type)) {
+      libSt.pdf = null; const img = new Image(); img.src = URL.createObjectURL(rec.blob); img.style.maxWidth = '100%'; view.append(img);
+      $('libTotal').textContent = ''; $('libPage').value = 1; return;
+    }
+    try {
+      await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+      const pl = window.pdfjsLib; pl.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      libSt.pdf = await pl.getDocument({ data: new Uint8Array(await rec.blob.arrayBuffer()), isEvalSupported: false }).promise;
+      $('libTotal').textContent = '/ ' + libSt.pdf.numPages + '쪽'; $('libPage').max = libSt.pdf.numPages;
+      let p = 1; try { p = parseInt(localStorage.getItem('alrim:libpage:' + name) || '1', 10) || 1; } catch (e) {}
+      await libShow(Math.min(Math.max(1, p), libSt.pdf.numPages));
+    } catch (e) { $('libMsg').textContent = '파일을 열지 못했어요: ' + (e.message || e); }
+    $('libViewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  async function libShow(n) {
+    if (!libSt.pdf) return;
+    n = Math.min(Math.max(1, n), libSt.pdf.numPages); libSt.page = n; $('libPage').value = n; $('libZoom').textContent = Math.round(libSt.zoom * 100) + '%';
+    try { localStorage.setItem('alrim:libpage:' + libSt.name, String(n)); } catch (e) {}
+    const tk = ++libSt.token, page = await libSt.pdf.getPage(n);
+    const base = page.getViewport({ scale: 1 }), view = $('libView');
+    const w = Math.max(300, view.clientWidth - 24), scale = (w / base.width) * libSt.zoom, vp = page.getViewport({ scale: scale * (window.devicePixelRatio || 1) });
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; c.style.width = (vp.width / (window.devicePixelRatio || 1)) + 'px';
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    if (tk !== libSt.token) return; view.textContent = ''; view.append(c); view.scrollTop = 0;
+  }
+  async function libAdd(files) {
+    const msg = $('libMsg'); let n = 0;
+    for (const f of files) {
+      if (!/\.pdf$/i.test(f.name) && !/^image\//.test(f.type)) { msg.textContent = `"${f.name}"은(는) PDF나 이미지가 아니라 건너뛰었어요.`; continue; }
+      try { await lib.put({ name: f.name, blob: f, added: Date.now() }); n++; } catch (e) { msg.textContent = `"${f.name}"을(를) 저장하지 못했어요. (저장 공간 부족일 수 있어요)`; }
+    }
+    if (n) msg.textContent = `${n}개 파일을 이 브라우저에 보관했어요.`; libRefresh();
+  }
+  function libInit() {
+    if (!$('libFile')) return;
+    $('libFile').onchange = (e) => { libAdd([...e.target.files]); e.target.value = ''; };
+    $('libPrev').onclick = () => libShow(libSt.page - 1); $('libNext').onclick = () => libShow(libSt.page + 1);
+    $('libGo').onclick = () => libShow(parseInt($('libPage').value, 10) || 1);
+    $('libPage').addEventListener('keydown', e => { if (e.key === 'Enter') libShow(parseInt($('libPage').value, 10) || 1); });
+    $('libZp').onclick = () => { libSt.zoom = Math.min(3, libSt.zoom + 0.25); libShow(libSt.page); };
+    $('libZm').onclick = () => { libSt.zoom = Math.max(0.5, libSt.zoom - 0.25); libShow(libSt.page); };
+    $('libClose').onclick = libClose;
+    libRefresh();
+  }
+  libInit();
 
   window.alrimSync = {
     snapshot,
