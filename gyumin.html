@@ -1578,15 +1578,15 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     Object.entries({ bg: T.bg, line: T.line, margin: T.margin, ink: T.ink, sub: T.sub, acc: T.accent, chip: T.chipBg, badge: T.badgeInk, box: T.box, hot: T.hot, lv1: T.lv1, lv2: T.lv2, lv3: T.lv3 })
       .forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
     if (state.mode === 'student') {   // 학생별 색: 규민 파랑 · 조수아 핑크
-      const H = ({ '김규민': 214, '조수아': 330 })[state.cls];
-      if (H) {
+      const H0 = ({ '김규민': 214, '조수아': 330 })[state.cls], H = H0 === 330 ? 352 : H0, K = H0 === 330 ? 0.42 : 1;
+      if (H0) {
         const dk = document.documentElement.dataset.theme === 'dark' || (document.documentElement.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
         const R = document.documentElement.style;
-        R.setProperty('--bg', `hsl(${H} ${dk ? 30 : 80}% ${dk ? 12 : 91}%)`); R.setProperty('--soft', `hsl(${H} ${dk ? 30 : 75}% ${dk ? 20 : 85}%)`);
-        R.setProperty('--accent', `hsl(${H} ${dk ? 70 : 60}% ${dk ? 70 : 40}%)`); R.setProperty('--line', `hsl(${H} 45% ${dk ? 28 : 78}%)`);
-        document.body.style.background = `hsl(${H} ${dk ? 30 : 80}% ${dk ? 12 : 91}%)`;
-        const P = { bg: `hsl(${H} ${H === 330 ? 85 : 70}% ${H === 330 ? 92 : 93}%)`, line: `hsl(${H} 45% 62% / .35)`, margin: H === 330 ? '#E0457B' : '#E88A8A', ink: '#222B3D', sub: '#55607A',
-          acc: `hsl(${H} 60% 38%)`, chip: `hsl(${H} 70% 85%)`, badge: '#FFFFFF', box: 'rgba(255,255,255,0.6)', hot: '#D2462F', lv1: '#1E5BD8', lv2: '#C62828', lv3: '#7B2FBE' };
+        R.setProperty('--bg', `hsl(${H} ${Math.round((dk ? 30 : 80) * K)}% ${dk ? 12 : 91}%)`); R.setProperty('--soft', `hsl(${H} ${Math.round((dk ? 30 : 75) * K)}% ${dk ? 20 : 85}%)`);
+        R.setProperty('--accent', `hsl(${H} ${Math.round((dk ? 70 : 60) * K)}% ${dk ? 70 : 40}%)`); R.setProperty('--line', `hsl(${H} ${Math.round(45 * K)}% ${dk ? 28 : 78}%)`);
+        document.body.style.background = `hsl(${H} ${Math.round((dk ? 30 : 80) * K)}% ${dk ? 12 : 91}%)`;
+        const P = { bg: `hsl(${H} ${Math.round((H0 === 330 ? 85 : 70) * K)}% ${H0 === 330 ? 92 : 93}%)`, line: `hsl(${H} ${Math.round(45 * K)}% 62% / .35)`, margin: H0 === 330 ? '#CF8A98' : '#E88A8A', ink: '#222B3D', sub: '#55607A',
+          acc: `hsl(${H} ${Math.round(60 * K)}% 38%)`, chip: `hsl(${H} ${Math.round(70 * K)}% 85%)`, badge: '#FFFFFF', box: 'rgba(255,255,255,0.6)', hot: '#D2462F', lv1: '#1E5BD8', lv2: '#C62828', lv3: '#7B2FBE' };
         Object.entries(P).forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
       }
     }
