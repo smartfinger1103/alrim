@@ -31,6 +31,8 @@
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+html { overflow-x: auto; }
+body.tmode { min-width: 980px; }   /* 교사 화면: 창을 줄이면 가로 스크롤바로 옆 내용을 볼 수 있어요 */
 .wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 header.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 22px; }
@@ -2871,6 +2873,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   /* ---------- 화면 전환 ---------- */
   function showMode(mode) {
     state.mode = mode;
+    document.body.classList.toggle('tmode', mode === 'teacher');
     $('teacherView').hidden = mode !== 'teacher';
     $('studentView').hidden = mode !== 'student';
     state.off.clear();
