@@ -3169,8 +3169,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     try { localStorage.setItem('alrim:libpage:' + libSt.name, String(n)); } catch (e) {}
     const tk = ++libSt.token, page = await libSt.pdf.getPage(n);
     const base = page.getViewport({ scale: 1 }), view = $('libView');
-    const w = Math.max(300, view.clientWidth - 24), scale = (w / base.width) * libSt.zoom, vp = page.getViewport({ scale: scale * (window.devicePixelRatio || 1) });
-    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; c.style.width = (vp.width / (window.devicePixelRatio || 1)) + 'px';
+    const w = Math.max(300, view.clientWidth - 24), scale = (w / base.width) * libSt.zoom, ratio = Math.min(Math.max(window.devicePixelRatio || 1, 2.5), 4096 / (base.width * scale));   // 선명하게: 화면 해상도의 2.5배 이상으로 그려요
+    const vp = page.getViewport({ scale: scale * ratio });
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; c.style.width = (base.width * scale) + 'px';
     await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
     if (tk !== libSt.token) return; view.textContent = ''; view.append(c); view.scrollTop = 0;
   }
