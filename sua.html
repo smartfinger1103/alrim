@@ -1579,7 +1579,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         R.setProperty('--bg', `hsl(${H} ${dk ? 30 : 80}% ${dk ? 12 : 91}%)`); R.setProperty('--soft', `hsl(${H} ${dk ? 30 : 75}% ${dk ? 20 : 85}%)`);
         R.setProperty('--accent', `hsl(${H} ${dk ? 70 : 60}% ${dk ? 70 : 40}%)`); R.setProperty('--line', `hsl(${H} 45% ${dk ? 28 : 78}%)`);
         document.body.style.background = `hsl(${H} ${dk ? 30 : 80}% ${dk ? 12 : 91}%)`;
-        if (state.theme === 'board') { nb.style.setProperty('--p-bg', `hsl(${H} 55% 30%)`); nb.style.setProperty('--p-badge', `hsl(${H} 55% 25%)`); }
+        const P = { bg: `hsl(${H} ${H === 330 ? 85 : 70}% ${H === 330 ? 92 : 93}%)`, line: `hsl(${H} 45% 62% / .35)`, margin: H === 330 ? '#E0457B' : '#E88A8A', ink: '#222B3D', sub: '#55607A',
+          acc: `hsl(${H} 60% 38%)`, chip: `hsl(${H} 70% 85%)`, badge: '#FFFFFF', box: 'rgba(255,255,255,0.6)', hot: '#D2462F', lv1: '#1E5BD8', lv2: '#C62828', lv3: '#7B2FBE' };
+        Object.entries(P).forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
       }
     }
     const list = currentItems();
