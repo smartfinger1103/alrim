@@ -2510,8 +2510,26 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     }
     $('qClose').focus({ preventScroll: true });
   }
+  /* 단어학습 시간: 창이 열려 있고 화면이 보이며 최근 1분 안에 손을 댄 시간만 센다 → 구글 폼으로 전송 */
+  const WS = { sec: 0, last: Date.now(), act: Date.now() };
+  ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev => document.addEventListener(ev, () => { WS.act = Date.now(); }, true));
+  setInterval(() => {
+    const now = Date.now();
+    if (typeof quiz !== 'undefined' && quiz.open && !document.hidden && now - WS.act < 60000) WS.sec += Math.min(5, (now - WS.last) / 1000);
+    WS.last = now;
+  }, 5000);
+  function wsFlush() {
+    if (state.mode === 'teacher' || !state.cls || WS.sec < 10) return;
+    const sec = Math.round(WS.sec); WS.sec = 0;
+    const cfg = lsCfg(), f = cfg.f, fd = new URLSearchParams();
+    fd.set(f.who, state.cls); fd.set(f.test, '단어'); fd.set(f.score, String(sec)); fd.set(f.wrong, ''); fd.set(f.picks, todayStr());
+    try { fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).catch(() => { WS.sec += sec; }); } catch (e) { WS.sec += sec; }
+  }
+  setInterval(wsFlush, 120000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) wsFlush(); });
+  window.addEventListener('pagehide', wsFlush);
   function closeQuiz() {
-    quiz.open = false; quiz.only = null;
+    wsFlush(); quiz.open = false; quiz.only = null;
     $('quiz').hidden = true; document.body.style.overflow = '';
     try { speechSynthesis.cancel(); } catch (e) {}
     renderNotebook();
