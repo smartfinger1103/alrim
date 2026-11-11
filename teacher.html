@@ -336,7 +336,7 @@ section.step[aria-labelledby="hLib"] { --h: 55; }
 @media (max-width: 1599px) {
   .tnav-float { width: 46px; left: 4px; gap: 4px; }
   .tnav-float button { font-size: 0; padding: 7px 0; text-align: center; border-radius: 10px; border-left-width: 1.5px; line-height: 1.2; }
-  .tnav-float button::after { content: attr(data-s); font-size: 0.74rem; font-weight: 700; color: var(--ink); }
+  .tnav-float button::after { content: attr(data-s); font-size: 0.74rem; font-weight: 700; color: var(--ink); white-space: pre-line; text-align: center; line-height: 1.15; }
   .wrap { padding-left: max(56px, env(safe-area-inset-left, 0px)); }
 }
 @media (max-width: 560px) { .tnav-float { display: none; } .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); } }
@@ -475,7 +475,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="hLs" data-s="듣기">듣기 숙제 결과</button>
     <button type="button" data-go="hDic" data-s="Guide">Teacher's Guide · 지문 해설 · 사전</button>
     <button type="button" data-go="hLib" data-s="자료">자료함 (책 · 답지)</button>
-    <button type="button" data-go="hWt" data-s="단어" class="primary">단어 테스트 · 틀린 단어 체크</button>
+    <button type="button" data-go="hWt" data-s="단어&#10;테스트" class="primary">단어 테스트 · 틀린 단어 체크</button>
     <button type="button" data-go="h2s" data-s="적기">과제 적기</button>
     <button type="button" data-go="h3s" data-s="만들기">알림장 만들기</button>
     <button type="button" data-go="h6s" data-s="저장">저장 · 학생 링크 반영</button>
