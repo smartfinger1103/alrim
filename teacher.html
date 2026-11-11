@@ -264,6 +264,16 @@ body.tmode[data-stu] { background: hsl(var(--cur) 75% 91%); transition: backgrou
 .tnav-float .stu-badge { display: block; text-align: center; font: 700 .85rem var(--font-display); padding: 5px 2px; margin-bottom: 4px; border-radius: 10px; color: #fff; background: hsl(var(--cur, 150) 65% 42%); }
 @media (max-width: 1599px) { .tnav-float .stu-badge { font-size: .72rem; } }
 body.tmode[data-stu] .stabs { border-bottom: 4px solid hsl(var(--cur) 70% 55%); }
+.tg-sent { margin: 0 0 16px; padding: 8px 10px 10px; border-bottom: 1px dashed var(--line); }
+.tg-ko { color: #D6336C; font-weight: 600; font-size: .98rem; margin-bottom: 4px; line-height: 1.5; }
+.tg-en { font-size: 1.12rem; line-height: 2.5; }
+.tg-en ruby { ruby-position: over; ruby-align: center; }
+.tg-en rt { color: #D6336C; font-size: .62em; font-weight: 600; }
+.tg-gr { margin-top: 6px; padding: 8px 10px; border-left: 4px solid #1E5BD8; border-radius: 6px; background: rgba(30,91,216,.08); color: #1E5BD8; font-size: .92rem; line-height: 1.5; }
+.tg-gr-i + .tg-gr-i { margin-top: 6px; }
+.tg-gr b { color: #1E5BD8; } .tg-m { color: #1E5BD8; opacity: .8; font-style: italic; }
+:root[data-theme="dark"] .tg-ko, :root[data-theme="dark"] .tg-en rt { color: #FF8FB5; }
+:root[data-theme="dark"] .tg-gr, :root[data-theme="dark"] .tg-gr b, :root[data-theme="dark"] .tg-m { color: #8DB4FF; }
 /* 섹션 색 구분 */
 :root { --sl: 36%; --sbg: 16%; }
 section.step { --h: 150; --sc: hsl(var(--h) 45% var(--sl)); border-left: 5px solid var(--sc); background: color-mix(in srgb, var(--sc) var(--sbg), var(--panel)); }
@@ -3100,26 +3110,74 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const a = await dicAuto(q); ap.lastChild.textContent = a || '뜻을 찾지 못했어요. 단어 표기를 확인해 주세요.';
     if (!ip) card.append(el('p', 'hint', '발음기호가 사전에 없는 단어예요.'));
   }
+  async function dicSent(t) {
+    const key = 'S:' + t; const c = dicCache.get(key); if (c) return c;
+    try {
+      const r = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(t.slice(0, 480)) + '&langpair=en|ko'); const j = await r.json();
+      const x = String((j.responseData && j.responseData.translatedText) || '').trim();
+      if (/[가-힣]/.test(x)) { dicCache.set(key, x); return x; }
+    } catch (e) {}
+    return '';
+  }
   async function dicMake() {
     const text = $('dicText').value.replace(/\r/g, '').trim(), out = $('dicOut'), msg = $('dicMsg'); out.textContent = '';
     if (!text) { msg.textContent = '지문을 붙여넣어 주세요.'; return; }
     await dicLoadIpa(); dicBuildStock();
     const pass = el('div', 'dic-pass');
-    const seen = new Map(), order = [];
-    text.split(/\n{2,}|\n/).forEach((para, pi) => {
-      const p = el('p'); p.style.margin = '0 0 8px';
-      para.split(/([A-Za-z][A-Za-z'’-]*)/).forEach(tok => {
-        if (/^[A-Za-z]/.test(tok)) {
-          const lw = tok.toLowerCase().replace(/’/g, "'"), sp = el('span', 'w', tok);
-          const own = dicOwn(lw.replace(/'s$/, ''));
-          if (own) { sp.classList.add('own'); sp.title = own.join(' / '); }
-          sp.onclick = () => { $('dicQ').value = lw.replace(/'s$/, ''); dicSearch($('dicQ').value); };
-          p.append(sp);
-          const base = lw.replace(/'s$/, '');
-          if (base.length >= 4 && !DIC_STOP.has(base) && !seen.has(base)) { seen.set(base, tok); order.push(base); }
-        } else p.append(document.createTextNode(tok));
+    const seen = new Map(), order = [], rts = new Map(), sents = [];
+    const gl = (w) => { const o = dicOwn(w); return o ? String(o[0]).split(/[\/,;]/)[0].trim() : ''; };
+    const GR = [
+      [/\b(have|has)\s+(\w+ed|been|done|gone|seen|made|taken|given|known|written|come|become|got|had|eaten|met|read|found|lost|heard|told)\b/i, '현재완료 (have/has + p.p.)', '과거에 시작한 일이 지금까지 이어지거나(계속), 해 본 적이 있거나(경험), 막 끝났거나(완료), 그 결과가 남아 있음(결과)을 나타내요. 과거를 나타내는 yesterday, ago와는 함께 쓰지 않아요.'],
+      [/\bhad\s+(\w+ed|been|done|gone|seen|made|taken|given|known|written|come|become|got|eaten|met|found|lost|heard|told)\b/i, '과거완료 (had + p.p.)', '과거의 어느 시점보다 더 앞서 일어난 일(대과거)을 나타내요.'],
+      [/\b(am|is|are|was|were|be|been|being)\s+(\w+ed|known|made|given|taken|written|done|seen|built|found|held|told|kept|called|born|chosen|spoken|shown|left|sent|brought)\b(\s+by\b)?/i, '수동태 (be + p.p.)', '주어가 동작을 "당하거나 받는" 관계예요. 행위자는 by ~로 나타내요. 능동태로 바꿔 읽으면 해석이 쉬워져요.'],
+      [/\b(it)\s+(is|was|will be)\s+\w+\s+(for\s+\w+\s+)?(to|that)\b/i, '가주어 it ~ to부정사/that절', '진짜 주어(to부정사·that절)가 길어서 뒤로 보내고 앞에 가주어 it을 쓴 문장이에요. it은 "그것"으로 해석하지 않아요.'],
+      [/\b(too\s+\w+\s+to|\w+\s+enough\s+to)\b/i, 'too ~ to / ~ enough to', 'too ~ to ... = 너무 ~해서 ...할 수 없다, ~ enough to ... = ...할 만큼 충분히 ~하다.'],
+      [/\bso\s+\w+\s+that\b/i, 'so ~ that ...', '너무 ~해서 ...하다 (결과). so that ~는 "~하도록"(목적)이에요.'],
+      [/\b(in order to|so as to)\b/i, '목적의 to부정사', '"~하기 위해서"라는 뜻으로 목적을 나타내요.'],
+      [/\b(want|wants|wanted|hope|hoped|decide|decided|plan|planned|need|needs|needed|try|tried|learn|learned|promise|promised|expect|expected|would like)\s+to\s+[a-z]+/i, '명사적 용법의 to부정사', 'to + 동사원형이 "~하는 것"이라는 뜻의 목적어 역할을 해요. want/hope/decide/need 같은 동사 뒤에는 to부정사를 써요.'],
+      [/\b(enjoy|enjoys|enjoyed|finish|finished|stop|stopped|keep|kept|mind|avoid|avoided|give up|gave up|practice|practiced|imagine|suggest|suggested)\s+[a-z]+ing\b/i, '동명사를 목적어로 쓰는 동사', 'enjoy/finish/stop/keep/mind/avoid 등은 목적어로 동명사(-ing)만 쓸 수 있어요. to부정사를 쓰면 틀려요.'],
+      [/\b(who|whom|whose|which)\b/i, '관계대명사', '앞의 명사(선행사)를 뒤에서 꾸며 주는 절을 이끌어요. who는 사람, which는 사물, whose는 소유("~의")를 나타내요. 선행사 바로 뒤에서 끊어 해석해 보세요.'],
+      [/\b(the (?:thing|man|woman|people|place|book|one|girl|boy|person)s?)\s+that\b/i, '관계대명사 that', 'that이 앞의 명사를 꾸미는 관계대명사로 쓰였어요. who/which로 바꿔 쓸 수 있어요.'],
+      [/\b(know|think|believe|say|said|hope|learn|learned|show|showed|find|found|realize|realized|sure|glad|happy)\s+that\b/i, '명사절 접속사 that', '"~라는 것/~라고"라는 뜻으로 뒤의 절 전체가 목적어 역할을 해요. 문맥상 생략되기도 해요.'],
+      [/\b(because|since|as)\b.*,|\bbecause\b/i, '이유의 접속사 because', '"~때문에" 이유를 나타내는 부사절이에요. because of 뒤에는 절이 아니라 명사(구)가 와요.'],
+      [/\b(although|though|even though)\b/i, '양보의 접속사 although', '"비록 ~이지만"이라는 뜻이에요. 같은 문장에서 but과 함께 쓰지 않아요.'],
+      [/\b(if|unless)\b/i, '조건의 접속사 if / unless', '조건을 나타내는 부사절에서는 미래의 일도 현재시제로 써요. (If it rains tomorrow, ...) unless = if ~ not.'],
+      [/\bif\b.*\b(were|had)\b.*\b(would|could|might)\b|\bwish\b.*\b(were|could|had)\b/i, '가정법', '현재 사실과 반대되는 상상을 나타내요. if절에는 과거형(be동사는 were), 주절에는 would/could + 동사원형을 써요.'],
+      [/\b(when|while|before|after|until|as soon as|whenever)\b/i, '시간의 접속사', '시간을 나타내는 부사절이에요. 시간 부사절 안에서는 미래를 현재시제로 나타내요.'],
+      [/\b\w+er than\b|\bmore\s+\w+\s+than\b|\bless\s+\w+\s+than\b/i, '비교급 (~ than)', '두 대상을 비교해서 "~보다 더 ...한"이라고 해석해요. 강조는 much/far/even/a lot을 써요(very는 안 돼요).'],
+      [/\bthe\s+\w+est\b|\bthe\s+most\s+\w+/i, '최상급', '셋 이상 중에서 "가장 ~한"이라는 뜻이에요. 보통 the를 붙이고 in/of로 범위를 나타내요.'],
+      [/\bas\s+\w+\s+as\b/i, '원급 비교 (as ~ as)', '"~만큼 ...한"이라는 동등 비교예요. 부정은 not as ~ as (~만큼 ...하지 않은).'],
+      [/\b(can|could|will|would|should|must|may|might|shall)\s+(not\s+)?[a-z]+/i, '조동사', '조동사 뒤에는 항상 동사원형이 와요. can(능력·가능), must(의무·강한 추측), should(충고), may/might(약한 추측·허락), will(의지·미래).'],
+      [/\bthere\s+(is|are|was|were)\b/i, 'There is/are ~', '"~이 있다"라는 뜻이고, 뒤에 오는 명사가 진짜 주어라서 그 명사의 수에 be동사를 맞춰요.'],
+      [/\b(am|is|are)\s+going\s+to\b/i, 'be going to + 동사원형', '가까운 미래의 계획·예정, 또는 눈에 보이는 근거가 있는 예측을 나타내요.'],
+      [/\bused to\s+[a-z]+/i, 'used to + 동사원형', '"~하곤 했다 / (예전에) ~였다"라는 과거의 습관·상태를 나타내요. be used to -ing(~에 익숙하다)와 구별해요.'],
+      [/\b(make|makes|made|let|lets|help|helps|helped|(?:have|has|had)(?=\s+(?:him|her|them|me|us|you)\b))\s+(\w+|\w+\s+\w+)\s+[a-z]+\b/i, '사역동사 / 5형식', 'make/let/have + 목적어 + 동사원형(~가 …하게 하다), help는 to가 있어도 없어도 돼요. 목적어와 목적격보어의 관계를 확인하세요.'],
+      [/\b(see|saw|watch|watched|hear|heard|feel|felt|notice|noticed)\s+\w+\s+[a-z]+(ing)?\b/i, '지각동사 구문', '지각동사 + 목적어 + 동사원형/-ing: "~가 …하는 것을 보다/듣다/느끼다".'],
+      [/\b(\w+ing|\w+ed)\b\s+(by|in|on|at|with)\b.*,/i, '분사', '현재분사(-ing)는 능동·진행, 과거분사(-ed)는 수동·완료의 뜻으로 명사를 꾸미거나 문장에 덧붙는 설명이 돼요.'],
+      [/\b(not|never|no)\b/i, '부정문', 'not은 be동사·조동사 뒤, 일반동사는 do/does/did + not으로 만들어요. never는 "결코 ~않다".']
+    ];
+    const gram = (t) => { const r = [], used = new Set(); GR.forEach(([re, ti, ex]) => { const m = t.match(re); if (m && !used.has(ti)) { used.add(ti); r.push([ti, ex, m[0]]); } }); return r.slice(0, 5); };
+    text.split(/\n+/).forEach((para) => {
+      const ss = para.match(/[^.!?]+[.!?]+["”'’)]*|[^.!?]+$/g) || [para];
+      ss.forEach((st) => {
+        st = st.trim(); if (!st) return;
+        const blk = el('div', 'tg-sent'), ko = el('div', 'tg-ko', '…'), p = el('div', 'tg-en');
+        st.split(/([A-Za-z][A-Za-z'’-]*)/).forEach(tok => {
+          if (/^[A-Za-z]/.test(tok)) {
+            const lw = tok.toLowerCase().replace(/’/g, "'"), base = lw.replace(/'s$/, '');
+            const own = dicOwn(base), big = base.length >= 4 && !DIC_STOP.has(base);
+            const sp = el('span', 'w', tok); if (own) { sp.classList.add('own'); sp.title = own.join(' / '); }
+            sp.onclick = () => { $('dicQ').value = base; dicSearch(base); };
+            if (big) { const rb = document.createElement('ruby'); const rt = document.createElement('rt'); rt.textContent = gl(base); (rts.get(base) || rts.set(base, []).get(base)).push(rt); rb.append(sp, rt); p.append(rb); }
+            else p.append(sp);
+            if (big && !seen.has(base)) { seen.set(base, tok); order.push(base); }
+          } else p.append(document.createTextNode(tok));
+        });
+        blk.append(ko, p);
+        const g = gram(st);
+        if (g.length) { const gb = el('div', 'tg-gr'); g.forEach(([ti, ex, mt]) => { const row = el('div', 'tg-gr-i'); row.append(el('b', null, '▶ ' + ti), el('span', 'tg-m', ' “' + mt.trim() + '”'), el('div', null, ex)); gb.append(row); }); blk.append(gb); }
+        pass.append(blk); sents.push({ st, ko });
       });
-      pass.append(p);
     });
     out.append(pass);
     const tbl = el('table', 'dic-tbl'); const th = el('tr'); ['단어', '발음', '뜻'].forEach(t => th.append(el('th', null, t))); tbl.append(th);
@@ -3139,6 +3197,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     await Promise.all([worker(), worker(), worker(), worker()]);
     msg.textContent = `지문 단어 ${order.length}개 정리 완료. 자동 번역은 참고용이에요. 문맥에 맞는지 확인해 주세요.`;
     out._rows = rows;
+    rows.forEach(r => { const t = r.own ? String(r.own[0]).split(/[\/,;]/)[0].trim() : ((r.ko.firstChild && r.ko.firstChild.textContent) || '').split(/[\/,;]/)[0].trim(); (rts.get(r.w) || []).forEach(rt => { if (!rt.textContent && t && !/^[(…-]/.test(t)) rt.textContent = t; }); });
+    msg.textContent = '문장 해석(핑크)을 가져오는 중이에요…';
+    const q = sents.slice(); const wk2 = async () => { while (q.length) { const x = q.shift(); const t = await dicSent(x.st); x.ko.textContent = t || '(해석을 가져오지 못했어요)'; } };
+    await Promise.all([wk2(), wk2(), wk2()]);
+    msg.textContent = `교사용 해설 완료 · 핑크: 해석 / 파랑: 문법. 자동 번역·문법 감지는 참고용이니 수업 전에 한 번 확인하세요.`;
   }
   function dicCopy() {
     const rows = ($('dicOut')._rows || []).map(r => `${r.w} - ${r.own ? r.own.join(' / ') : (r.tr.dataset.auto || '')}`).join('\n');
