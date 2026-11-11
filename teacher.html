@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261111185049">
+<meta name="build" content="20261111193337">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -46,6 +46,13 @@ header.top h1 { font-family: var(--font-display); font-weight: 400; font-size: 2
 header.top p { margin: 0; color: var(--muted); }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 24px; align-items: start; }
 @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+body.tmode .wrap { max-width: min(98vw, 1700px); }
+body.tmode .grid { grid-template-columns: minmax(0, 1fr) 14px minmax(240px, var(--rw, 420px)); gap: 10px; }
+.gsplit { align-self: stretch; cursor: col-resize; border-radius: 8px; background: color-mix(in srgb, var(--muted) 25%, transparent); position: relative; touch-action: none; min-height: 80px; }
+.gsplit::after { content: "⋮"; position: absolute; top: 150px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 1.2rem; }
+.gsplit:hover, .gsplit.on { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+body:not(.tmode) .gsplit { display: none; }
+@media (max-width: 900px) { body.tmode .grid { grid-template-columns: minmax(0, 1fr); } .gsplit { display: none; } }
 .steps { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 section.step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .step h2 { margin: 0; font-size: 1.02rem; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -726,6 +733,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       </section>
     </div>
 
+     <div class="gsplit" id="gsplit" role="separator" aria-orientation="vertical" aria-label="좌우 크기 조절 (끌어서 조절, 더블클릭하면 원래대로)" title="끌어서 좌우 크기 조절 · 더블클릭: 원래대로"></div>
     <aside class="preview" aria-label="미리보기">
       <div class="canvas-box"><img class="outImg" alt="과제 알림장 미리보기"></div>
       <div class="actions">
@@ -1598,6 +1606,20 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (WT.who !== t) { WT.who = t; WT.src = ''; WT.wrong.clear(); }
     state.cls = t;
   }
+  /* 좌우 단 크기 조절: 가운데 손잡이를 끌면 오른쪽 미리보기 폭이 바뀌어요 */
+  (function () {
+    const g = $('gsplit'), grid = document.querySelector('.grid'); if (!g || !grid) return;
+    const root = document.body, key = 'rw';
+    const set = (w, save) => { w = Math.max(240, Math.min(w, Math.round(window.innerWidth * 0.75))); root.style.setProperty('--rw', w + 'px'); if (save) { try { localStorage.setItem('alrim.' + key, String(w)); } catch (e) {} } };
+    try { const v = parseInt(localStorage.getItem('alrim.' + key)); if (v) set(v); } catch (e) {}
+    g.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); g.setPointerCapture(e.pointerId); g.classList.add('on');
+      const mv = (ev) => { const r = grid.getBoundingClientRect(); set(r.right - ev.clientX - 7); };
+      const up = (ev) => { g.classList.remove('on'); g.removeEventListener('pointermove', mv); g.removeEventListener('pointerup', up); g.removeEventListener('pointercancel', up); const w = parseInt(getComputedStyle(root).getPropertyValue('--rw')); if (w) set(w, true); };
+      g.addEventListener('pointermove', mv); g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up);
+    });
+    g.addEventListener('dblclick', () => { root.style.removeProperty('--rw'); try { localStorage.removeItem('alrim.' + key); } catch (e) {} });
+  })();
   function renderTabs() {
     const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : '';
     { const nm = state.tab ? shortName(state.tab) : '', hv = state.tab ? slugOf(state.tab) : '';
