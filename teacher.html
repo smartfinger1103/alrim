@@ -258,6 +258,9 @@ section.card h2 { margin: 0; font-family: var(--font-display); font-weight: 400;
 :root[data-theme="dark"] .stab[aria-selected="true"] { background: hsl(var(--st) 50% 38%); }
 body.tmode::before { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 6px; z-index: 60; background: hsl(var(--cur, 150) 70% 55%); }
 body[data-stu="gyumin"] { --cur: 214; } body[data-stu="sua"] { --cur: 330; }
+body.tmode[data-stu] { background: hsl(var(--cur) 75% 91%); transition: background .25s; }
+:root[data-theme="dark"] body.tmode[data-stu] { background: hsl(var(--cur) 35% 14%); }
+body.tmode[data-stu] .stabs { border-bottom: 4px solid hsl(var(--cur) 70% 55%); }
 /* 섹션 색 구분 */
 :root { --sl: 36%; --sbg: 16%; }
 section.step { --h: 150; --sc: hsl(var(--h) 45% var(--sl)); border-left: 5px solid var(--sc); background: color-mix(in srgb, var(--sc) var(--sbg), var(--panel)); }
