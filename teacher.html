@@ -120,7 +120,7 @@ section.tt { border-color: var(--accent); }
 .lcard .lh b { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; }
 .lcard .lh span { font-size: 0.8rem; color: var(--muted); }
 .lcard ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; line-height: 1.35; }
-.lcard li { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.lcard li { overflow-wrap: anywhere; }
 .lcard li em { font-style: normal; color: var(--accent); font-weight: 600; }
 .lcard li.sh { color: var(--accent); font-weight: 600; margin-top: 2px; }
 .lcard li.si { padding-left: 10px; position: relative; }
@@ -1056,11 +1056,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const tasks = lessonTasks(OV.who, d).filter(e => e.task);
         let shown = 0;
         groupBySubject(tasks).forEach(g => {
-          if (shown >= 6) return;
           ul.append(el('li', 'sh', g.subject));
-          g.items.forEach(e => { if (shown >= 6) return; shown++; const li = el('li', 'si'); li.append(document.createTextNode(e.task.split('\n')[0])); const wc = wordCount(e); if (wc) li.append(el('span', 'wbadge', wc)); ul.append(li); });
+          g.items.forEach(e => { const li = el('li', 'si'); li.append(document.createTextNode(e.task.replace(/\n+/g, ' / '))); const wc = wordCount(e); if (wc) li.append(el('span', 'wbadge', wc)); ul.append(li); });
         });
-        if (tasks.length > shown) ul.append(el('li', 'more', `외 ${tasks.length - shown}개`));
         if (!tasks.length) ul.append(el('li', 'more', '과제 없음'));
         c.append(ul);
         c.onclick = () => ovSelectDay(d);
