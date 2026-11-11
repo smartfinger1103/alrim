@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261111193337">
+<meta name="build" content="20261111194239">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1599,18 +1599,20 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const sd = studentDates();
     const lbl = state.date === sd.prev ? '지난 과제' : state.date === todayStr() ? '오늘의 과제' : '이번 과제';
     const n = list.filter(isDone).length;
-    meta.append(el('span', 'nb-count', list.length ? `${lbl} ${list.length}개` + (n ? (n === list.length ? ' · 모두 완료!' : ` · ${n}개 완료`) : '') : '과제가 없어요'));
+    const nLines = (it) => String(it.task || '').split('\n').map(x => x.trim()).filter(Boolean).length || 1, total = list.reduce((a, it) => a + nLines(it), 0);
+    meta.append(el('span', 'nb-count', list.length ? `${lbl} ${total}개` + (n ? (n === list.length ? ' · 모두 완료!' : ` · ${list.filter(isDone).reduce((a, it) => a + nLines(it), 0)}개 완료`) : '') : '과제가 없어요'));
     nb.append(meta);
     groupBySubject(list).forEach((g, gi) => {
       const sec = el('section', 'nb-g');
       sec.append(el('span', 'nb-num', g.items.every(isDone) ? '✓' : String(gi + 1)));
-      const h = el('h3', 'nb-sub', g.subject); if (g.items.length > 1) h.append(el('small', null, g.items.length + '개'));
+      const h = el('h3', 'nb-sub', g.subject); const gcnt = g.items.reduce((a, it) => a + nLines(it), 0); if (gcnt > 1) h.append(el('small', null, gcnt + '개'));
       sec.append(h);
       g.items.forEach(it => {
         const d = isDone(it);
         const row = el('div', 'nb-item' + (d ? ' done' : ''));
         row.append(el('span', 'nb-dot', d ? '✓' : '•'));
-        const tx = el('div', 'nb-t'); tx.append(taskSpan(it.task));
+        const tl = String(it.task || '').split('\n').map(x => x.trim()).filter(Boolean);
+        const tx = el('div', 'nb-t'); tx.append(taskSpan(tl.length > 1 ? tl[0] : it.task));
         const mt = [it.range, it.note ? '준비물 ' + it.note : ''].filter(Boolean).join(' · ');
         if (mt) tx.append(el('small', null, mt));
         const ws = it.words ? parseWords(it.words, '') : [];
@@ -1646,6 +1648,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           b.onclick = () => setDone([it], !d); act.append(b);
         }
         row.append(tx, act); sec.append(row);
+        tl.slice(1).forEach(t2 => { const r2 = el('div', 'nb-item' + (d ? ' done' : '')); r2.append(el('span', 'nb-dot', d ? '✓' : '•')); const t3 = el('div', 'nb-t'); t3.append(taskSpan(t2)); r2.append(t3); sec.append(r2); });
       });
       const gn = dayNotes().filter(x => x.subject === g.subject);
       if (gn.length) sec.append(noteThumbs(gn));
