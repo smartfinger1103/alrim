@@ -275,6 +275,7 @@ section.step[aria-labelledby="h6s"] { --h: 140; }
 section.step.flash { animation: secflash 1.3s ease-out; }
 @keyframes secflash { 0% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--sc) 55%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .tnav-float [data-go].primary { color: var(--ink); }
+.tnav .tobottom { background: color-mix(in srgb, hsl(50 70% var(--sl)) 30%, var(--panel)); border: 1.5px solid hsl(50 60% var(--sl)); font-weight: 600; }
 .tnav .totop { border-left: 1px solid var(--line); text-align: center; font-weight: 600; color: var(--muted); }
 .tnav { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 18px; }
 .tnav button { font-size: 0.88rem; padding: 6px 12px; border-radius: 99px; }
@@ -412,6 +413,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="h2s">과제 적기</button>
     <button type="button" data-go="h3s">알림장 만들기</button>
     <button type="button" data-go="h6s">저장 · 학생 링크 반영</button>
+    <button type="button" class="tobottom" data-bottom>학생 알림장 보기 ↓</button>
   </nav>
   <nav class="tnav tnav-float" aria-label="바로 가기 (고정)">
     <button type="button" data-go="h0s" data-s="할 일">선생님 할 일</button>
@@ -421,6 +423,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="h2s" data-s="적기">과제 적기</button>
     <button type="button" data-go="h3s" data-s="알림장">알림장 만들기</button>
     <button type="button" data-go="h6s" data-s="저장">저장 · 학생 링크 반영</button>
+    <button type="button" class="tobottom" data-bottom data-s="알림장↓">학생 알림장 보기 ↓</button>
     <button type="button" class="totop" data-top data-s="↑ 위로">↑ 맨 위로</button>
   </nav>
 
@@ -1178,6 +1181,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     changed();
   };
   $$('.tnav [data-go]').forEach(b => b.onclick = () => { const t = $(b.dataset.go); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); const sec = t.closest('section'); if (sec) { sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash'); } });
+  $$('.tnav [data-bottom]').forEach(b => b.onclick = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
   $$('.tnav [data-top]').forEach(b => b.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
   /* ---------- 듣기 숙제 ---------- */
