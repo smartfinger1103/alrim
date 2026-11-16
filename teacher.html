@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116182200">
+<meta name="build" content="20261116183500">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1292,7 +1292,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       $('fSubject').focus();
     }
     if (pron) {   /* 발음 단어 칸 → 따로 '발음연습' 과제로 만들어 학생 화면의 발음 연습과 연결 */
-      D.entries.push({ id: uid(), date: f.date, who: f.who, subject: '단어', task: '발음연습', range: '', due: '', note: '', words: pron });
+      mergeWords('p', f.date, f.who, pron).e.task = '발음연습';
       fMsg($('fMsg').textContent + ' 발음 연습 과제도 만들었어요.');
     }
     if (sents) {   /* 문장 연습 칸 → 따로 '문장분석' 과제 (학생 화면에 ✍️ 문장 분석 버튼) */
@@ -1304,6 +1304,22 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (!lessonOnly) { state.date = f.date; state.auto = f.date === autoDate(); if (f.who) state.cls = f.who; }
     changed();
   }
+  /* 같은 날 '외울 단어' / '발음연습' 과제는 하나로 묶고, 새로 넣는 단어는 거기에 더함 (중복 제외) */
+  function mergeWords(kind, date, who, text) {
+    const isP = kind === 'p';
+    const hit = D.entries.find(e => e.date === date && (e.who || '') === (who || '') && e.subject === '단어' && (isP ? isPronE(e) : /^외울 단어/.test(e.task || '')));
+    const keyOf = (line) => line.trim().split(/\s+[-–:=]\s+|\t/)[0].trim().toLowerCase();
+    if (!hit) {
+      const e = { id: uid(), date, who, subject: '단어', task: isP ? '발음연습' : '', range: '', due: '', note: '', words: text.trim() };
+      D.entries.push(e); fixWordTask(e); return { e, added: wordCount(e), merged: false };
+    }
+    const have = new Set(String(hit.words || '').split('\n').filter(x => x.trim()).map(keyOf));
+    const add = text.split('\n').filter(x => x.trim() && !have.has(keyOf(x)) && (have.add(keyOf(x)), true));
+    const before = wordCount(hit);
+    if (add.length) hit.words = (String(hit.words || '').trim() + '\n' + add.join('\n')).trim();
+    fixWordTask(hit); return { e: hit, added: wordCount(hit) - before, merged: true };
+  }
+  function fixWordTask(e) { const n = wordCount(e); e.task = isPronE(e) || e.task === '발음연습' ? '발음연습' : (n ? `외울 단어 (${n}개)` : '외울 단어'); }
   /* 박스별 저장: 그 박스 내용만 따로 과제로 저장 */
   async function saveBox(kind, btn) {
     const date = $('fDate').value, who = $('fWho').value;
@@ -1311,13 +1327,18 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     let e = null, label = '';
     if (kind === 'w') {
       const words = $('fWords').value.trim(); if (!words) { fMsg('외울 단어 칸이 비어 있어요.'); return; }
-      const n = parseWords(words, '').length;
-      e = { subject: '단어', task: n ? `외울 단어 (${n}개)` : '외울 단어', words }; label = '외울 단어';
+      const r = mergeWords('w', date, who, words);
       $('fWords').value = ''; fwCount();
+      fMsg(r.merged ? `${kShort(date)} 외울 단어에 ${r.added}개를 더했어요. (모두 ${wordCount(r.e)}개)` : `${kShort(date)} 외울 단어 ${wordCount(r.e)}개를 저장했어요.`);
+      if (state.isSample) state.isSample = false; $('sampleBadge').hidden = true;
+      state.date = date; state.auto = date === autoDate(); if (who) state.cls = who; changed(); return;
     } else if (kind === 'p') {
       const words = readPron(); if (!words) { fMsg('발음 단어 칸이 비어 있어요.'); return; }
-      e = { subject: '단어', task: '발음연습', words }; label = '발음연습';
+      const r = mergeWords('p', date, who, words); r.e.task = '발음연습';
       $('fPron').value = ''; fpCount();
+      fMsg(r.merged ? `${kShort(date)} 발음연습에 ${r.added}개를 더했어요. (모두 ${wordCount(r.e)}개)` : `${kShort(date)} 발음연습 ${wordCount(r.e)}개를 저장했어요.`);
+      if (state.isSample) state.isSample = false; $('sampleBadge').hidden = true;
+      state.date = date; state.auto = date === autoDate(); if (who) state.cls = who; changed(); return;
     } else {
       if (!$('fSents').value.trim()) { fMsg('문장 연습 칸이 비어 있어요.'); return; }
       if (btn) btn.disabled = true;
@@ -2477,8 +2498,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           }
           y += 14;
         });
-        const due = dueInfo(it), wc = it.words ? parseWords(it.words, '').length : 0;
-        [['범위', it.range, false], ['준비물', it.note, false], ['단어', wc ? wc + '개 (알림장 링크에서 공부)' : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
+        const prn = /발음/.test((it.subject || '') + ' ' + (it.task || ''));
+        const due = dueInfo(it), wc = it.words ? (prn ? pronWords(it.words) : parseWords(it.words, '')).length : 0;
+        [['범위', it.range, false], ['준비물', it.note, false], [prn ? '발음' : '단어', wc ? wc + '개' + (prn ? ' 단어 (알림장 링크에서 연습)' : ' (알림장 링크에서 공부)') : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
           y += 4;
           ctx.font = '28px ' + FD; const kw = ctx.measureText(k).width + 18;
           ctx.font = '30px ' + FB;
