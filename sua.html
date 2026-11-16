@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116184000">
+<meta name="build" content="20261116192520">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1269,6 +1269,127 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const s = new Set(lsDoneSet(it)); ts.forEach(t => s.add(t)); store.set('lsdone:' + it.id, JSON.stringify([...s]));
     const L = listenOf(it); if (L && L.sets.every(st => s.has(st.test))) setDone([it], true);
   }
+  /* ---------- 시험 풀기: 객관식 · 한 문제씩(듣기평가처럼) · 채점 없음 · 제출만 · 걸린 시간은 선생님께 ---------- */
+  var EX_C = ['①', '②', '③', '④', '⑤', '⑥'];
+  function exOk(it) { return !!(it && it.exam && Array.isArray(it.exam.qs) && it.exam.qs.length); }
+  function exFmt(sec) { sec = Math.max(0, Math.round(sec || 0)); const m = Math.floor(sec / 60), s = sec % 60; return m ? m + '분 ' + s + '초' : s + '초'; }
+  function exClock(sec) { sec = Math.max(0, Math.round(sec || 0)); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); }
+  function exKey(it) { return 'exam:' + (state.cls || '') + ':' + it.id; }
+  function exGet(it) { try { return JSON.parse(store.get(exKey(it)) || 'null'); } catch (e) { return null; } }
+  function exPut(it, S) { store.set(exKey(it), JSON.stringify(S)); }
+  /* 글자는 그대로 보여 주고, {{밑줄}} 은 밑줄, ____ 는 빈칸 줄, [보기] 는 작은 표시로 */
+  function exHtml(t) {
+    const esc = String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return esc.replace(/\{\{([\s\S]*?)\}\}/g, '<u>$1</u>').replace(/_{3,}/g, '<span class="ex-blank"></span>').replace(/^\[보기\]\s*/, '<b class="ex-bogi">보기</b> ').replace(/\n/g, '<br>');
+  }
+  function exStyle() {
+    if (document.getElementById('exCss')) return;
+    const st = document.createElement('style'); st.id = 'exCss';
+    st.textContent = `.ex-box{max-width:640px}
+.ex-meta{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--muted,#5E6D67);font-size:14px}.ex-meta b{font-size:22px;color:var(--ink,#1D2A26)}
+.ex-bar{height:8px;border-radius:99px;background:var(--soft,#E6EFEA);overflow:hidden}.ex-bar i{display:block;height:100%;background:var(--accent,#2E6B57)}
+.ex-inst{font-weight:600;font-size:15px;line-height:1.5}
+.ex-body{border:1.5px solid var(--line,#DCE3DE);border-radius:10px;padding:12px 14px;font-size:18px;line-height:1.75;overflow-wrap:anywhere}
+.ex-body u,.ex-opt u{text-decoration:underline;text-underline-offset:3px}
+.ex-blank{display:inline-block;min-width:84px;border-bottom:1.5px solid currentColor;margin:0 3px}
+.ex-bogi{font-size:13px;background:var(--soft,#E6EFEA);border-radius:6px;padding:1px 6px;margin-right:4px}
+.ex-opts{display:grid;gap:8px}
+.ex-opt{display:flex;gap:10px;align-items:flex-start;text-align:left;min-height:52px;padding:10px 12px;border-radius:12px;border:2px solid var(--line,#DCE3DE);background:transparent;color:inherit;font:inherit;font-size:17px;line-height:1.5;cursor:pointer;overflow-wrap:anywhere}
+.ex-opt .ex-no{flex:none;font-weight:700}
+.ex-opt[aria-pressed=true]{border-color:var(--accent,#2E6B57);background:var(--soft,#E6EFEA)}
+.ex-nav{display:flex;gap:8px;position:sticky;bottom:0;background:var(--panel,#fff);padding:8px 0 2px}.ex-nav .ls-btn{flex:1}
+.ex-big{font-size:28px;font-weight:700}.ex-rules{display:grid;gap:6px;color:var(--muted,#5E6D67);line-height:1.5}`;
+    document.head.append(st);
+  }
+  /* 제출 결과 → 구글 폼 → 선생님 화면: 종류 '시험', 점수칸=걸린 초, 틀린칸='시험번호|고른답|문항별초|제목', 날짜칸=날짜 */
+  function exSend(it, S) {
+    if (state.mode === 'teacher' || !state.cls || it.id === '__pv') return;
+    try {
+      const cfg = lsCfg(), f = cfg.f, fd = new URLSearchParams();
+      fd.set(f.who, state.cls); fd.set(f.test, '시험'); fd.set(f.score, String(S.sec));
+      fd.set(f.wrong, [it.id, S.pick.join(''), S.times.map(t => Math.round(t)).join(','), String((it.exam && it.exam.title) || it.task || '').replace(/\|/g, ' ').slice(0, 40)].join('|'));
+      fd.set(f.picks, S.date || todayStr());
+      fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).then(() => { S.sent = true; exPut(it, S); }).catch(() => {});
+    } catch (e) {}
+  }
+  function exRetry() {   /* 인터넷이 끊겨 못 보낸 제출은 다시 보내요 */
+    if (state.mode === 'teacher' || !state.cls) return;
+    try { (D.entries || []).forEach(it => { if (exOk(it)) { const S = exGet(it); if (S && S.done && !S.sent) exSend(it, S); } }); } catch (e) {}
+  }
+  setTimeout(exRetry, 5000); setInterval(exRetry, 120000); window.addEventListener('online', exRetry);
+  function openExam(it) {
+    if (!exOk(it)) return;
+    const PV = it.id === '__pv', qs = it.exam.qs, N = qs.length;
+    let S = PV ? null : exGet(it);
+    if (S && S.done) return;
+    if (!S || !Array.isArray(S.pick) || S.pick.length !== N) S = { pick: Array(N).fill(0), times: Array(N).fill(0), idx: 0, started: false, done: false };
+    lsStyle(); exStyle();
+    const prevOv = document.body.style.overflow; document.body.style.overflow = 'hidden';
+    const ov = el('div', 'ls-ov'), box = el('div', 'ls-box ex-box'); ov.append(box); document.body.append(ov);
+    let mode = 'start', last = Date.now(), tid = 0;
+    const total = () => S.times.reduce((a, b) => a + b, 0);
+    const lap = () => { const now = Date.now(); if (mode === 'q' && !document.hidden) S.times[S.idx] += Math.min(5, (now - last) / 1000); last = now; };
+    const save = () => { if (!PV) exPut(it, S); };
+    const Q = (s) => box.querySelector(s);
+    const onVis = () => { if (!document.hidden) last = Date.now(); };
+    const onKey = (ev) => {
+      if (ev.key === 'Escape') { close(); return; }
+      if (mode !== 'q') return;
+      if (/^[1-6]$/.test(ev.key) && +ev.key <= qs[S.idx].choices.length) pickAt(+ev.key);
+      else if (ev.key === 'Enter' && S.pick[S.idx]) next(false);
+    };
+    function close() { lap(); save(); clearInterval(tid); document.removeEventListener('visibilitychange', onVis); document.removeEventListener('keydown', onKey); ov.remove(); document.body.style.overflow = prevOv; renderNotebook(); }
+    document.addEventListener('visibilitychange', onVis); document.addEventListener('keydown', onKey);
+    function head() {
+      const top = el('div', 'ls-top'); top.append(el('b', null, '📝 ' + (it.exam.title || it.task || '시험')));
+      const x = el('button', 'ls-btn', '×'); x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.onclick = close; top.append(x); box.append(top);
+    }
+    function updTime() { const tm = Q('.ex-time'); if (tm) tm.textContent = '이 문제 ' + exClock(S.times[S.idx]) + ' · 전체 ' + exClock(total()); }
+    function drawStart() {
+      mode = 'start'; box.textContent = ''; head();
+      box.append(el('div', 'ex-big', S.started ? S.idx + 1 + '번부터 이어서 풀어요' : '객관식 ' + N + '문제'));
+      const ul = el('div', 'ex-rules');
+      ['· 한 문제씩 나와요. 다음으로 넘어가면 앞 문제로 돌아갈 수 없어요.', '· 채점은 하지 않아요. 아는 만큼 풀고 끝까지 제출하면 돼요.', '· 모르는 문제는 "잘 모르겠어요"를 눌러 넘어가요.', '· 푸는 데 걸린 시간이 선생님께 전달돼요. 화면을 보고 있는 시간만 재요.'].forEach(t => ul.append(el('div', null, t)));
+      box.append(ul);
+      const go = el('button', 'ls-btn primary', S.started ? '이어서 풀기' : '시작하기'); go.type = 'button'; go.id = 'exGo';
+      go.onclick = () => { S.started = true; save(); drawQ(); }; box.append(go);
+    }
+    function drawQ() {
+      mode = 'q'; last = Date.now();
+      const q = qs[S.idx], n = S.idx + 1; box.textContent = ''; head();
+      const meta = el('div', 'ex-meta'); meta.append(el('b', null, n + ' / ' + N), el('span', 'ex-time')); box.append(meta);
+      const bar = el('div', 'ex-bar'), bi = el('i'); bi.style.width = ((n - 1) / N * 100) + '%'; bar.append(bi); box.append(bar);
+      if (q.inst) box.append(el('div', 'ex-inst', q.inst));
+      if (q.body) { const b = el('div', 'ex-body'); b.innerHTML = exHtml(q.body); box.append(b); }
+      const opts = el('div', 'ex-opts');
+      q.choices.forEach((c, k) => { const b = el('button', 'ex-opt'); b.type = 'button'; b.setAttribute('aria-pressed', S.pick[S.idx] === k + 1 ? 'true' : 'false'); b.innerHTML = '<span class="ex-no">' + EX_C[k] + '</span><span>' + exHtml(c) + '</span>'; b.onclick = () => pickAt(k + 1); opts.append(b); });
+      box.append(opts);
+      const nav = el('div', 'ex-nav');
+      const sk = el('button', 'ls-btn', n === N ? '답 없이 제출하기' : '잘 모르겠어요 (넘어가기)'); sk.type = 'button'; sk.id = 'exSkip'; sk.onclick = () => next(true);
+      const nx = el('button', 'ls-btn primary', n === N ? '제출하기' : '다음 문제 →'); nx.type = 'button'; nx.id = 'exNext'; nx.disabled = !S.pick[S.idx]; nx.onclick = () => next(false);
+      nav.append(sk, nx); box.append(nav); ov.scrollTop = 0; updTime();
+    }
+    function pickAt(k) {
+      S.pick[S.idx] = k; save();
+      box.querySelectorAll('.ex-opt').forEach((b, i) => b.setAttribute('aria-pressed', i + 1 === k ? 'true' : 'false'));
+      const nx = Q('#exNext'); if (nx) nx.disabled = false;
+    }
+    function next(skip) {
+      lap(); if (skip) S.pick[S.idx] = 0;
+      if (S.idx < N - 1) { S.idx++; save(); drawQ(); } else finish();
+    }
+    function finish() {
+      mode = 'end'; clearInterval(tid);
+      S.done = true; S.sec = Math.round(total()); S.date = todayStr(); S.sent = false; save();
+      exSend(it, S); if (!PV) setDone([it], true);
+      box.textContent = ''; head();
+      const ans = S.pick.filter(Boolean).length;
+      box.append(el('div', 'ex-big', '제출했어요! 🎉'), el('p', null, '걸린 시간 ' + exFmt(S.sec) + ' · ' + N + '문제 중 ' + ans + '문제에 답했어요.'), el('p', null, PV ? '(미리 풀어보기라 기록은 저장되지 않았어요.)' : '채점은 하지 않아요. 선생님이 확인해 주실 거예요. 수고했어요!'));
+      const bt = el('button', 'ls-btn primary', '닫기'); bt.type = 'button'; bt.onclick = close; box.append(bt);
+    }
+    tid = setInterval(() => { lap(); updTime(); }, 1000);
+    drawStart();
+  }
   async function openListening(it, onlyTest) {
     let L = listenOf(it); if (!L) return;
     if (onlyTest) L = { ...L, sets: L.sets.filter(s => s.test === onlyTest) };
@@ -1697,7 +1818,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const ws = it.words ? (isPron(it) ? pronWords(it.words) : parseWords(it.words, '')) : [];
         const act = el('div', 'nb-act');
         if (it.sents && saParse(it.sents).length) { const sn = saParse(it.sents), sd = saDoneN(it, sn); if (!d) tx.append(el('small', 'nb-prog', `문장 ${sd}/${sn.length}개 완성`)); const sb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '문장 다시 보기' : '✍️ 문장 분석'); sb.type = 'button'; sb.onclick = () => openSA(it); act.append(sb); }
-        if (ws.length) {
+        if (exOk(it)) {
+          const XS = exGet(it), XN = it.exam.qs.length;
+          if (XS && XS.done) { tx.append(el('small', 'nb-prog', '✅ 제출 완료 · 걸린 시간 ' + exFmt(XS.sec))); const xb = el('button', 'nb-btn ghost', '제출 완료'); xb.type = 'button'; xb.disabled = true; act.append(xb); }
+          else { tx.append(el('small', 'nb-prog', XS && XS.started ? XN + '문제 중 ' + (XS.idx + 1) + '번부터 이어서 풀어요' : '객관식 ' + XN + '문제 · 한 문제씩 풀고 제출만 해요 (채점 없음)')); const xb = el('button', 'nb-btn', XS && XS.started ? '이어서 풀기' : '📝 시험 풀기'); xb.type = 'button'; xb.onclick = () => openExam(it); act.append(xb); }
+        } else if (ws.length) {
           // 단어가 붙은 과제는 단어를 다 외워야 완료돼요
           const m = memCount('t:' + it.id, ws);
           if (!d) tx.append(el('small', 'nb-prog', isPron(it) ? `발음 ${m}/${ws.length}개 통과 · 단어마다 3번 PASS하면 완성` : `단어 ${m}/${ws.length}개 외움 · 다 외우면 자동으로 완료`));
@@ -1869,7 +1994,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         });
         const prn = /발음/.test((it.subject || '') + ' ' + (it.task || ''));
         const due = dueInfo(it), wc = it.words ? (prn ? pronWords(it.words) : parseWords(it.words, '')).length : 0;
-        [['범위', it.range, false], ['준비물', it.note, false], ['단어', wc ? wc + '개' + (prn ? ' (알림장 링크에서 발음 연습)' : ' (알림장 링크에서 공부)') : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
+        [['범위', it.range, false], ['준비물', it.note, false], ['단어', wc ? wc + '개' + (prn ? ' (알림장 링크에서 발음 연습)' : ' (알림장 링크에서 공부)') : '', false], ['시험', exOk(it) ? it.exam.qs.length + '문항 (알림장 링크에서 풀기)' : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
           y += 4;
           ctx.font = '28px ' + FD; const kw = ctx.measureText(k).width + 18;
           ctx.font = '30px ' + FB;
