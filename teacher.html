@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116184000">
+<meta name="build" content="20261116184500">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1307,7 +1307,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   /* 같은 날 '외울 단어' / '발음연습' 과제는 하나로 묶고, 새로 넣는 단어는 거기에 더함 (중복 제외) */
   function mergeWords(kind, date, who, text) {
     const isP = kind === 'p';
-    const hit = D.entries.find(e => e.date === date && (e.who || '') === (who || '') && e.subject === '단어' && (isP ? isPronE(e) : /^외울 단어/.test(e.task || '')));
+    const hit = D.entries.find(e => e.date === date && (e.who || '') === (who || '') && e.subject === '단어' && (isP ? isPronE(e) : (!isPronE(e) && !!e.words)));
     const keyOf = (line) => line.trim().split(/\s+[-–:=]\s+|\t/)[0].trim().toLowerCase();
     if (!hit) {
       const e = { id: uid(), date, who, subject: '단어', task: isP ? '발음연습' : '', range: '', due: '', note: '', words: text.trim() };
@@ -1317,9 +1317,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const add = text.split('\n').filter(x => x.trim() && !have.has(keyOf(x)) && (have.add(keyOf(x)), true));
     const before = wordCount(hit);
     if (add.length) hit.words = (String(hit.words || '').trim() + '\n' + add.join('\n')).trim();
+    if (!isP && add.length) hit.task = '외울 단어';
     fixWordTask(hit); return { e: hit, added: wordCount(hit) - before, merged: true };
   }
-  function fixWordTask(e) { const p = isPronE(e) || /^발음연습/.test(e.task || ''); const n = p ? pronWords(e.words || '').length : parseWords(e.words || '', '').length;
+  function fixWordTask(e) { const p = isPronE(e) || /^발음연습/.test(e.task || '');
+    if (!p && e.task && !/^외울 단어/.test(e.task)) { const n0 = parseWords(e.words || '', '').length; e.task = e.task.replace(/\(\d+개\)/, '(' + n0 + '개)'); return; } const n = p ? pronWords(e.words || '').length : parseWords(e.words || '', '').length;
     e.task = p ? (n ? `발음연습 (${n}개)` : '발음연습') : (n ? `외울 단어 (${n}개)` : '외울 단어'); }
   /* 박스별 저장: 그 박스 내용만 따로 과제로 저장 */
   async function saveBox(kind, btn) {
@@ -2131,17 +2133,17 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   /* 같은 날 같은 학생의 '외울 단어' / '발음연습' 과제가 여러 개면 하나로 합침 (단어 중복 제외) */
   function dedupeWordEntries() {
     if (!D || !Array.isArray(D.entries)) return false;
-    const kindOf = (e) => e.subject === '단어' || /발음/.test(e.subject || '') ? (isPronE(e) ? 'p' : /^외울 단어/.test(e.task || '') ? 'w' : '') : '';
+    const kindOf = (e) => e.subject === '단어' || /발음/.test(e.subject || '') ? (isPronE(e) ? 'p' : e.words ? 'w' : '') : '';
     const keyOf = (line) => line.trim().split(/\s+[-–:=]\s+|\t/)[0].trim().toLowerCase();
     const first = new Map(); let hit = false;
     D.entries = D.entries.filter(e => {
       const k = kindOf(e); if (!k || !e.words) { if (k) { e.subject = '단어'; } return true; }
       e.subject = '단어';
       const key = e.date + '|' + (e.who || '') + '|' + k, m = first.get(key);
-      if (!m) { first.set(key, e); fixWordTask(e); return true; }
+      if (!m) { first.set(key, e); if (k === 'p' || /^외울 단어/.test(e.task || '')) fixWordTask(e); return true; }
       const have = new Set(String(m.words).split('\n').filter(x => x.trim()).map(keyOf));
       String(e.words).split('\n').forEach(x => { if (x.trim() && !have.has(keyOf(x))) { have.add(keyOf(x)); m.words = (m.words.trim() + '\n' + x.trim()).trim(); } });
-      fixWordTask(m); hit = true; return false;
+      if (k === 'w') m.task = '외울 단어'; fixWordTask(m); hit = true; return false;
     });
     return hit;
   }
