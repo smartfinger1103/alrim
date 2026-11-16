@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116214214">
+<meta name="build" content="20261116214339">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -494,6 +494,25 @@ section.step[aria-labelledby="hLib"] { --h: 55; }
 .tnav button.big.tnav-fix, .tnav-float button.big { font-size: 0; padding: 15px 0; border-width: 2.5px; }
 .tnav-float button.big::after { font-size: 0.92rem; font-weight: 800; }
 .wrap { padding-left: max(78px, env(safe-area-inset-left, 0px)); }
+/* ── 바로가기 버튼: 한 가지 차분한 인디고 톤 (무지개색 대신) ── */
+:root { --nv-ac: #3F4FB8; --nv-ac2: #2D3A96; --nv-soft: #EEF1FD; --nv-line: #CDD4F3; --nv-txt: #2B3786; --nv-nbg: #FFFFFF; --nv-nline: #E0E4EC; --nv-ntxt: #5A6479; }
+:root[data-theme="dark"] { --nv-ac: #7F8EFF; --nv-ac2: #6575EE; --nv-soft: #232A4B; --nv-line: #3A447D; --nv-txt: #CDD3FF; --nv-nbg: #1D2230; --nv-nline: #2E3547; --nv-ntxt: #A9B1C6; }
+:root:root:root body .tnav button[data-go], :root:root:root body .tnav .tobottom, :root:root:root body .tnav .totop { background: var(--nv-nbg); border: 1px solid var(--nv-nline); border-left-width: 1px; color: var(--nv-ntxt); box-shadow: none; font-weight: 600; transform: none; transition: background .15s, color .15s, border-color .15s, box-shadow .15s; }
+:root:root:root body .tnav button[data-go].big { background: var(--nv-soft); border: 1px solid var(--nv-line); color: var(--nv-txt); font-weight: 700; }
+:root:root:root body .tnav button[data-go].main { background: linear-gradient(135deg, var(--nv-ac), var(--nv-ac2)); border-color: var(--nv-ac2); color: #fff; box-shadow: 0 4px 12px rgba(63,79,184,.28); font-weight: 800; }
+:root:root:root body .tnav button[data-go]:hover, :root:root:root body .tnav .tobottom:hover, :root:root:root body .tnav .totop:hover { background: var(--nv-ac); border-color: var(--nv-ac); color: #fff; box-shadow: 0 4px 12px rgba(63,79,184,.25); }
+:root:root:root body .tnav button[data-go].main:hover { background: linear-gradient(135deg, var(--nv-ac2), var(--nv-ac2)); }
+:root:root:root body .tnav button[data-go]:focus-visible { outline: 3px solid color-mix(in srgb, var(--nv-ac) 45%, transparent); outline-offset: 2px; }
+.tnav button.big { font-size: 1.08rem; padding: 12px 22px; }
+.tnav button.main { font-size: 1.22rem; padding: 14px 30px; }
+.tnav-float { width: 92px; gap: 5px; }
+.tnav-float button { border-radius: 12px; }
+.tnav-float button::after { font-size: .68rem; font-weight: 600; color: inherit; }
+.tnav-float button.big { font-size: 0; padding: 16px 0; }
+.tnav-float button.big::after { font-size: 1rem; font-weight: 800; }
+.tnav-float button.main { font-size: 0; padding: 26px 0; border-radius: 14px; }
+.tnav-float button.main::after { font-size: 1.15rem; font-weight: 800; white-space: nowrap; }
+.wrap { padding-left: max(108px, env(safe-area-inset-left, 0px)); }
 @media (max-width: 560px) { .tnav-float { display: none; } .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); } }
 /* 수업 중 단어 테스트 */
 .wt-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.84rem; color: var(--muted); }
@@ -616,7 +635,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   <nav class="tnav" aria-label="바로 가기">
     <button type="button" data-go="hLs" class="big">숙제 검사</button>
     <button type="button" data-go="hWt" class="primary big">단어 테스트 · 틀린 단어 체크</button>
-    <button type="button" data-go="h2s" class="big">과제 적기</button>
+    <button type="button" data-go="h2s" class="big main">과제 적기</button>
     <button type="button" data-go="hPast" class="big">지난 과제 보기</button>
     <button type="button" data-go="h3s">알림장 만들기</button>
     <button type="button" data-go="h6s" class="big">저장 · 학생 링크 반영</button>
@@ -628,7 +647,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   <nav class="tnav tnav-float" aria-label="바로 가기 (고정)">
     <button type="button" data-go="hLs" data-s="숙제&#10;검사" class="big">숙제 검사</button>
     <button type="button" data-go="hWt" data-s="단어&#10;테스트" class="primary big">단어 테스트 · 틀린 단어 체크</button>
-    <button type="button" data-go="h2s" data-s="적기" class="big">과제 적기</button>
+    <button type="button" data-go="h2s" data-s="과제적기" class="big main">과제 적기</button>
     <button type="button" data-go="hPast" data-s="지난&#10;과제" class="big">지난 과제 보기</button>
     <button type="button" data-go="h3s" data-s="만들기">알림장 만들기</button>
     <button type="button" data-go="h6s" data-s="저장" class="big">저장 · 학생 링크 반영</button>
