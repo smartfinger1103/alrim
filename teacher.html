@@ -241,6 +241,16 @@ section.tt { border-color: var(--accent); }
 /* 과제에 단어 붙이기 */
 .wordbox { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .wordbox textarea { min-height: 90px; }
+/* 외울 단어 | 발음 단어 | 문장 연습: 공간이 되면 가로로 나란히, 좁으면 위아래로 */
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.trio > * { grid-column: auto !important; }
+.trio .inmodes { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 700px) { .trio { grid-template-columns: minmax(0, 1fr); } }
+.trio > * { margin: 0; min-width: 0; }
+.pronbox { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.pronbox textarea { min-height: 150px; }
+.pronbox .row b { font-size: 0.86rem; color: var(--ink); }
+.trio .sa-in textarea { min-height: 150px; }
 .inmodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
 .capzone.file { cursor: default; border-style: solid; border-color: var(--line); background: var(--bg); }
 .capzone span b { font-size: inherit; }
@@ -643,7 +653,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <p class="hint wide">{빨강:강조}처럼 적으면 학생 화면에서 그 글자만 빨간색으로 보여요. 색은 빨강·파랑 두 가지를 쓸 수 있어요.</p>
           <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
           <label>준비물 (선택)<input type="text" id="fNote"></label>
-          <div class="wide wordbox">
+          <div class="wide trio">
+          <div class="wordbox">
             <div class="row"><b>외울 단어 (선택)</b><span class="hint" id="fwCount"></span></div>
             <div class="inmodes">
               <div class="capzone" id="fCapZone" tabindex="0" role="button" aria-label="방법 1: 단어장 캡처 붙여넣기">
@@ -659,13 +670,20 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             <textarea class="mono" id="fWords" spellcheck="false" aria-label="이 과제의 단어 목록" placeholder="찾은 단어가 여기에 들어와요. 직접 고칠 수 있어요.&#10;apple - 사과&#10;look after - 돌보다"></textarea>
             <p class="hint">찾은 단어는 위 칸에 들어가요. 직접 쓰거나 엑셀에서 복사해 붙여넣어도 돼요. 한글(hwp)은 PDF나 워드로 저장해서 올려 주세요. 넣은 단어는 학생 화면에서 이 과제의 단어 공부로 나와요.</p>
           </div>
-        </div>
-        <details class="sa-in" id="fSentsBox">
-          <summary>✍️ 문장 분석 연습 (선택) · 복잡한 문장을 넣으면 학생이 성분 찾기 → 끊어 읽기 → 해석 → 순서 맞추기로 연습해요</summary>
+          <div class="pronbox">
+            <div class="row"><b>🎤 발음 단어 (선택)</b><span class="hint" id="fpCount"></span></div>
+            <textarea class="mono" id="fPron" spellcheck="false" aria-label="발음 연습 단어 목록" placeholder="발음 연습할 단어를 한 줄에 하나씩 적어요.&#10;comfortable&#10;vegetable"></textarea>
+            <p class="hint">뜻은 안 적어도 돼요. 저장하면 "발음연습" 과제가 따로 만들어져요.</p>
+          </div>
+          <details class="sa-in" id="fSentsBox" open>
+          <summary>✍️ 문장 연습 (선택)</summary>
           <textarea class="mono" id="fSents" spellcheck="false" rows="7" placeholder="문장마다 빈 줄로 구분해요. 복사해서 붙여넣어도 돼요.&#10;[S The boy] / who lives next door / [V kicked] / [O the ball] / in the park.&#10;= 옆집에 사는 그 소년은 공원에서 공을 찼다."></textarea>
           <p class="hint">· <b>/</b> = 의미 단위로 끊는 곳 · <b>[S …]</b> 주어, <b>[V …]</b> 동사, <b>[O …]</b> 목적어 (없으면 안 써도 돼요)<br>· <b>=</b> 로 시작하는 줄 = 모범 해석 (학생 해석을 이것과 비교해서 자동 채점해요)<br>· 끊는 곳(/)이 없으면 끊어 읽기·순서 맞추기 단계는 건너뛰어요.</p>
           <div id="fSentsPv" class="sa-pv"></div>
         </details>
+        </div>
+        </div>
+        
         <datalist id="subjects"><option value="단어"><option value="본문"><option value="문법"><option value="독해"><option value="듣기"><option value="말하기"><option value="쓰기"><option value="발음연습"><option value="워크북"></datalist>
         <div class="row">
           <button type="button" class="primary" id="fAdd">과제 추가</button>
@@ -1060,14 +1078,16 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   /* ---------- 과제 적기 ---------- */
   function readForm() {
     return { date: $('fDate').value, who: $('fWho').value, subject: $('fSubject').value.trim(), task: $('fTask').value.trim(),
-      range: $('fRange').value.trim(), due: '', note: $('fNote').value.trim(), words: $('fWords').value.trim() };
+      range: $('fRange').value.trim(), due: '', note: $('fNote').value.trim(), words: $('fWords').value.trim(), sents: $('fSents') ? $('fSents').value.trim() : '' };
   }
+  const readPron = () => ($('fPron') ? $('fPron').value.trim() : '');
   function fMsg(t) { $('fMsg').textContent = t; }
   function addEntry(lessonOnly) {
     const f = readForm();
+    const pron = lessonOnly ? '' : readPron();
     if (!f.date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
     if (lessonOnly) { f.subject = f.task = f.range = f.due = f.note = f.words = ''; }
-    else if (!f.task) { fMsg('과제 내용을 적어 주세요. 과제가 없는 날이면 "과제 없이 수업만 기록"을 누르세요.'); $('fTask').focus(); return; }
+    else if (!f.task && (!pron || state.editing)) { fMsg('과제 내용을 적어 주세요. 과제가 없는 날이면 "과제 없이 수업만 기록"을 누르세요.'); $('fTask').focus(); return; }
     if (lessonOnly && D.entries.some(e => e.date === f.date && e.who === f.who)) { fMsg('그날 수업은 이미 기록돼 있어요.'); return; }
     if (state.editing) {
       const e = D.entries.find(x => x.id === state.editing);
@@ -1075,10 +1095,14 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       fMsg('수정했어요.');
       stopEdit();
     } else {
-      D.entries.push(Object.assign({ id: uid() }, f));
+      if (f.task || lessonOnly) D.entries.push(Object.assign({ id: uid() }, f));
       fMsg(lessonOnly ? `${kShort(f.date)} 수업을 기록했어요.` : `${kShort(f.date)} 과제를 추가했어요. 같은 날 과제를 더 적을 수 있어요.`);
-      $('fSubject').value = ''; $('fTask').value = ''; $('fRange').value = ''; $('fNote').value = ''; $('fWords').value = ''; $('fSents').value = ''; fwCount();
+      $('fSubject').value = ''; $('fTask').value = ''; $('fRange').value = ''; $('fNote').value = ''; $('fWords').value = ''; $('fSents').value = ''; if ($('fPron')) { $('fPron').value = ''; fpCount(); } fwCount();
       $('fSubject').focus();
+    }
+    if (pron) {   /* 발음 단어 칸 → 따로 '발음연습' 과제로 만들어 학생 화면의 발음 연습과 연결 */
+      D.entries.push({ id: uid(), date: f.date, who: f.who, subject: '발음연습', task: '발음 연습', range: '', due: '', note: '', words: pron });
+      fMsg($('fMsg').textContent + ' 발음 연습 과제도 만들었어요.');
     }
     if (state.isSample) state.isSample = false;
     $('sampleBadge').hidden = true;
@@ -1090,7 +1114,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   function startEdit(e) {
     state.editing = e.id;
     $('fDate').value = e.date; $('fWho').value = e.who || ''; $('fSubject').value = e.subject; $('fTask').value = e.task;
-    $('fRange').value = e.range; $('fDue').value = e.due; $('fNote').value = e.note; $('fWords').value = e.words || ''; fwCount();
+    $('fRange').value = e.range; $('fDue').value = e.due; $('fNote').value = e.note; $('fWords').value = e.words || ''; if ($('fSents')) $('fSents').value = e.sents || ''; fwCount();
     $('fAdd').textContent = '수정 저장'; $('fCancel').hidden = false; $('fLesson').hidden = true;
     $('form').classList.add('editing'); fMsg('위에서 고친 뒤 "수정 저장"을 누르세요.');
     $('fTask').focus();
@@ -1101,7 +1125,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     state.editing = null;
     $('fAdd').textContent = '과제 추가'; $('fCancel').hidden = true; $('fLesson').hidden = false;
     $('form').classList.remove('editing');
-    $('fSubject').value = ''; $('fTask').value = ''; $('fRange').value = ''; $('fDue').value = ''; $('fNote').value = ''; $('fWords').value = ''; $('fSents').value = ''; fwCount();
+    $('fSubject').value = ''; $('fTask').value = ''; $('fRange').value = ''; $('fDue').value = ''; $('fNote').value = ''; $('fWords').value = ''; $('fSents').value = ''; if ($('fPron')) { $('fPron').value = ''; fpCount(); } fwCount();
   }
   $('fCancel').onclick = () => { stopEdit(); fMsg(''); renderEntries(); };
 
@@ -2734,6 +2758,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     $('fwCount').textContent = msg || (n ? `단어 ${n}개` : '');
   }
   $('fWords').addEventListener('input', () => fwCount());
+  function fpCount() { const c = $('fpCount'); if (!c || !$('fPron')) return; const n = $('fPron').value.split('\n').filter(x => x.trim()).length; c.textContent = n ? n + '개' : ''; }
+  if ($('fPron')) $('fPron').addEventListener('input', fpCount);
   // 캡처 이미지를 붙여넣거나 끌어다 놓으면 단어를 찾아 넣어요
   const imgFiles = (dt) => [...(dt && dt.files && dt.files.length ? dt.files : [])].filter(f => f.type.startsWith('image/'))
     .concat(dt && dt.items ? [...dt.items].filter(i => i.kind === 'file' && i.type.startsWith('image/') && !(dt.files && dt.files.length)).map(i => i.getAsFile()).filter(Boolean) : []);
