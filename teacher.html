@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116180800">
+<meta name="build" content="20261116181000">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -253,6 +253,7 @@ section.tt { border-color: var(--accent); }
 .fbody { display: flex; flex-direction: column; gap: 8px; }
 .fbox.folded .fbody { display: none; }
 .fbox.folded { padding-bottom: 10px; }
+.fmainrow { align-items: center; gap: 10px; }
 /* 모든 항목 접기/펼치기 */
 section.step > h2, section.card > h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sfold-btn { margin-left: auto; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card, #fff); color: var(--ink); cursor: pointer; }
@@ -664,6 +665,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <p class="hint wide">{빨강:강조}처럼 적으면 학생 화면에서 그 글자만 빨간색으로 보여요. 색은 빨강·파랑 두 가지를 쓸 수 있어요.</p>
           <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
           <label>준비물 (선택)<input type="text" id="fNote"></label>
+          <div class="wide row fmainrow"><button type="button" class="primary small" id="fMainSave">이 과제만 저장</button><span class="hint">위 과목·과제 내용만 저장해요. 아래 단어·발음·문장 칸에 쓰던 내용은 그대로 남아요.</span></div>
           <div class="wide trio">
           <div class="wordbox fbox" id="fbWords">
             <div class="fhead"><b>📘 외울 단어 (선택)</b><span class="hint" id="fwCount"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="w">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
@@ -1291,6 +1293,22 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     changed();
   }
   $$('.fsave').forEach(b => { b.onclick = () => saveBox(b.dataset.kind, b); });
+  /* 위쪽 과제만 저장: 아래 박스 내용은 건드리지 않음 */
+  function saveMain() {
+    if (state.editing) { addEntry(false); return; }
+    const f = readForm(); f.words = ''; f.sents = '';
+    if (!f.date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
+    if (!f.task) { fMsg('과제 내용을 적어 주세요.'); $('fTask').focus(); return; }
+    if (/발음/.test(f.subject)) f.subject = '단어';
+    D.entries.push(Object.assign({ id: uid() }, f));
+    fMsg(`${kShort(f.date)} 과제를 저장했어요. 아래 칸에 쓰던 내용은 그대로 있어요.`);
+    $('fSubject').value = ''; $('fTask').value = ''; $('fRange').value = ''; $('fNote').value = '';
+    if (state.isSample) state.isSample = false;
+    $('sampleBadge').hidden = true;
+    state.date = f.date; state.auto = f.date === autoDate(); if (f.who) state.cls = f.who;
+    changed(); $('fSubject').focus();
+  }
+  $('fMainSave').onclick = saveMain;
   /* 접기 / 펼치기 (상태는 이 기기에 기억) */
   function setFold(box, on) {
     box.classList.toggle('folded', on);
