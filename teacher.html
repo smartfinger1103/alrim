@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116214920">
+<meta name="build" content="20261116215845">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -416,8 +416,9 @@ body.tmode::before { content: ""; position: fixed; left: 0; right: 0; top: 0; he
 body { --cs: 1; } body[data-stu="gyumin"] { --cur: 214; } body[data-stu="sua"] { --cur: 352; --cs: .42; }
 body.tmode[data-stu] { background: hsl(var(--cur) calc(75% * var(--cs, 1)) 91%); transition: background .25s; }
 :root[data-theme="dark"] body.tmode[data-stu] { background: hsl(var(--cur) calc(35% * var(--cs, 1)) 14%); }
-.stu-now { position: fixed; top: 10px; right: 14px; z-index: 70; padding: 6px 16px; border-radius: 99px; font: 700 1.05rem var(--font-display); color: #fff; background: hsl(var(--cur, 150) calc(65% * var(--cs, 1)) 42%); box-shadow: 0 2px 8px rgba(0,0,0,.25); pointer-events: none; }
-.tnav-float .stu-badge { display: block; text-align: center; font: 700 .85rem var(--font-display); padding: 5px 2px; margin-bottom: 4px; border-radius: 10px; color: #fff; background: hsl(var(--cur, 150) calc(65% * var(--cs, 1)) 42%); }
+.stu-now { position: fixed; top: 10px; right: 14px; z-index: 70; padding: 6px 16px; border-radius: 99px; font: 700 1.05rem var(--font-display); color: #fff; background: hsl(var(--cur, 150) calc(65% * var(--cs, 1)) 42%); box-shadow: 0 2px 8px rgba(0,0,0,.25); cursor: pointer; user-select: none; transition: transform .12s, filter .12s; }
+.stu-now:hover, .tnav-float .stu-badge:hover { filter: brightness(1.12); transform: scale(1.04); } .stu-now:active, .tnav-float .stu-badge:active { transform: scale(.97); }
+.tnav-float .stu-badge { cursor: pointer; user-select: none; transition: transform .12s, filter .12s; display: block; text-align: center; font: 700 .85rem var(--font-display); padding: 5px 2px; margin-bottom: 4px; border-radius: 10px; color: #fff; background: hsl(var(--cur, 150) calc(65% * var(--cs, 1)) 42%); }
 @media all { .tnav-float .stu-badge { font-size: .72rem; } }
 body.tmode[data-stu] .stabs { border-bottom: 4px solid hsl(var(--cur) calc(70% * var(--cs, 1)) 55%); }
 .tg-sent { margin: 0 0 16px; padding: 8px 10px 10px; border-bottom: 1px dashed var(--line); }
@@ -2610,8 +2611,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : ''; if (typeof renderHwCheck === 'function') setTimeout(() => { renderHwCheck(); if (state.mode === 'teacher' && LSROWS.length && LSTAB !== state.tab) { LSTAB = state.tab; lsLoad(); } }, 0);
     { const nm = state.tab ? shortName(state.tab) : '', hv = state.tab ? slugOf(state.tab) : '';
       let pill = $('stuNow'); if (!pill) { pill = el('div', 'stu-now'); pill.id = 'stuNow'; document.body.append(pill); }
-      pill.textContent = nm ? nm + ' 화면' : ''; pill.hidden = !nm || state.mode !== 'teacher';
-      document.querySelectorAll('.tnav-float').forEach(f => { let bd = f.querySelector('.stu-badge'); if (!bd) { bd = el('div', 'stu-badge'); f.prepend(bd); } bd.textContent = nm; bd.hidden = !nm; }); }
+      const ns = names(), nxt = ns.length > 1 ? shortName(ns[(ns.indexOf(state.tab) + 1) % ns.length]) : '', swap = () => { const l = names(); if (l.length < 2) return; setTab(l[(Math.max(0, l.indexOf(state.tab)) + 1) % l.length]); };   /* 누르면 다음 학생으로 (2명이면 규민 ↔ 수아) */
+      pill.textContent = nm ? nm + ' 화면' + (nxt ? ' ⇄' : '') : ''; pill.hidden = !nm || state.mode !== 'teacher'; pill.title = nxt ? '눌러서 ' + nxt + ' 화면으로 바꾸기' : ''; pill.onclick = swap;
+      document.querySelectorAll('.tnav-float').forEach(f => { let bd = f.querySelector('.stu-badge'); if (!bd) { bd = el('div', 'stu-badge'); f.prepend(bd); } bd.textContent = nm + (nxt ? ' ⇄' : ''); bd.hidden = !nm; bd.title = nxt ? '눌러서 ' + nxt + '(으)로 바꾸기' : ''; bd.onclick = swap; }); }
     names().forEach(n => {
       const b = el('button', 'stab'); b.type = 'button'; b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', n === state.tab ? 'true' : 'false');
