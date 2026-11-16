@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116213224">
+<meta name="build" content="20261116213345">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -42,7 +42,7 @@ if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setIt
 .err-banner { position: fixed; top: 54px; right: 14px; z-index: 71; background: #D7263D; color: #fff; border: 0; border-radius: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.25); animation: errp 1.5s ease-in-out infinite alternate; }
 @keyframes errp { from { opacity: 1; } to { opacity: .75; } }
 .err-box { color: #D7263D; border: 2px solid #D7263D; border-radius: 10px; padding: 8px 10px; margin: 6px 0 10px; display: flex; flex-direction: column; gap: 3px; font-size: .92rem; }
-.sa-pv { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; } .sa-pv .pv { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--card, #fff); } .sa-pv .pv .sa-toks { font-size: 1rem; line-height: 1.9; margin: 2px 0; } .sa-pv .cut { color: #D23B3B; font-weight: 800; margin: 0 4px; } .sa-pv .warn { color: #D7263D; font-size: .85rem; }
+.sa-pv { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; } .sa-pv .pv { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--card, #fff); } .sa-pv .pv .sa-toks { font-size: 1rem; line-height: 1.9; margin: 2px 0; } .sa-pv .cut { color: #D23B3B; font-weight: 800; margin: 0 4px; } .sa-pv .warn { color: #D7263D; font-size: .85rem; } .sa-pv .pvtop { display: flex; align-items: center; gap: 8px; } .sa-pv .pvtop b { flex: 1; } .sa-pv .pvx { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 1.2rem; line-height: 1; } .sa-pv .pvg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 6px 0; } @media (max-width: 760px) { .sa-pv .pvg { grid-template-columns: minmax(0, 1fr); } } .sa-pv .pvc { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; background: var(--soft, #f6f6f6); min-width: 0; } .sa-pv .pvc.skip { opacity: .5; } .sa-pv .pvc h5 { margin: 0 0 2px; font-size: .88rem; color: var(--accent); } .sa-pv .pvc .sa-q { font-size: .82rem; margin: 2px 0; } .sa-pv .pvc .sa-toks { font-size: .98rem; } .sa-pv .sa-tok, .sa-pv .sa-gap { cursor: default; } .sa-pv .sa-tags button { cursor: default; padding: 4px; font-size: .8rem; } .sa-pv .sa-pool button, .sa-pv .sa-ans button { padding: 5px 8px; font-size: .9rem; } .sa-pv .sa-pool, .sa-pv .sa-ans { min-height: 34px; } .sa-pv .sa-ta { width: 100%; box-sizing: border-box; }
 .esub { margin: 8px 12px 2px; font-size: .82rem; font-weight: 700; color: var(--accent); border-bottom: 1px dashed var(--line); padding-bottom: 2px; }
 .hwc { border: 2px solid hsl(172 40% 60%); border-radius: 12px; padding: 10px 12px; margin: 8px 0 14px; background: hsl(172 50% 97%); }
 :root[data-theme="dark"] .hwc { background: hsl(172 25% 14%); }
@@ -3422,7 +3422,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   $('fWords').addEventListener('input', () => fwCount());
   function fpCount() { const c = $('fpCount'); if (!c || !$('fPron')) return; const n = $('fPron').value.split('\n').filter(x => x.trim()).length; c.textContent = n ? n + '개' : ''; }
   if ($('fPron')) $('fPron').addEventListener('input', fpCount);
-  if ($('fSentsAuto')) $('fSentsAuto').onclick = async () => { const b = $('fSentsAuto'); b.disabled = true; try { if (!saNeedsAuto($('fSents').value)) fMsg('이미 표시가 된 문장이에요. 표시 없는 문장만 자동 분석해요.'); else await saAutoFill(); } finally { b.disabled = false; } };
+  if ($('fSentsAuto')) $('fSentsAuto').onclick = async () => { const b = $('fSentsAuto'); if (!$('fSents').value.trim()) { fMsg('문장을 먼저 적어 주세요.'); return; } saPvOpen = true; b.disabled = true; try { if (saNeedsAuto($('fSents').value)) await saAutoFill(); } finally { b.disabled = false; } saPreview(); if ($('fSentsPv').firstChild) $('fSentsPv').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
   // 캡처 이미지를 붙여넣거나 끌어다 놓으면 단어를 찾아 넣어요
   const imgFiles = (dt) => [...(dt && dt.files && dt.files.length ? dt.files : [])].filter(f => f.type.startsWith('image/'))
     .concat(dt && dt.items ? [...dt.items].filter(i => i.kind === 'file' && i.type.startsWith('image/') && !(dt.files && dt.files.length)).map(i => i.getAsFile()).filter(Boolean) : []);
@@ -3765,21 +3765,45 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   window.addEventListener('error', (e) => { if (e.message) errReport('화면 오류: ' + e.message, (e.filename || '').split('/').pop() + ':' + (e.lineno || '')); });
   window.addEventListener('unhandledrejection', (e) => { errReport('처리 안 된 오류: ' + ((e.reason && (e.reason.message || e.reason)) || ''), ''); });
   /* 교사: 문장 분석 입력 미리보기 + 학생 화면으로 직접 해보기 */
+  let saPvOpen = false;
   function saPreview() {
     const box = $('fSentsPv'); if (!box) return; box.textContent = '';
-    const sn = saParse($('fSents').value); if (!sn.length) return;
+    if (!saPvOpen) return;
+    const sn = saParse($('fSents').value); if (!sn.length) { saPvOpen = false; return; }
+    const top = el('div', 'pvtop'); top.append(el('b', null, `학생 화면 미리 보기 · 문장 ${sn.length}개 (4단계)`));
+    const tr = el('button', 'btn small primary', '▶ 직접 해보기'); tr.type = 'button';
+    tr.onclick = () => { const S = saStore(); delete S.__pv; store.set('sa', JSON.stringify(S)); openSA({ id: '__pv', task: '미리보기', sents: $('fSents').value }); };
+    const x = el('button', 'pvx', '×'); x.type = 'button'; x.title = '미리 보기 닫기'; x.setAttribute('aria-label', '미리 보기 닫기'); x.onclick = () => { saPvOpen = false; saPreview(); };
+    top.append(tr, x); box.append(top);
     sn.forEach((q, n) => {
       const pv = el('div', 'pv'); pv.append(el('b', null, `문장 ${n + 1}`));
-      const tk = el('div', 'sa-toks'); q.toks.forEach((o, i) => { tk.append(el('span', 'sa-tok ' + o.t, o.w)); if (q.cuts.has(i)) tk.append(el('span', 'cut', '/')); }); pv.append(tk);
-      if (q.ko) pv.append(el('div', 'sa-ko', '모범 해석: ' + q.ko));
-      const st = ['성분 찾기' + (q.hasTag ? '' : ' (건너뜀: [S][V][O] 없음)'), '끊어 읽기' + (q.cuts.size ? ` (${q.chunks.length}덩어리)` : ' (건너뜀: / 없음)'), '해석하기' + (q.ko ? '' : ' (건너뜀: = 줄 없음)'), '순서 맞추기' + (q.chunks.length > 1 ? '' : ' (건너뜀)')];
-      pv.append(el('small', null, '학생 단계: ' + st.join(' → ')));
-      pv.append(el('br'), el('small', null, '색: 주어 분홍 · 동사 파랑 · 목적어 초록'));
+      const g = el('div', 'pvg');
+      const card = (title, skip) => { const c = el('div', 'pvc' + (skip ? ' skip' : '')); c.append(el('h5', null, title + (skip ? ' (건너뜀: ' + skip + ')' : ''))); g.append(c); return c; };
+      /* 1. 성분 찾기 */
+      let c = card('1. 성분 찾기', q.hasTag ? '' : '[S][V][O] 표시 없음');
+      c.append(el('p', 'sa-q', '주어(S)·동사(V)·목적어(O)를 고르고 단어를 눌러 표시해요.'));
+      const tg = el('div', 'sa-tags'); [['S', '주어 S'], ['V', '동사 V'], ['O', '목적어 O'], ['X', '지우개']].forEach(([k, t]) => tg.append(el('button', k, t))); c.append(tg);
+      const t1 = el('div', 'sa-toks'); q.toks.forEach(o => t1.append(el('span', 'sa-tok ' + o.t, o.w))); c.append(t1);
+      /* 2. 끊어 읽기 */
+      c = card('2. 끊어 읽기', q.cuts.size ? '' : '/ 표시 없음');
+      c.append(el('p', 'sa-q', '의미 단위로 끊을 곳(단어 사이)을 눌러 / 를 넣어요.'));
+      const t2 = el('div', 'sa-toks'); q.toks.forEach((o, i) => { t2.append(el('span', 'sa-tok', o.w)); if (i < q.toks.length - 1) t2.append(el('span', 'sa-gap' + (q.cuts.has(i) ? ' cut' : ''))); }); c.append(t2);
+      /* 3. 해석하기 */
+      c = card('3. 해석하기', q.ko ? '' : '= 해석 줄 없음');
+      c.append(el('p', 'sa-q', '끊은 덩어리를 보며 문장 전체를 해석해 써요.'));
+      c.append(el('div', 'sa-toks', q.chunks.join('  /  ')));
+      const ta = el('textarea', 'sa-ta'); ta.disabled = true; ta.rows = 2; ta.placeholder = '해석을 써 보세요'; c.append(ta);
+      if (q.ko) c.append(el('div', 'sa-ko', '모범 해석: ' + q.ko));
+      /* 4. 순서 맞추기 */
+      c = card('4. 순서 맞추기', q.chunks.length > 1 ? '' : '덩어리 1개');
+      c.append(el('p', 'sa-q', '해석을 보고, 영어 덩어리를 순서대로 눌러 문장을 완성해요.'));
+      if (q.ko) c.append(el('div', 'sa-ko', q.ko));
+      c.append(el('div', 'sa-ans'));
+      const pl = el('div', 'sa-pool'); q.chunks.slice().reverse().forEach(ch => { const b = el('button', null, ch); b.type = 'button'; b.disabled = true; pl.append(b); }); c.append(pl);
+      pv.append(g);
+      pv.append(el('small', null, '색: 주어 분홍 · 동사 파랑 · 목적어 초록'));
       box.append(pv);
     });
-    const b = el('button', 'btn small primary', '▶ 학생 화면으로 직접 해보기'); b.type = 'button';
-    b.onclick = () => { const S = saStore(); delete S.__pv; store.set('sa', JSON.stringify(S)); openSA({ id: '__pv', task: '미리보기', sents: $('fSents').value }); };
-    box.append(b);
   }
   if ($('fSents')) { $('fSents').addEventListener('input', saPreview); setTimeout(saPreview, 500); }
   function closeQuiz() {
