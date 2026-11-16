@@ -1,10 +1,12 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116173500">
+<meta name="build" content="20261116174500">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
 if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){})}catch(e){}})();</script>
-<meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.pr-ov { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+<meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
+.hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
+.pr-ov { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .pr-box { background: var(--card, #fff); color: var(--ink); width: min(440px, 100%); max-height: 92vh; overflow: auto; border-radius: 18px; padding: 18px 18px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
 .pr-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .pr-top b { font-size: 1.05rem; } .pr-top button { border: 0; background: none; font-size: 1.5rem; cursor: pointer; color: var(--muted); }
@@ -981,7 +983,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   function currentItems() {
     if (state.mode === 'student') { const sd = studentDates(); if (state.date !== sd.cur && state.date !== sd.prev) return []; }
-    return items().filter(it => it.date === state.date && forMe(it));
+    return items().filter(it => (it.date === state.date || carriedTo(it, state.date)) && forMe(it));
+  }
+  /* 과제 이월: carry = 넘긴 횟수. 그 과제 날짜 다음 수업(과제 날짜) carry개에도 같은 과제로 보여요 (진도는 그대로 이어짐) */
+  function carriedTo(it, d) {
+    const n = +it.carry || 0; if (!n || !d || d <= it.date) return false;
+    const later = [...new Set(items().filter(x => x !== it && x.date > it.date && forMe(x)).map(x => x.date))].sort();
+    return later.slice(0, n).includes(d);
   }
   const allAssignDates = () => [...new Set(items().filter(forMe).map(i => i.date))].sort();
   // 학생은 오늘까지 나온 과제 중 이번 과제와 바로 전 과제만
@@ -1740,7 +1748,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const sel = el('select'); dates.forEach(d => sel.append(new Option(kShort(d) + ' 숙제', d))); sel.value = HWC.date; sel.onchange = () => { HWC.date = sel.value; HWC.user = true; renderHwCheck(); };
     top.append(el('span', 'hint', '검사할 숙제:'), sel); box.append(top);
     const next = dates.slice().reverse().find(d => d > HWC.date) || '';
-    const tasks = D.entries.filter(e => e.task && e.date === HWC.date && forWho(e.who, who));
+    const tasks = D.entries.filter(e => e.task && (e.date === HWC.date || (e.carry && carriedTo(e, HWC.date))) && forWho(e.who, who));
     const R0 = LSROWS || [];
     const autoOf = (e) => {
       const out = [];
@@ -1757,6 +1765,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const au = autoOf(e); if (au.length) t.append(el('small', 'auto', '앱 기록: ' + au.join(' · ')));
       const bs = el('div', 'hwc-st');
       [['done', '했음'], ['part', '일부'], ['no', '안 함'], ['skip', '빼기']].forEach(([v, lb]) => { const b = el('button', v + (stOf(e) === v ? ' on' : ''), lb); b.type = 'button'; b.onclick = () => { e.chk = e.chk || {}; if (e.chk[who] === v) delete e.chk[who]; else e.chk[who] = v; changed(); renderHwCheck(); }; bs.append(b); });
+      { const cb = el('button', 'carry' + (e.carry ? ' on' : ''), e.carry ? `이월됨 +${e.carry} · 취소` : '➡ 다음 수업으로 넘기기'); cb.type = 'button';
+        cb.title = '진도는 그대로 두고, 다음 수업 과제에도 이 과제가 이어서 보여요';
+        cb.onclick = () => { if (e.carry) delete e.carry; else e.carry = 1; changed(); renderHwCheck(); }; bs.append(cb);
+        if (e.carry) { const pb = el('button', 'carry', '한 번 더 +1'); pb.type = 'button'; pb.onclick = () => { e.carry = (+e.carry || 0) + 1; changed(); renderHwCheck(); }; bs.append(pb); } }
+      if (e.date !== HWC.date) t.append(el('small', 'auto', '↪ ' + kShort(e.date) + ' 과제에서 이월'));
       row.append(t, bs); box.append(row);
     });
     const act = el('div', 'row'); act.style.marginTop = '8px';
@@ -2116,6 +2129,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         row.append(el('span', 'nb-dot', d ? '✓' : '•'));
         const tl = String(it.task || '').split('\n').map(x => x.trim()).filter(Boolean);
         const tx = el('div', 'nb-t'); tx.append(taskSpan(tl.length > 1 ? tl[0] : it.task));
+        if (it.carry && it.date !== state.date) tx.append(el('small', 'nb-carry', '↪ ' + kShort(it.date) + ' 과제 이월 · 이어서 하기'));
+        else if (it.carry) tx.append(el('small', 'nb-carry', '⏳ 기간 연장 · 다음 수업까지 이어서 해요'));
         const mt = [it.range, it.note ? '준비물 ' + it.note : ''].filter(Boolean).join(' · ');
         if (mt) tx.append(el('small', null, mt));
         const ws = it.words ? (isPron(it) ? pronWords(it.words) : parseWords(it.words, '')) : [];
