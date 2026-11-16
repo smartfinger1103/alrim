@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116162955">
+<meta name="build" content="20261116172600">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1682,7 +1682,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const tx = el('div', 'nb-t'); tx.append(taskSpan(tl.length > 1 ? tl[0] : it.task));
         const mt = [it.range, it.note ? '준비물 ' + it.note : ''].filter(Boolean).join(' · ');
         if (mt) tx.append(el('small', null, mt));
-        const ws = it.words ? parseWords(it.words, '') : [];
+        const ws = it.words ? (isPron(it) ? pronWords(it.words) : parseWords(it.words, '')) : [];
         const act = el('div', 'nb-act');
         if (it.sents && saParse(it.sents).length) { const sn = saParse(it.sents), sd = saDoneN(it, sn); if (!d) tx.append(el('small', 'nb-prog', `문장 ${sd}/${sn.length}개 완성`)); const sb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '문장 다시 보기' : '✍️ 문장 분석'); sb.type = 'button'; sb.onclick = () => openSA(it); act.append(sb); }
         if (ws.length) {
@@ -2520,6 +2520,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 
 
   /* ---------- 단어 암기 도우미 ---------- */
+  /* 발음 과제: 뜻 없이 단어만 적어도(한 줄에 하나) 연습 단어로 인식 */
+  function pronWords(text) { const p = parseWords(text, ''); if (p.length) return p;
+    return String(text || '').split(/\r?\n/).map(x => x.trim().replace(/\s*[-–:=]\s*$/, '')).filter(x => /^[A-Za-z]/.test(x)).map(en => ({ en, ko: '', unit: '', who: '' })); }
   function parseWords(text, who) {
     const out = []; let unit = '', col = null;
     String(text || '').split(/\r?\n/).forEach(line => {

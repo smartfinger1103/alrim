@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116171200">
+<meta name="build" content="20261116172600">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -673,7 +673,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <div class="pronbox">
             <div class="row"><b>🎤 발음 단어 (선택)</b><span class="hint" id="fpCount"></span></div>
             <textarea class="mono" id="fPron" spellcheck="false" aria-label="발음 연습 단어 목록" placeholder="발음 연습할 단어를 한 줄에 하나씩 적어요.&#10;comfortable&#10;vegetable"></textarea>
-            <p class="hint">뜻은 안 적어도 돼요. 저장하면 "발음연습" 과제가 따로 만들어져요.</p>
+            <p class="hint">뜻은 안 적어도 돼요. 저장하면 학생 화면 <b>단어</b> 아래에 "발음연습"으로 들어가요.</p>
           </div>
           <details class="sa-in" id="fSentsBox" open>
           <summary>✍️ 문장 연습 (선택)</summary>
@@ -1085,9 +1085,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   function addEntry(lessonOnly) {
     const f = readForm();
     const pron = lessonOnly ? '' : readPron();
+    const sents = (lessonOnly || state.editing) ? '' : f.sents;   /* 새 과제: 문장 연습은 따로 과제로 만듦 */
+    if (sents) f.sents = '';
     if (!f.date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
     if (lessonOnly) { f.subject = f.task = f.range = f.due = f.note = f.words = ''; }
-    else if (!f.task && (!pron || state.editing)) { fMsg('과제 내용을 적어 주세요. 과제가 없는 날이면 "과제 없이 수업만 기록"을 누르세요.'); $('fTask').focus(); return; }
+    else if (!f.task && ((!pron && !sents) || state.editing)) { fMsg('과제 내용을 적어 주세요. 과제가 없는 날이면 "과제 없이 수업만 기록"을 누르세요.'); $('fTask').focus(); return; }
     if (lessonOnly && D.entries.some(e => e.date === f.date && e.who === f.who)) { fMsg('그날 수업은 이미 기록돼 있어요.'); return; }
     if (state.editing) {
       const e = D.entries.find(x => x.id === state.editing);
@@ -1101,8 +1103,12 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       $('fSubject').focus();
     }
     if (pron) {   /* 발음 단어 칸 → 따로 '발음연습' 과제로 만들어 학생 화면의 발음 연습과 연결 */
-      D.entries.push({ id: uid(), date: f.date, who: f.who, subject: '발음연습', task: '발음 연습', range: '', due: '', note: '', words: pron });
+      D.entries.push({ id: uid(), date: f.date, who: f.who, subject: '단어', task: '발음연습', range: '', due: '', note: '', words: pron });
       fMsg($('fMsg').textContent + ' 발음 연습 과제도 만들었어요.');
+    }
+    if (sents) {   /* 문장 연습 칸 → 따로 '문장분석' 과제 (학생 화면에 ✍️ 문장 분석 버튼) */
+      D.entries.push({ id: uid(), date: f.date, who: f.who, subject: '문장분석', task: '문장 분석 연습', range: '', due: '', note: '', words: '', sents });
+      fMsg($('fMsg').textContent + ' 문장 분석 과제도 만들었어요.');
     }
     if (state.isSample) state.isSample = false;
     $('sampleBadge').hidden = true;
@@ -1988,7 +1994,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const tx = el('div', 'nb-t'); tx.append(taskSpan(tl.length > 1 ? tl[0] : it.task));
         const mt = [it.range, it.note ? '준비물 ' + it.note : ''].filter(Boolean).join(' · ');
         if (mt) tx.append(el('small', null, mt));
-        const ws = it.words ? parseWords(it.words, '') : [];
+        const ws = it.words ? (isPron(it) ? pronWords(it.words) : parseWords(it.words, '')) : [];
         const act = el('div', 'nb-act');
         if (it.sents && saParse(it.sents).length) { const sn = saParse(it.sents), sd = saDoneN(it, sn); if (!d) tx.append(el('small', 'nb-prog', `문장 ${sd}/${sn.length}개 완성`)); const sb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '문장 다시 보기' : '✍️ 문장 분석'); sb.type = 'button'; sb.onclick = () => openSA(it); act.append(sb); }
         if (ws.length) {
@@ -2829,6 +2835,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 
 
   /* ---------- 단어 암기 도우미 ---------- */
+  /* 발음 과제: 뜻 없이 단어만 적어도(한 줄에 하나) 연습 단어로 인식 */
+  function pronWords(text) { const p = parseWords(text, ''); if (p.length) return p;
+    return String(text || '').split(/\r?\n/).map(x => x.trim().replace(/\s*[-–:=]\s*$/, '')).filter(x => /^[A-Za-z]/.test(x)).map(en => ({ en, ko: '', unit: '', who: '' })); }
   function parseWords(text, who) {
     const out = []; let unit = '', col = null;
     String(text || '').split(/\r?\n/).forEach(line => {
