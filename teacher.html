@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116194733">
+<meta name="build" content="20261116213224">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -464,6 +464,14 @@ section.step[aria-labelledby="hLib"] { --h: 55; }
   .tnav-float button::after { content: attr(data-s); font-size: 0.68rem; font-weight: 700; color: var(--ink); white-space: pre-line; text-align: center; line-height: 1.15; }
   .wrap { padding-left: max(50px, env(safe-area-inset-left, 0px)); }
 }
+/* 자주 쓰는 5개(숙제 검사 · 단어 테스트 · 과제 적기 · 지난 과제 · 저장)는 크게 */
+.tnav button.big { font-size: 1.05rem; padding: 11px 20px; font-weight: 800; border-width: 2.5px; }
+.tnav-float { width: 66px; }
+.tnav-float button { padding: 5px 0; }
+.tnav-float button::after { font-size: 0.6rem; font-weight: 600; }
+.tnav button.big.tnav-fix, .tnav-float button.big { font-size: 0; padding: 15px 0; border-width: 2.5px; }
+.tnav-float button.big::after { font-size: 0.92rem; font-weight: 800; }
+.wrap { padding-left: max(78px, env(safe-area-inset-left, 0px)); }
 @media (max-width: 560px) { .tnav-float { display: none; } .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); } }
 /* 수업 중 단어 테스트 */
 .wt-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.84rem; color: var(--muted); }
@@ -584,27 +592,25 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   </header>
   <div class="stabs" role="tablist" aria-label="학생" id="stuTabs"></div>
   <nav class="tnav" aria-label="바로 가기">
-    <button type="button" data-go="hLs">숙제 검사</button>
-    <button type="button" data-go="hWt" class="primary">단어 테스트 · 틀린 단어 체크</button>
-    <button type="button" data-go="h2s">과제 적기</button>
-    <button type="button" data-go="hPast">지난 과제 보기</button>
+    <button type="button" data-go="hLs" class="big">숙제 검사</button>
+    <button type="button" data-go="hWt" class="primary big">단어 테스트 · 틀린 단어 체크</button>
+    <button type="button" data-go="h2s" class="big">과제 적기</button>
+    <button type="button" data-go="hPast" class="big">지난 과제 보기</button>
     <button type="button" data-go="h3s">알림장 만들기</button>
-    <button type="button" data-go="h6s">저장 · 학생 링크 반영</button>
+    <button type="button" data-go="h6s" class="big">저장 · 학생 링크 반영</button>
     <button type="button" data-go="hOv">과제 한눈에 보기</button>
-    <button type="button" data-go="hDic">Teacher's Guide · 지문 해설 · 사전</button>
     <button type="button" data-go="hLib">자료함 (책 · 답지)</button>
     <button type="button" data-go="h0s">선생님 할 일</button>
     <button type="button" class="tobottom" data-bottom>학생 알림장 보기 ↓</button>
   </nav>
   <nav class="tnav tnav-float" aria-label="바로 가기 (고정)">
-    <button type="button" data-go="hLs" data-s="숙제&#10;검사">숙제 검사</button>
-    <button type="button" data-go="hWt" data-s="단어&#10;테스트" class="primary">단어 테스트 · 틀린 단어 체크</button>
-    <button type="button" data-go="h2s" data-s="적기">과제 적기</button>
-    <button type="button" data-go="hPast" data-s="지난&#10;과제">지난 과제 보기</button>
+    <button type="button" data-go="hLs" data-s="숙제&#10;검사" class="big">숙제 검사</button>
+    <button type="button" data-go="hWt" data-s="단어&#10;테스트" class="primary big">단어 테스트 · 틀린 단어 체크</button>
+    <button type="button" data-go="h2s" data-s="적기" class="big">과제 적기</button>
+    <button type="button" data-go="hPast" data-s="지난&#10;과제" class="big">지난 과제 보기</button>
     <button type="button" data-go="h3s" data-s="만들기">알림장 만들기</button>
-    <button type="button" data-go="h6s" data-s="저장">저장 · 학생 링크 반영</button>
+    <button type="button" data-go="h6s" data-s="저장" class="big">저장 · 학생 링크 반영</button>
     <button type="button" data-go="hOv" data-s="한눈에">과제 한눈에 보기</button>
-    <button type="button" data-go="hDic" data-s="Guide">Teacher's Guide · 지문 해설 · 사전</button>
     <button type="button" data-go="hLib" data-s="자료">자료함 (책 · 답지)</button>
     <button type="button" data-go="h0s" data-s="할 일">선생님 할 일</button>
     <button type="button" class="tobottom" data-bottom data-s="학생↓">학생 알림장 보기 ↓</button>
@@ -687,30 +693,6 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
               <label>범위 (선택)<input type="text" class="srange" id="fRRange" placeholder="p.62–63"></label>
             </div></div>
           </div>
-          <div class="fbox sbox" id="fbV" data-subj="단어">
-            <div class="fhead"><b>📒 단어</b><span class="fsum" id="fsV"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
-            <div class="fbody"><div class="sgrid">
-              <label class="sgrow">과제 내용<textarea class="stask" id="fVTask" rows="2" placeholder="예: ASAP 단어 Unit 2-3 외우기"></textarea></label>
-              <label>범위 (선택)<input type="text" class="srange" id="fVRange" placeholder="p.62–63"></label>
-            </div></div>
-          </div>
-          <div class="fbox sbox" id="fbL" data-subj="듣기">
-            <div class="fhead"><b>🎧 듣기</b><span class="fsum" id="fsL"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
-            <div class="fbody"><div class="sgrid">
-              <label class="sgrow">과제 내용<textarea class="stask" id="fLTask" rows="2" placeholder="예: 듣기 22-23회"></textarea></label>
-              <label>범위 (선택)<input type="text" class="srange" id="fLRange" placeholder="p.62–63"></label>
-            </div></div>
-          </div>
-          <div class="fbox" id="fbTask">
-            <div class="fhead"><b>📝 기타 과목 (과목 선택)</b><span class="fsum" id="fsTask"></span><span class="fsp"></span><button type="button" class="small primary" id="fMainSave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
-            <div class="fbody"><div class="fields">
-              <label>과목<input type="text" id="fSubject" list="subjects" placeholder="단어, 본문, 문법…"></label>
-              <label class="wide">과제 내용<textarea id="fTask" placeholder="예: Lesson 4 단어 20개 3번씩 쓰고 뜻 외우기"></textarea></label>
-              <p class="hint wide">{빨강:강조}처럼 적으면 학생 화면에서 그 글자만 빨간색으로 보여요. 색은 빨강·파랑 두 가지를 쓸 수 있어요.</p>
-              <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
-              <label>준비물 (선택)<input type="text" id="fNote"></label>
-            </div></div>
-          </div>
           <div class="wordbox fbox" id="fbWords">
             <div class="fhead"><b>📘 외울 단어 (선택)</b><span class="hint fsum-c" id="fwCount"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="w">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
             <div class="fbody">
@@ -736,6 +718,20 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             <p class="hint">뜻은 안 적어도 돼요. 저장하면 학생 화면 <b>단어</b> 아래에 "발음연습"으로 들어가요.</p>
             </div>
           </div>
+          <div class="fbox sbox" id="fbV" data-subj="단어" hidden style="display:none">
+            <div class="fhead"><b>📒 단어</b><span class="fsum" id="fsV"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">과제 내용<textarea class="stask" id="fVTask" rows="2" placeholder="예: ASAP 단어 Unit 2-3 외우기"></textarea></label>
+              <label>범위 (선택)<input type="text" class="srange" id="fVRange" placeholder="p.62–63"></label>
+            </div></div>
+          </div>
+          <div class="fbox sbox" id="fbL" data-subj="듣기">
+            <div class="fhead"><b>🎧 듣기</b><span class="fsum" id="fsL"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">과제 내용<textarea class="stask" id="fLTask" rows="2" placeholder="예: 듣기 22-23회"></textarea></label>
+              <label>범위 (선택)<input type="text" class="srange" id="fLRange" placeholder="p.62–63"></label>
+            </div></div>
+          </div>
           <div class="sa-in fbox" id="fSentsBox">
             <div class="fhead"><b>✍️ 문장 연습 (선택)</b><span class="fsum" id="fsSents"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="s">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
             <div class="fbody">
@@ -744,6 +740,16 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <div class="row"><button type="button" class="small" id="fSentsAuto">✨ 자동 분석 미리 보기</button></div>
           <div id="fSentsPv" class="sa-pv"></div>
             </div>
+          </div>
+          <div class="fbox" id="fbTask">
+            <div class="fhead"><b>📝 기타 과목 (과목 선택)</b><span class="fsum" id="fsTask"></span><span class="fsp"></span><button type="button" class="small primary" id="fMainSave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="fields">
+              <label>과목<input type="text" id="fSubject" list="subjects" placeholder="단어, 본문, 문법…"></label>
+              <label class="wide">과제 내용<textarea id="fTask" placeholder="예: Lesson 4 단어 20개 3번씩 쓰고 뜻 외우기"></textarea></label>
+              <p class="hint wide">{빨강:강조}처럼 적으면 학생 화면에서 그 글자만 빨간색으로 보여요. 색은 빨강·파랑 두 가지를 쓸 수 있어요.</p>
+              <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
+              <label>준비물 (선택)<input type="text" id="fNote"></label>
+            </div></div>
           </div>
           <div class="fbox" id="fbExam">
             <div class="fhead"><b>📝 시험문제 올리기 (객관식 · 파일)</b><span class="fsum" id="fsExam"></span><span class="fsp"></span><button type="button" class="small primary" id="exSave" disabled>과제로 올리기</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
@@ -842,7 +848,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         <div class="ovdetail" id="ovDetail"></div>
       </section>
 
-      <section class="step" aria-labelledby="hDic">
+      <section class="step" aria-labelledby="hDic" hidden style="display:none">
         <h2 id="hDic">Teacher's Guide · 지문 해설 · 단어 사전</h2>
         <p class="hint">단어를 검색하면 발음기호와 뜻이 나와요. 독해 지문을 <b>캡처해서 붙여넣으면</b> 바로 교사용 해설(단어 뜻·발음)이 아래에 만들어져요. 노란색 단어는 내 단어장에 있는 단어예요.</p>
         <div class="row">
