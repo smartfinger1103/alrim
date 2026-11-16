@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116162058">
+<meta name="build" content="20261116162200">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -68,6 +68,7 @@ if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setIt
 :root:not([data-theme="dark"]) body.tmode .stab { border-radius: 18px 18px 0 0; font-family: var(--font-display); }
 :root:not([data-theme="dark"]) body.tmode aside.preview .canvas-box, :root:not([data-theme="dark"]) body.tmode aside.preview > div:not(.todo-red) { border-radius: 20px; }
 :root:not([data-theme="dark"]) body.tmode .hwc { background: #F2FFFB; border-color: #8FE3CF; border-radius: 18px; }
+b.tm { color: #1E6FE0; font-weight: 700; margin-left: 2px; }
 </style></head><body><title>알림장 메이커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1638,10 +1639,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const ld = [...new Set(D.entries.filter(e => forWho(e.who, w)).map(e => e.date))].sort();
         const st = ld.filter(d => d <= wd).pop() || '', en = ld.find(d => d > (st || wd)) || '';
         const days = Object.keys(wsum[w].day).filter(d => d && d >= st && (!en || d < en)).sort(), tot = days.reduce((a, d) => a + wsum[w].day[d], 0);
-        const line = el('div'); line.append(el('b', null, w), document.createTextNode(` · 수업 ${st ? st.slice(5) : '처음'} 이후 ~ ${en ? '다음 수업 ' + en.slice(5) + ' 전' : '지금'}: 총 ${fm(tot)}`));
-        line.append(el('small', null, ` · ${wd.slice(5)} 하루 ${fm(wsum[w].day[wd] || 0)}`));
+        const tm = (t) => `<b class="tm">${t}</b>`;
+        const line = el('div'); line.innerHTML = `<b>${w}</b> · 수업 ${st ? st.slice(5) : '처음'} 이후 ~ ${en ? '다음 수업 ' + en.slice(5) + ' 전' : '지금'}: 총 ${tm(fm(tot))}`;
+        { const sm = el('small'); sm.innerHTML = ` · ${wd.slice(5)} 하루 ${tm(fm(wsum[w].day[wd] || 0))}`; line.append(sm); }
         wb.append(line);
-        if (days.length) wb.append(el('small', null, '　날짜별: ' + days.map(d => `${d.slice(5)} ${fm(wsum[w].day[d])}`).join(' · ')));
+        if (days.length) { const sm = el('small'); sm.innerHTML = '　날짜별: ' + days.map(d => `${d.slice(5)} ${tm(fm(wsum[w].day[d]))}`).join(' · '); wb.append(sm); }
       });
       wb.append(el('small', 'hint', '위 "넣을 수업 날짜"를 바꾸면 그 날짜 기준으로 바뀌어요.'));
       box.append(wb);

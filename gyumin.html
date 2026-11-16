@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116161859">
+<meta name="build" content="20261116162200">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -41,6 +41,12 @@ if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setIt
 .past-h { margin: 16px 0 6px; font-size: 1rem; color: var(--accent); scroll-margin-top: 20px; }
 .todo-red { color: #D7263D; border: 2px solid #D7263D; border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; background: color-mix(in srgb, #D7263D 6%, var(--panel, #fff)); }
 .todo-red b { display: block; margin-bottom: 2px; } .todo-red li { margin: 2px 0 2px 16px; } .todo-red small { opacity: .8; }
+.skin-row { display: flex; justify-content: flex-end; margin-top: -4px; } .skin-btn { flex: none !important; padding: 6px 12px !important; font-size: .9rem !important; border-radius: 999px; }
+.skin-box { background: var(--panel, #fff); border: 2px dashed var(--line); border-radius: 18px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.skin-box b { font-size: .9rem; } .skin-sw { display: flex; flex-wrap: wrap; gap: 8px; }
+.skin-sw button { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; font-size: .7rem; padding: 0; flex: none !important; }
+.skin-sw button.on { box-shadow: 0 0 0 3px var(--accent); }
+.skin-fn { display: flex; flex-wrap: wrap; gap: 6px; } .skin-fn button { flex: none !important; padding: 6px 12px !important; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 1.05rem !important; cursor: pointer; } .skin-fn button.on { background: var(--accent); color: #fff; }
 </style></head><body><title>알림장 메이커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -389,6 +395,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-snav="prev" id="sPrev">지난 과제</button>
     <button type="button" data-snav="cur" id="sCur">이번 과제</button>
   </div>
+  <div class="skin-row"><button type="button" id="skinBtn" class="skin-btn">🎨 꾸미기</button></div>
+  <div id="skinBox" class="skin-box" hidden></div>
   <p class="hint" id="navMsg" hidden></p>
   <section class="card" id="cycleBox" hidden aria-labelledby="ch">
     <h2 id="ch">수업 회차</h2>
@@ -1625,7 +1633,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     Object.entries({ bg: T.bg, line: T.line, margin: T.margin, ink: T.ink, sub: T.sub, acc: T.accent, chip: T.chipBg, badge: T.badgeInk, box: T.box, hot: T.hot, lv1: T.lv1, lv2: T.lv2, lv3: T.lv3 })
       .forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
     if (state.mode === 'student') {   // 학생별 색: 규민 파랑 · 조수아 핑크
-      const H0 = ({ '김규민': 214, '조수아': 330 })[state.cls], H = H0 === 330 ? 352 : H0, K = H0 === 330 ? 0.42 : 1;
+      const SK = skinGet(), H00 = ({ '김규민': 214, '조수아': 330 })[state.cls], H0 = H00 || (SK.h ? 1 : 0), H = SK.h || (H0 === 330 ? 352 : H0), K = SK.h ? (SK.k || 1) : (H0 === 330 ? 0.42 : 1);
       if (H0) {
         const dk = document.documentElement.dataset.theme === 'dark' || (document.documentElement.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
         const R = document.documentElement.style;
@@ -1637,6 +1645,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         Object.entries(P).forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
       }
     }
+    if (state.mode === 'student') { const f = skinGet().f || ''; skinFont(f); document.body.style.fontFamily = f ? `'${f}', var(--font-body, sans-serif)` : ''; nb.style.fontFamily = f ? `'${f}', sans-serif` : ''; }
     const list = currentItems();
     const hv = $('heading').value.trim();
     nb.append(el('div', 'nb-top', [hv, state.cls].filter(Boolean).join(' · ')), el('div', 'nb-date', kLong(state.date)));
@@ -2767,6 +2776,21 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     box.append(b);
   }
   if ($('fSents')) { $('fSents').addEventListener('input', saPreview); setTimeout(saPreview, 500); }
+  /* 학생이 직접 고르는 종이 색 · 글씨체 (이 휴대폰에만 저장) */
+  const SKIN_COL = [['', '기본'], [340, '핑크', 1], [200, '하늘', 1], [160, '민트', .85], [48, '레몬', 1], [265, '보라', .8], [18, '피치', 1], [120, '연두', .7]];
+  const SKIN_FONT = [['', '기본'], ['Jua', '주아체'], ['Gaegu', '개구쟁이'], ['Hi Melody', '하이멜로디'], ['Poor Story', '푸어스토리'], ['Gowun Dodum', '고운돋움'], ['Nanum Pen Script', '나눔펜']];
+  function skinGet() { try { return JSON.parse(store.get('skin:' + (state.cls || '')) || '{}') || {}; } catch (e) { return {}; } }
+  function skinSet(o) { store.set('skin:' + (state.cls || ''), JSON.stringify(Object.assign(skinGet(), o))); renderNotebook(); skinDraw(); }
+  function skinFont(f) { if (!f || document.getElementById('skf-' + f.replace(/\s/g, ''))) return; const l = document.createElement('link'); l.id = 'skf-' + f.replace(/\s/g, ''); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(f).replace(/%20/g, '+') + '&display=swap'; document.head.append(l); }
+  function skinDraw() {
+    const box = $('skinBox'); if (!box || box.hidden) return; box.textContent = ''; const sk = skinGet();
+    box.append(el('b', null, '종이 색'));
+    const sw = el('div', 'skin-sw'); SKIN_COL.forEach(([h, nm, kk]) => { const b = el('button', (String(sk.h || '') === String(h) ? 'on' : ''), h === '' ? '기본' : ''); b.type = 'button'; b.title = nm; b.setAttribute('aria-label', nm); b.style.background = h === '' ? 'linear-gradient(135deg,#fff 50%,#ddd 50%)' : `hsl(${h} ${Math.round(85 * kk)}% 86%)`; b.onclick = () => skinSet({ h: h || 0, k: kk || 1 }); sw.append(b); }); box.append(sw);
+    box.append(el('b', null, '글씨체'));
+    const fn = el('div', 'skin-fn'); SKIN_FONT.forEach(([f, nm]) => { skinFont(f); const b = el('button', (sk.f || '') === f ? 'on' : '', nm); b.type = 'button'; if (f) b.style.fontFamily = `'${f}', sans-serif`; b.onclick = () => skinSet({ f }); fn.append(b); }); box.append(fn);
+    box.append(el('small', 'hint', '이 휴대폰에만 저장돼요. 언제든 바꿀 수 있어요.'));
+  }
+  if ($('skinBtn')) $('skinBtn').onclick = () => { const b = $('skinBox'); b.hidden = !b.hidden; skinDraw(); };
   function closeQuiz() {
     wsFlush(); quiz.open = false; quiz.only = null;
     $('quiz').hidden = true; document.body.style.overflow = '';
