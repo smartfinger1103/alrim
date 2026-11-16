@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116180600">
+<meta name="build" content="20261116180800">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -253,6 +253,11 @@ section.tt { border-color: var(--accent); }
 .fbody { display: flex; flex-direction: column; gap: 8px; }
 .fbox.folded .fbody { display: none; }
 .fbox.folded { padding-bottom: 10px; }
+/* 모든 항목 접기/펼치기 */
+section.step > h2, section.card > h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sfold-btn { margin-left: auto; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card, #fff); color: var(--ink); cursor: pointer; }
+section.sfolded > *:not(h2) { display: none !important; }
+section.sfolded { padding-bottom: 14px; }
 .pronbox { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .pronbox textarea { min-height: 90px; }
 .pronbox .row b { font-size: 0.86rem; color: var(--ink); }
@@ -1295,13 +1300,30 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     setFold(box, store.get('fold:' + box.id) === '1');
     const fb = box.querySelector('.ffold'); if (fb) fb.onclick = () => { const on = !box.classList.contains('folded'); setFold(box, on); store.set('fold:' + box.id, on ? '1' : '0'); };
   });
+  /* 모든 항목(섹션) 접기 / 펼치기: 제목 오른쪽 버튼, 상태는 이 기기에 기억 */
+  function setSFold(sec, on) {
+    sec.classList.toggle('sfolded', on);
+    const b = sec.querySelector(':scope > h2 > .sfold-btn'); if (b) { b.textContent = on ? '펼치기 ▼' : '접기 ▲'; b.setAttribute('aria-expanded', on ? 'false' : 'true'); }
+  }
+  $$('section.step, section.card').forEach(sec => {
+    const h = sec.querySelector(':scope > h2'); if (!h || !h.id) return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sfold-btn';
+    b.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); const on = !sec.classList.contains('sfolded'); setSFold(sec, on); store.set('sfold:' + h.id, on ? '1' : '0'); };
+    h.append(b); setSFold(sec, store.get('sfold:' + h.id) === '1');
+  });
+  /* 왼쪽 메뉴로 이동하면 접혀 있던 항목은 펼쳐서 보여 줌 */
+  document.addEventListener('click', (ev) => {
+    const g = ev.target.closest && ev.target.closest('[data-go]'); if (!g) return;
+    const h = document.getElementById(g.dataset.go), sec = h && h.closest('section');
+    if (sec && sec.classList.contains('sfolded')) { setSFold(sec, false); store.set('sfold:' + h.id, '0'); }
+  }, true);
   $('fAdd').onclick = async () => { const b = $('fAdd'); b.disabled = true; try { if (await saAutoFill()) addEntry(false); } finally { b.disabled = false; } };
   $('fLesson').onclick = () => addEntry(true);
   function startEdit(e) {
     state.editing = e.id;
     $('fDate').value = e.date; $('fWho').value = e.who || ''; $('fSubject').value = e.subject; $('fTask').value = e.task;
     $('fRange').value = e.range; $('fDue').value = e.due; $('fNote').value = e.note; $('fWords').value = isPronE(e) ? '' : (e.words || ''); if ($('fPron')) { $('fPron').value = isPronE(e) ? (e.words || '') : ''; fpCount(); } if ($('fSents')) $('fSents').value = e.sents || ''; fwCount();
-    $$('.fbox.folded').forEach(b => setFold(b, false));
+    $$('.fbox.folded').forEach(b => setFold(b, false)); { const sc = $('form').closest('section'); if (sc) setSFold(sc, false); }
     $('fAdd').textContent = '수정 저장'; $('fCancel').hidden = false; $('fLesson').hidden = true;
     $('form').classList.add('editing'); fMsg('위에서 고친 뒤 "수정 저장"을 누르세요.');
     $('fTask').focus();
