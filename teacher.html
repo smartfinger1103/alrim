@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116182500">
+<meta name="build" content="20261116182200">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -3236,7 +3236,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev => document.addEventListener(ev, () => { WS.act = Date.now(); }, true));
   setInterval(() => {
     const now = Date.now();
-    if (typeof quiz !== 'undefined' && quiz.open && !document.hidden && now - WS.act < 60000) WS.sec += Math.min(5, (now - WS.last) / 1000);
+    // 발음 연습·문장 분석 창(.pr-ov)이 열려 있는 시간은 단어 공부 시간에서 뺌
+    if (typeof quiz !== 'undefined' && quiz.open && !document.querySelector('.pr-ov') && !document.hidden && now - WS.act < 60000) WS.sec += Math.min(5, (now - WS.last) / 1000);
     WS.last = now;
   }, 5000);
   function wsFlush() {
