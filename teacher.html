@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116161859">
+<meta name="build" content="20261116162058">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -52,6 +52,22 @@ if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setIt
 .past-h { margin: 16px 0 6px; font-size: 1rem; color: var(--accent); scroll-margin-top: 20px; }
 .todo-red { color: #D7263D; border: 2px solid #D7263D; border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; background: color-mix(in srgb, #D7263D 6%, var(--panel, #fff)); }
 .todo-red b { display: block; margin-bottom: 2px; } .todo-red li { margin: 2px 0 2px 16px; } .todo-red small { opacity: .8; }
+/* 밝고 화사한 테마 (라이트 모드) */
+:root:not([data-theme="dark"]) body.tmode { --panel: #FFFFFF; --line: #F0E3EE; }
+:root:not([data-theme="dark"]) body.tmode[data-stu] { background-color: hsl(var(--cur) calc(95% * var(--cs, 1)) 96.5%); background-image: radial-gradient(hsl(var(--cur) calc(90% * var(--cs, 1)) 85% / .55) 1.6px, transparent 1.8px); background-size: 22px 22px; }
+:root:not([data-theme="dark"]) body.tmode header.top h1 { font-family: var(--font-display); color: hsl(var(--cur, 330) 70% 55%); text-shadow: 2px 2px 0 hsl(var(--cur, 330) 90% 88%); }
+:root:not([data-theme="dark"]) body.tmode section.step { --sc: hsl(var(--h) 85% 62%); border: 2px solid hsl(var(--h) 85% 82%); border-left: 7px solid var(--sc); border-radius: 22px; background: linear-gradient(180deg, hsl(var(--h) 100% 97%), #FFFFFF 140px); box-shadow: 0 6px 18px hsl(var(--h) 70% 70% / .18); }
+:root:not([data-theme="dark"]) body.tmode section.step h2 { font-family: var(--font-display); font-weight: 400; color: hsl(var(--h) 65% 42%); border-bottom: 2px dotted hsl(var(--h) 85% 80%); }
+:root:not([data-theme="dark"]) body.tmode section.step .n { background: var(--sc); box-shadow: 0 2px 0 hsl(var(--h) 70% 45%); }
+:root:not([data-theme="dark"]) body.tmode .tnav [data-go] { --sc: hsl(var(--h, 150) 85% 62%); background: hsl(var(--h, 150) 100% 92%); border: 2px solid hsl(var(--h, 150) 85% 78%); border-left-width: 2px; color: hsl(var(--h, 150) 65% 32%); border-radius: 999px; font-weight: 700; box-shadow: 0 2px 0 hsl(var(--h, 150) 70% 80%); transition: transform .12s; }
+:root:not([data-theme="dark"]) body.tmode .tnav [data-go]:hover { background: var(--sc); color: #fff; transform: translateY(-1px); }
+:root:not([data-theme="dark"]) body.tmode .tnav-float [data-go], :root:not([data-theme="dark"]) body.tmode .tnav-float button { border-radius: 14px; }
+:root:not([data-theme="dark"]) body.tmode button.primary, :root:not([data-theme="dark"]) body.tmode .btn.primary { background: linear-gradient(180deg, #FF8FB8, #FF6FA3); border-color: #FF6FA3; color: #fff; border-radius: 14px; box-shadow: 0 3px 0 #E0508A; }
+:root:not([data-theme="dark"]) body.tmode button.primary:hover { filter: brightness(1.05); }
+:root:not([data-theme="dark"]) body.tmode input, :root:not([data-theme="dark"]) body.tmode textarea, :root:not([data-theme="dark"]) body.tmode select { border-radius: 12px; border-color: #F1D7E6; background: #FFFDFE; }
+:root:not([data-theme="dark"]) body.tmode .stab { border-radius: 18px 18px 0 0; font-family: var(--font-display); }
+:root:not([data-theme="dark"]) body.tmode aside.preview .canvas-box, :root:not([data-theme="dark"]) body.tmode aside.preview > div:not(.todo-red) { border-radius: 20px; }
+:root:not([data-theme="dark"]) body.tmode .hwc { background: #F2FFFB; border-color: #8FE3CF; border-radius: 18px; }
 </style></head><body><title>알림장 메이커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
