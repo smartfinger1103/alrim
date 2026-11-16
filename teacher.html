@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116162955">
+<meta name="build" content="20261116163713">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -80,6 +80,9 @@ b.tm { color: #1E6FE0; font-weight: 700; margin-left: 2px; }
 .pp-b { font-size: .92rem; color: var(--accent); word-break: keep-all; }
 .pp-tile.lv1 .pp-f { color: #1E5BD8; } .pp-tile.lv2 .pp-f { color: #C62828; } .pp-tile.lv3 .pp-f { color: #7B2FBE; }
 .pp-tile .lv-tag { position: absolute; top: 4px; right: 6px; font-size: .62rem; }
+.wt-mk { width: 30px; height: 30px; border-radius: 8px; border: 2px solid var(--line); background: #fff; font-size: 1.15rem; font-weight: 800; line-height: 1; padding: 0; cursor: pointer; color: var(--lv2); }
+.wt-row.half { border-color: #E0A100; background: color-mix(in srgb, #FFC93C 16%, var(--bg)); } .wt-row.half .wt-mk { color: #C78A00; border-color: #E0A100; } .wt-row.bad .wt-mk { border-color: var(--lv2); }
+.wt-tri { display: block; color: #E09A00; font-weight: 900; font-size: 1.1rem; line-height: 1; margin-bottom: 1px; }
 </style></head><body><title>알림장 메이커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1268,7 +1271,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   const LV_TXT = ['', '1번 틀린 단어', '2번 틀린 단어', '3번 이상 틀린 단어'];
 
   /* ---------- 수업 중 단어 테스트 ---------- */
-  const WT = { who: '', src: '', wrong: new Set() };
+  const WT = { who: '', src: '', wrong: new Set(), half: new Set() };
   // 오늘(넣을 수업 날짜)까지 외워 와야 하는 단어: 그 전 수업에 나간 단어 과제를 모두 모아요
   function dueWords(who, day) {
     const before = [...new Set(D.entries.filter(e => e.words && forWho(e.who, who) && e.date < day).map(e => e.date))].sort();
@@ -1305,7 +1308,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (state.mode !== 'teacher') return;
     const ws = $('wtWho'); ws.textContent = '';
     names().forEach(n => ws.append(new Option(n, n)));
-    if (!names().includes(WT.who)) { WT.who = names().includes(OV.who) ? OV.who : (names()[0] || ''); WT.src = ''; WT.wrong.clear(); }
+    if (!names().includes(WT.who)) { WT.who = names().includes(OV.who) ? OV.who : (names()[0] || ''); WT.src = ''; WT.wrong.clear(); WT.half.clear(); }
     ws.value = WT.who;
     if (!$('wtDate').value) $('wtDate').value = todayStr();
     const srcs = WT.who ? wtSources(WT.who) : [];
@@ -1318,21 +1321,21 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const cur = srcs.find(x => x.key === WT.src);
     if (!cur || !cur.words.length) { g.append(el('p', 'hint', !WT.who ? '학생을 먼저 추가해 주세요.' : WT.src === 'paste' ? '위 칸에 테스트할 단어를 붙여넣거나 파일로 불러오세요. 과제에 "외울 단어"를 넣어 두면 목록에서 바로 고를 수도 있어요.' : '단어가 없어요.')); $('wtCount').textContent = ''; $('wtGo').disabled = true; return; }
     cur.words.forEach((w, i) => {
-      const k = wkey(w), lv = missLv(WT.who, w), bad = WT.wrong.has(k);
-      const row = el('label', 'wt-row' + (lv ? ' l' + lv : '') + (bad ? ' bad' : ''));
-      const cb = el('input'); cb.type = 'checkbox'; cb.id = 'wt' + i; cb.checked = bad;
-      cb.setAttribute('aria-label', w.en + ' 못 외움');
-      cb.onchange = () => { cb.checked ? WT.wrong.add(k) : WT.wrong.delete(k); renderWT(); };
-      const tx = el('span'); tx.append(el('b', null, w.en), ...(ipaOf(w.en) ? [el('small', 'ipa', ipaOf(w.en))] : []), el('small', null, w.ko + (lv ? ' · ' + LV_TXT[lv] : '')));
+      const k = wkey(w), lv = missLv(WT.who, w), bad = WT.wrong.has(k), half = WT.half.has(k);
+      const row = el('div', 'wt-row' + (lv ? ' l' + lv : '') + (bad ? ' bad' : '') + (half ? ' half' : ''));
+      const cb = el('button', 'wt-mk', bad ? '✕' : half ? '△' : ''); cb.type = 'button'; cb.id = 'wt' + i;
+      cb.setAttribute('aria-label', w.en + (bad ? ' 틀림' : half ? ' 반만 맞음' : ' 맞음') + ' (누를 때마다 ✕ → △ → 없음)');
+      row.onclick = () => { if (bad) { WT.wrong.delete(k); WT.half.add(k); } else if (half) WT.half.delete(k); else WT.wrong.add(k); renderWT(); };
+      const tx = el('span'); if (half) tx.append(el('span', 'wt-tri', '△')); tx.append(el('b', null, w.en), ...(ipaOf(w.en) ? [el('small', 'ipa', ipaOf(w.en))] : []), el('small', null, w.ko + (lv ? ' · ' + LV_TXT[lv] : '')));
       row.append(cb, tx); g.append(row);
     });
-    const nw = cur.words.filter(w => WT.wrong.has(wkey(w))).length;
-    $('wtCount').textContent = `못 외운 단어 ${nw}개 / ${cur.words.length}개`;
+    const nx = cur.words.filter(w => WT.wrong.has(wkey(w))).length, nh = cur.words.filter(w => WT.half.has(wkey(w))).length, nw = nx + nh;
+    $('wtCount').textContent = `틀림 ✕ ${nx}개 · 반만 맞음 △ ${nh}개 / ${cur.words.length}개 (한 번 누르면 ✕, 두 번 누르면 △)`;
     $('wtGo').disabled = false;
     $('wtGo').textContent = nw ? `못 외운 단어 ${nw}개를 오늘 과제로 다시 내기` : '모두 외웠어요 · 기록 저장';
   }
-  $('wtWho').onchange = (e) => { WT.who = e.target.value; WT.src = ''; WT.wrong.clear(); $('wtMsg').textContent = ''; renderWT(); };
-  $('wtDate').addEventListener('change', () => { WT.wrong.clear(); renderWT(); });
+  $('wtWho').onchange = (e) => { WT.who = e.target.value; WT.src = ''; WT.wrong.clear(); WT.half.clear(); $('wtMsg').textContent = ''; renderWT(); };
+  $('wtDate').addEventListener('change', () => { WT.wrong.clear(); WT.half.clear(); renderWT(); });
   let wtT;
   $('wtPaste').addEventListener('input', () => { clearTimeout(wtT); wtT = setTimeout(renderWT, 250); });
   $('wtPaste').addEventListener('paste', () => setTimeout(() => {
@@ -1347,13 +1350,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     try { await addWordFiles(files, $('wtPaste'), (t) => { $('wtPasteMsg').textContent = t; }, renderWT); } finally { $('wtFileZone').classList.remove('busy'); }
   };
 
-  $('wtSrc').onchange = (e) => { WT.src = e.target.value; WT.wrong.clear(); $('wtMsg').textContent = ''; renderWT(); };
+  $('wtSrc').onchange = (e) => { WT.src = e.target.value; WT.wrong.clear(); WT.half.clear(); $('wtMsg').textContent = ''; renderWT(); };
   $('wtGo').onclick = () => {
     const cur = wtSources(WT.who).find(x => x.key === WT.src); if (!cur) return;
     const who = WT.who, mm = (D.miss[who] = D.miss[who] || {});
-    const wrong = cur.words.filter(w => WT.wrong.has(wkey(w)));
-    cur.words.forEach(w => { const k = wkey(w); if (WT.wrong.has(k)) mm[k] = (mm[k] || 0) + 1; else delete mm[k]; });
-    if (!wrong.length) { WT.wrong.clear(); $('wtMsg').textContent = '모두 맞혔어요! 이 단어들의 틀린 기록을 지웠어요.'; changed(); return; }
+    const wrong = cur.words.filter(w => WT.wrong.has(wkey(w)) || WT.half.has(wkey(w)));
+    cur.words.forEach(w => { const k = wkey(w); if (WT.wrong.has(k)) mm[k] = (mm[k] || 0) + 1; else if (!WT.half.has(k)) delete mm[k]; });
+    if (!wrong.length) { WT.wrong.clear(); WT.half.clear(); $('wtMsg').textContent = '모두 맞혔어요! 이 단어들의 틀린 기록을 지웠어요.'; changed(); return; }
     const date = $('wtDate').value || todayStr();
     let e = D.entries.find(x => x.date === date && x.who === who && x.retake);
     const merged = new Map();
@@ -1371,7 +1374,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     else D.entries.push({ id: uid(), date, who, subject: '단어', task, range: '', due: '', note: '', words: text, retake: true });
     const red = wrong.filter(w => (mm[wkey(w)] || 0) >= 2).length;
     $('wtMsg').textContent = `${who} ${kShort(date)} 과제에 못 외운 단어 ${wrong.length}개를 다시 냈어요` + (red ? ` (그중 ${red}개는 2번 이상 틀린 단어)` : '') + '. 학생 링크에 올리면 학생이 바로 공부할 수 있어요.';
-    WT.wrong.clear();
+    WT.wrong.clear(); WT.half.clear();
     if (WT.src === 'paste') $('wtPaste').value = '';
     changed();
   };
@@ -1771,7 +1774,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (!names().includes(state.tab)) state.tab = names().includes(store.get('tab')) ? store.get('tab') : (names()[0] || '');
     const t = state.tab;
     if (OV.who !== t) { OV.who = t; OV.round = null; OV.day = ''; }
-    if (WT.who !== t) { WT.who = t; WT.src = ''; WT.wrong.clear(); }
+    if (WT.who !== t) { WT.who = t; WT.src = ''; WT.wrong.clear(); WT.half.clear(); }
     state.cls = t;
   }
   /* 좌우 단 크기 조절: 가운데 손잡이를 끌면 오른쪽 미리보기 폭이 바뀌어요 */
