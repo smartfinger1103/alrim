@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116194427">
+<meta name="build" content="20261116194733">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1602,17 +1602,21 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     $('fSubject').value = ''; $('fTask').value = ''; $('fRange').value = ''; $('fDue').value = ''; $('fNote').value = ''; $('fWords').value = ''; $('fSents').value = ''; if ($('fPron')) { $('fPron').value = ''; fpCount(); } fwCount();
   }
   $('fCancel').onclick = () => { stopEdit(); fMsg(''); renderEntries(); };
+  $('fDate').addEventListener('change', () => renderEntries());
 
   function renderEntries() {
+    /* 지난 과제 보기: 바로 직전 수업만. (이번 수업 날짜에 적은 과제는 수정·삭제할 수 있게 위에 따로 보여 줘요) */
     const box = $('entryList'); box.textContent = '';
     const groups = {};
     D.entries.filter(e => !state.tab || forWho(e.who, state.tab)).forEach(e => { const k = e.date + '|' + (e.who || ''); (groups[k] = groups[k] || []).push(e); });
     const keys = Object.keys(groups).sort((a, b) => (a < b ? 1 : -1));
-    const shown = state.showAll ? keys : keys.slice(0, 6);
-    $('moreEntries').hidden = keys.length <= 6;
-    $('moreEntries').textContent = state.showAll ? '최근 기록만 보기' : `지난 기록 더 보기 (${keys.length - 6}개)`;
+    const cur = $('fDate').value || todayStr();
+    const nowKeys = keys.filter(k => k.split('|')[0] >= cur);
+    const prevDate = keys.map(k => k.split('|')[0]).filter(d => d < cur).sort().pop() || '';
+    const prevKeys = keys.filter(k => k.split('|')[0] === prevDate);
+    $('moreEntries').hidden = true;
     if (!keys.length) box.append(el('p', 'hint', '아직 적은 과제가 없어요.'));
-    shown.forEach(k => {
+    const draw = (k) => {
       const [date, who] = k.split('|');
       const g = el('div', 'egroup');
       const head = el('div', 'ehead');
@@ -1622,7 +1626,10 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       g.append(head);
       groupBySubject(groups[k]).forEach(sg => { g.append(el('div', 'esub', sg.subject + (sg.items.length > 1 ? ` · ${sg.items.length}개` : ''))); sg.items.forEach(e => g.append(entryRow(e, true))); });
       box.append(g);
-    });
+    };
+    if (nowKeys.length) { box.append(el('p', 'hint', '✏️ 이번 수업 날짜(' + kShort(cur) + ')에 적은 과제 · 여기서 수정·삭제해요')); nowKeys.forEach(draw); }
+    if (prevKeys.length) { box.append(el('p', 'hint', '⏮ 바로 직전 수업')); prevKeys.forEach(draw); }
+    else if (keys.length) box.append(el('p', 'hint', '직전 수업 기록이 없어요.'));
   }
   const isPronE = (e) => !!e && (/발음/.test(e.subject || '') || /^\s*\[발음\]|발음\s*연습/.test(e.task || ''));
   const wordCount = (e) => (e.words ? (isPronE(e) ? pronWords(e.words) : parseWords(e.words, '')).length : 0);
