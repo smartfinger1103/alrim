@@ -25,7 +25,7 @@ def pages_for(bk,N):
     if bk=='17': s=1+16*(N-1); return list(range(s,s+4))
     s=1+12*(N-1); return list(range(s,s+5))
 def run(bk,N,pages=None):
-    ans=[];flags=[];qn=0
+    ans=[];flags=[];qn=0;qp=[]
     for p in (pages or pages_for(bk,N)):
         a=analyze(bk,p);xg=cv2.cvtColor(a['x'],cv2.COLOR_BGR2GRAY)
         for thr in (0.62,0.55,0.5,0.45,0.7):
@@ -47,9 +47,10 @@ def run(bk,N,pages=None):
                     if best is None or d<best[0]: best=(d,gi,si,r[2])
             if best and best[0]<40: per[best[1]].append((best[2]+1,best[3]))
         for gi,g in enumerate(gs):
-            qn+=1;m=per[gi]
+            qn+=1;m=per[gi];qp.append(p)
             if len(m)!=1 or len(g)!=5: flags.append((qn,p,m,len(g)))
             ans.append(m[0][0] if m else 0)
+    run.qp=qp
     return ans,flags
 if __name__=='__main__':
     bk,N=sys.argv[1],int(sys.argv[2])
