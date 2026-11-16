@@ -66,7 +66,8 @@ const disconnect=document.createElement('button'); disconnect.type='button'; dis
 disconnect.onclick=()=>{tokenInput.value='';rememberToken();tokenInput.focus();};
 panel.append(tokenStatus,disconnect); rememberToken();
 
-document.querySelector('#teacherView .steps').prepend(panel);
+{ const dt=document.createElement('details'); const sm=document.createElement('summary'); sm.textContent='⚙ GitHub 저장 연결 (처음 한 번만 설정 · 평소엔 안 열어도 돼요)'; sm.style.cssText='cursor:pointer;font-weight:600'; dt.append(sm); [...panel.childNodes].forEach(n=>{ if(n!==dt) { if(n.tagName==='H2') n.remove(); else dt.append(n); } }); panel.append(dt); }
+document.querySelector('#teacherView .steps').append(panel);
 const publish=document.getElementById('publish');
 publish.textContent='두 학생 과제 저장하기';
 document.getElementById('exportOne').hidden=true;
