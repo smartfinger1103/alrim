@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116174500">
+<meta name="build" content="20261116180600">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1631,7 +1631,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   // 같은 과목끼리 묶어요 (처음 나온 순서대로)
   function groupBySubject(list) {
     const map = new Map();
-    list.forEach(it => { const k = it.subject || '기타'; if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
+    list.forEach(it => { const k = /발음/.test(it.subject || '') ? '단어' : (it.subject || '기타');   /* 발음연습은 항상 단어 아래 */ if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
     return [...map].map(([subject, items]) => ({ subject, items }));
   }
   const isWordTask = (it) => (it.subject || '').trim() === '단어';

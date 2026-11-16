@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116174500">
+<meta name="build" content="20261116180600">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -244,15 +244,19 @@ section.tt { border-color: var(--accent); }
 .wordbox { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .wordbox textarea { min-height: 90px; }
 /* 외울 단어 | 발음 단어 | 문장 연습: 공간이 되면 가로로 나란히, 좁으면 위아래로 */
-.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
-.trio > * { grid-column: auto !important; }
-.trio .inmodes { grid-template-columns: minmax(0, 1fr); }
-@media (max-width: 700px) { .trio { grid-template-columns: minmax(0, 1fr); } }
+.trio { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .trio > * { margin: 0; min-width: 0; }
+.fbox { border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.fhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fhead b { font-size: 0.95rem; color: var(--ink); }
+.fhead .fsp { flex: 1; }
+.fbody { display: flex; flex-direction: column; gap: 8px; }
+.fbox.folded .fbody { display: none; }
+.fbox.folded { padding-bottom: 10px; }
 .pronbox { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-.pronbox textarea { min-height: 150px; }
+.pronbox textarea { min-height: 90px; }
 .pronbox .row b { font-size: 0.86rem; color: var(--ink); }
-.trio .sa-in textarea { min-height: 150px; }
+.trio .sa-in textarea { min-height: 120px; width: 100%; }
 .inmodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
 .capzone.file { cursor: default; border-style: solid; border-color: var(--line); background: var(--bg); }
 .capzone span b { font-size: inherit; }
@@ -656,8 +660,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
           <label>준비물 (선택)<input type="text" id="fNote"></label>
           <div class="wide trio">
-          <div class="wordbox">
-            <div class="row"><b>외울 단어 (선택)</b><span class="hint" id="fwCount"></span></div>
+          <div class="wordbox fbox" id="fbWords">
+            <div class="fhead"><b>📘 외울 단어 (선택)</b><span class="hint" id="fwCount"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="w">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody">
             <div class="inmodes">
               <div class="capzone" id="fCapZone" tabindex="0" role="button" aria-label="방법 1: 단어장 캡처 붙여넣기">
                 <b>① 캡처 붙여넣기</b>
@@ -671,19 +676,24 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             </div>
             <textarea class="mono" id="fWords" spellcheck="false" aria-label="이 과제의 단어 목록" placeholder="찾은 단어가 여기에 들어와요. 직접 고칠 수 있어요.&#10;apple - 사과&#10;look after - 돌보다"></textarea>
             <p class="hint">찾은 단어는 위 칸에 들어가요. 직접 쓰거나 엑셀에서 복사해 붙여넣어도 돼요. 한글(hwp)은 PDF나 워드로 저장해서 올려 주세요. 넣은 단어는 학생 화면에서 이 과제의 단어 공부로 나와요.</p>
+            </div>
           </div>
-          <div class="pronbox">
-            <div class="row"><b>🎤 발음 단어 (선택)</b><span class="hint" id="fpCount"></span></div>
+          <div class="pronbox fbox" id="fbPron">
+            <div class="fhead"><b>🎤 발음 단어 (선택)</b><span class="hint" id="fpCount"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="p">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody">
             <textarea class="mono" id="fPron" spellcheck="false" aria-label="발음 연습 단어 목록" placeholder="발음 연습할 단어를 한 줄에 하나씩 적어요.&#10;comfortable&#10;vegetable"></textarea>
             <p class="hint">뜻은 안 적어도 돼요. 저장하면 학생 화면 <b>단어</b> 아래에 "발음연습"으로 들어가요.</p>
+            </div>
           </div>
-          <details class="sa-in" id="fSentsBox" open>
-          <summary>✍️ 문장 연습 (선택)</summary>
+          <div class="sa-in fbox" id="fSentsBox">
+            <div class="fhead"><b>✍️ 문장 연습 (선택)</b><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="s">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody">
           <textarea class="mono" id="fSents" spellcheck="false" rows="7" placeholder="영어 문장만 쓰면 돼요. 여러 문장도 그냥 이어서 써요.&#10;The boy who lives next door kicked the ball in the park.&#10;&#10;과제 추가를 누르면 성분 표시·끊어 읽기·해석이 자동으로 만들어져요."></textarea>
           <p class="hint">문장만 쓰면 과제 추가 때 <b>[S][V][O]</b> 표시, <b>/</b> 끊어 읽기, <b>=</b> 해석이 자동으로 들어가요. 자동 분석은 틀릴 수 있으니 <b>✨ 자동 분석 미리 보기</b>로 확인하고 고쳐도 돼요.</p>
           <div class="row"><button type="button" class="small" id="fSentsAuto">✨ 자동 분석 미리 보기</button></div>
           <div id="fSentsPv" class="sa-pv"></div>
-        </details>
+            </div>
+          </div>
         </div>
         </div>
         
@@ -1214,6 +1224,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   function addEntry(lessonOnly) {
     const f = readForm();
+    if (/발음/.test(f.subject)) { f.subject = '단어'; if (!/발음/.test(f.task)) f.task = f.task ? '발음연습 · ' + f.task : '발음연습'; }   /* 과목에 발음연습이라고 써도 단어 아래로 */
     let pron = lessonOnly ? '' : readPron();
     if (state.editing && isPronE(D.entries.find(x => x.id === state.editing))) { f.words = pron; pron = ''; }   /* 발음 과제 수정: 발음 단어 칸 내용으로 바꿈 */
     const sents = (lessonOnly || state.editing) ? '' : f.sents;   /* 새 과제: 문장 연습은 따로 과제로 만듦 */
@@ -1246,12 +1257,51 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (!lessonOnly) { state.date = f.date; state.auto = f.date === autoDate(); if (f.who) state.cls = f.who; }
     changed();
   }
+  /* 박스별 저장: 그 박스 내용만 따로 과제로 저장 */
+  async function saveBox(kind, btn) {
+    const date = $('fDate').value, who = $('fWho').value;
+    if (!date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
+    let e = null, label = '';
+    if (kind === 'w') {
+      const words = $('fWords').value.trim(); if (!words) { fMsg('외울 단어 칸이 비어 있어요.'); return; }
+      const n = parseWords(words, '').length;
+      e = { subject: '단어', task: n ? `외울 단어 (${n}개)` : '외울 단어', words }; label = '외울 단어';
+      $('fWords').value = ''; fwCount();
+    } else if (kind === 'p') {
+      const words = readPron(); if (!words) { fMsg('발음 단어 칸이 비어 있어요.'); return; }
+      e = { subject: '단어', task: '발음연습', words }; label = '발음연습';
+      $('fPron').value = ''; fpCount();
+    } else {
+      if (!$('fSents').value.trim()) { fMsg('문장 연습 칸이 비어 있어요.'); return; }
+      if (btn) btn.disabled = true;
+      try { if (!(await saAutoFill())) return; } finally { if (btn) btn.disabled = false; }
+      e = { subject: '문장분석', task: '문장 분석 연습', words: '', sents: $('fSents').value.trim() }; label = '문장 분석';
+      $('fSents').value = ''; $('fSents').dispatchEvent(new Event('input'));
+    }
+    D.entries.push(Object.assign({ id: uid(), date, who, range: '', due: '', note: '' }, e));
+    fMsg(`${kShort(date)} ${label} 과제를 저장했어요.`);
+    if (state.isSample) state.isSample = false;
+    $('sampleBadge').hidden = true;
+    state.date = date; state.auto = date === autoDate(); if (who) state.cls = who;
+    changed();
+  }
+  $$('.fsave').forEach(b => { b.onclick = () => saveBox(b.dataset.kind, b); });
+  /* 접기 / 펼치기 (상태는 이 기기에 기억) */
+  function setFold(box, on) {
+    box.classList.toggle('folded', on);
+    const fb = box.querySelector('.ffold'); if (fb) { fb.textContent = on ? '펼치기 ▼' : '접기 ▲'; fb.setAttribute('aria-expanded', on ? 'false' : 'true'); }
+  }
+  $$('.fbox').forEach(box => {
+    setFold(box, store.get('fold:' + box.id) === '1');
+    const fb = box.querySelector('.ffold'); if (fb) fb.onclick = () => { const on = !box.classList.contains('folded'); setFold(box, on); store.set('fold:' + box.id, on ? '1' : '0'); };
+  });
   $('fAdd').onclick = async () => { const b = $('fAdd'); b.disabled = true; try { if (await saAutoFill()) addEntry(false); } finally { b.disabled = false; } };
   $('fLesson').onclick = () => addEntry(true);
   function startEdit(e) {
     state.editing = e.id;
     $('fDate').value = e.date; $('fWho').value = e.who || ''; $('fSubject').value = e.subject; $('fTask').value = e.task;
     $('fRange').value = e.range; $('fDue').value = e.due; $('fNote').value = e.note; $('fWords').value = isPronE(e) ? '' : (e.words || ''); if ($('fPron')) { $('fPron').value = isPronE(e) ? (e.words || '') : ''; fpCount(); } if ($('fSents')) $('fSents').value = e.sents || ''; fwCount();
+    $$('.fbox.folded').forEach(b => setFold(b, false));
     $('fAdd').textContent = '수정 저장'; $('fCancel').hidden = false; $('fLesson').hidden = true;
     $('form').classList.add('editing'); fMsg('위에서 고친 뒤 "수정 저장"을 누르세요.');
     $('fTask').focus();
@@ -2081,7 +2131,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   // 같은 과목끼리 묶어요 (처음 나온 순서대로)
   function groupBySubject(list) {
     const map = new Map();
-    list.forEach(it => { const k = it.subject || '기타'; if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
+    list.forEach(it => { const k = /발음/.test(it.subject || '') ? '단어' : (it.subject || '기타');   /* 발음연습은 항상 단어 아래 */ if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
     return [...map].map(([subject, items]) => ({ subject, items }));
   }
   const isWordTask = (it) => (it.subject || '').trim() === '단어';
