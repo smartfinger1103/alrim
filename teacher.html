@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116161509">
+<meta name="build" content="20261116161722">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -40,6 +40,14 @@ if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setIt
 .err-box { color: #D7263D; border: 2px solid #D7263D; border-radius: 10px; padding: 8px 10px; margin: 6px 0 10px; display: flex; flex-direction: column; gap: 3px; font-size: .92rem; }
 .sa-pv { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; } .sa-pv .pv { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--card, #fff); } .sa-pv .pv .sa-toks { font-size: 1rem; line-height: 1.9; margin: 2px 0; } .sa-pv .cut { color: #D23B3B; font-weight: 800; margin: 0 4px; } .sa-pv .warn { color: #D7263D; font-size: .85rem; }
 .esub { margin: 8px 12px 2px; font-size: .82rem; font-weight: 700; color: var(--accent); border-bottom: 1px dashed var(--line); padding-bottom: 2px; }
+.hwc { border: 2px solid hsl(172 40% 60%); border-radius: 12px; padding: 10px 12px; margin: 8px 0 14px; background: hsl(172 50% 97%); }
+:root[data-theme="dark"] .hwc { background: hsl(172 25% 14%); }
+.hwc-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; } .hwc-top b { font-size: 1.05rem; }
+.hwc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 7px 0; border-top: 1px dashed var(--line); }
+.hwc-row .t small { display: block; color: var(--muted); } .hwc-row .auto { color: #1F6FB2; font-size: .85rem; }
+.hwc-st { display: flex; gap: 4px; } .hwc-st button { padding: 5px 9px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; font-size: .85rem; }
+.hwc-st button.on.done { background: #DDF5E6; border-color: #2F9D5B; color: #1F7A43; font-weight: 700; } .hwc-st button.on.part { background: #FFF1CC; border-color: #D9A300; color: #8A6400; font-weight: 700; } .hwc-st button.on.skip { background: #ECECEC; border-color: #888; color: #444; font-weight: 700; } .hwc-st button.on.no { background: #FFE0E0; border-color: #D23B3B; color: #B02020; font-weight: 700; }
+.hwc-rep { white-space: pre-wrap; background: var(--card, #fff); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; font-size: .95rem; line-height: 1.6; }
 </style></head><body><title>알림장 메이커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -618,6 +626,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <label class="lab" style="flex-direction:row;align-items:center;gap:6px">넣을 수업 날짜<input type="date" id="lsDate" style="width:auto"></label>
           <button type="button" class="small" id="lsReload">결과 새로고침</button>
         </div>
+        <div id="hwCheck" class="hwc"></div>
         <div id="lsBox"></div>
         <div class="msg" id="lsMsg" role="status"></div>
       </section>
@@ -1525,6 +1534,58 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (f || r.length) { r.push(f); rows.push(r); }
     return rows;
   }
+  /* 숙제 검사: 지난 수업 숙제를 한 것/일부/안 함으로 체크하고 학생 리포트 만들기 */
+  let LSROWS = [], HWC = { date: '', rep: false };
+  function renderHwCheck() {
+    const box = $('hwCheck'); if (!box || state.mode !== 'teacher') return; box.textContent = '';
+    const who = state.tab || names()[0]; if (!who) return;
+    const wd = $('lsDate').value || todayStr();
+    const dates = [...new Set(D.entries.filter(e => e.task && forWho(e.who, who)).map(e => e.date))].sort().reverse();
+    if (!dates.length) { box.append(el('p', 'hint', '아직 낸 숙제가 없어요.')); return; }
+    if (!HWC.user || !dates.includes(HWC.date)) HWC.date = dates.find(d => d < (HWC.base || todayStr())) || dates[0];
+    const top = el('div', 'hwc-top'); top.append(el('b', null, `📋 ${who} 숙제 검사`));
+    const sel = el('select'); dates.forEach(d => sel.append(new Option(kShort(d) + ' 숙제', d))); sel.value = HWC.date; sel.onchange = () => { HWC.date = sel.value; HWC.user = true; renderHwCheck(); };
+    top.append(el('span', 'hint', '검사할 숙제:'), sel); box.append(top);
+    const next = dates.slice().reverse().find(d => d > HWC.date) || '';
+    const tasks = D.entries.filter(e => e.task && e.date === HWC.date && forWho(e.who, who));
+    const R0 = LSROWS || [];
+    const autoOf = (e) => {
+      const out = [];
+      const L = listenOf(e); if (L) L.sets.forEach(st => { const r = R0.filter(r => (r[1] || '').trim() === who && (r[2] || '').trim() === String(st.test)).pop(); out.push(`듣기 ${st.test}회 ` + (r ? (r[3] || '').trim() + '점' : '안 풂')); });
+      const key = (t) => R0.filter(r => (r[1] || '').trim() === who && (r[2] || '').trim() === t && (r[5] || '').trim() === e.date && (r[4] || '').trim() === String(e.task || '').split('\n')[0].slice(0, 60)).pop();
+      if (e.words && isPron(e)) { const r = key('발음'); out.push('발음 ' + (r ? r[3] : '기록 없음')); }
+      if (e.sents) { const r = key('문장'); out.push('문장 분석 ' + (r ? r[3] : '기록 없음')); }
+      return out;
+    };
+    const stOf = (e) => (e.chk && e.chk[who]) || '';
+    tasks.forEach(e => {
+      const row = el('div', 'hwc-row'), t = el('div', 't');
+      t.append(el('span', null, (e.subject ? '[' + e.subject + '] ' : '') + String(e.task).split('\n').join(' / ')));
+      const au = autoOf(e); if (au.length) t.append(el('small', 'auto', '앱 기록: ' + au.join(' · ')));
+      const bs = el('div', 'hwc-st');
+      [['done', '했음'], ['part', '일부'], ['no', '안 함'], ['skip', '빼기']].forEach(([v, lb]) => { const b = el('button', v + (stOf(e) === v ? ' on' : ''), lb); b.type = 'button'; b.onclick = () => { e.chk = e.chk || {}; if (e.chk[who] === v) delete e.chk[who]; else e.chk[who] = v; changed(); renderHwCheck(); }; bs.append(b); });
+      row.append(t, bs); box.append(row);
+    });
+    const act = el('div', 'row'); act.style.marginTop = '8px';
+    const rb = el('button', 'primary small', HWC.rep ? '리포트 닫기' : '📄 과제 결과 리포트 보기'); rb.type = 'button'; rb.onclick = () => { HWC.rep = !HWC.rep; renderHwCheck(); }; act.append(rb);
+    box.append(act);
+    box.append(el('small', 'hint', '빼기 = 앱 오류 등으로 못 한 과제는 수행률 계산에서 빼요. "저장"을 눌러야 다른 기기에도 남아요.'));
+    if (HWC.rep) {
+      const fm = sec => sec < 60 ? sec + '초' : Math.round(sec / 60) + '분';
+      let wsec = 0; const wdays = {};
+      R0.forEach(r => { if ((r[1] || '').trim() === who && (r[2] || '').trim() === '단어') { const d = (r[5] || '').trim(); if (d >= HWC.date && (!next || d < next)) { const v = parseInt(r[3]) || 0; wsec += v; wdays[d] = (wdays[d] || 0) + v; } } });
+      const cnt = { done: 0, part: 0, no: 0, skip: 0, '': 0 }; tasks.forEach(e => cnt[stOf(e)]++);
+      const lab = { done: '✅ 했음', part: '🔶 일부', no: '❌ 안 함', skip: '➖ 제외(앱 오류 등)', '': '· 미확인' };
+      const lines = [`[${who} 과제 결과 리포트]`, `숙제 낸 날: ${kShort(HWC.date)}${next ? '  →  검사: ' + kShort(next) : ''}`, ''];
+      groupBySubject(tasks).forEach(g => { lines.push(`■ ${g.subject}`); g.items.forEach(e => { const au = autoOf(e); lines.push(`  ${lab[stOf(e)]}  ${String(e.task).split('\n').join(' / ')}` + (au.length ? `  (${au.join(', ')})` : '')); }); });
+      lines.push('', `단어 공부 시간: 총 ${fm(wsec)}` + (Object.keys(wdays).length ? '  (' + Object.keys(wdays).sort().map(d => d.slice(5) + ' ' + fm(wdays[d])).join(', ') + ')' : ''));
+      const tot = tasks.length - cnt.skip, rate = tot ? Math.round((cnt.done + cnt.part * 0.5) / tot * 100) : 0;
+      lines.push(`과제 수행: ${tot}개 중 했음 ${cnt.done} · 일부 ${cnt.part} · 안 함 ${cnt.no}` + (cnt.skip ? ` · 제외 ${cnt.skip}` : '') + (cnt[''] ? ` · 미확인 ${cnt['']}` : '') + `  → 수행률 ${rate}%`);
+      const txt = lines.join('\n');
+      box.append(el('div', 'hwc-rep', txt));
+      const cp = el('button', 'small', '리포트 복사 (문자·카톡 붙여넣기용)'); cp.type = 'button'; cp.onclick = async () => { try { await navigator.clipboard.writeText(txt); cp.textContent = '복사했어요 ✓'; } catch (e) { cp.textContent = '복사 실패 — 직접 드래그해서 복사해 주세요'; } }; box.append(cp);
+    }
+  }
   async function lsLoad() {
     const box = $('lsBox'); if (!box) return;
     if (!$('lsDate').value) $('lsDate').value = ($('wtDate') && $('wtDate').value) || todayStr();
@@ -1533,6 +1594,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     let rows;
     try { rows = csvParse(await (await fetch(lsCfg().csv + '&_=' + Date.now())).text()).slice(1); }
     catch (e) { box.textContent = ''; box.append(el('p', 'hint', '결과를 불러오지 못했어요. 인터넷을 확인하고 다시 눌러 보세요.')); return; }
+    LSROWS = rows; renderHwCheck();
     const errs = []; const lim = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
     rows.forEach(r => { if ((r[2] || '').trim() === '오류' && (r[5] || '').trim() >= lim) errs.push(r); });
     { let bn = $('errBanner'); if (!bn) { bn = el('button', 'err-banner'); bn.id = 'errBanner'; bn.type = 'button'; bn.onclick = () => document.getElementById('hLs').scrollIntoView({ behavior: 'smooth' }); document.body.append(bn); } bn.textContent = errs.length ? `⚠ 학생 화면 오류 ${errs.length}건 (최근 7일) · 눌러서 보기` : ''; bn.hidden = !errs.length; }
@@ -1599,7 +1661,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     changed(); lsLoad().then(() => { $('lsMsg').textContent = cm; });
   }
   if ($('lsReload')) $('lsReload').onclick = lsLoad;
-  if ($('lsDate')) $('lsDate').onchange = lsLoad;
+  if ($('lsDate')) $('lsDate').onchange = () => { HWC.date = ''; HWC.user = false; HWC.base = $('lsDate').value; lsLoad(); };
   setTimeout(() => { if (state.mode === 'teacher') lsLoad(); }, 1500);
 
   /* ---------- 수업 노트 사진 ---------- */
@@ -1689,7 +1751,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     g.addEventListener('dblclick', () => { root.style.removeProperty('--rw'); try { localStorage.removeItem('alrim.' + key); } catch (e) {} });
   })();
   function renderTabs() {
-    const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : '';
+    const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : ''; if (typeof renderHwCheck === 'function') setTimeout(renderHwCheck, 0);
     { const nm = state.tab ? shortName(state.tab) : '', hv = state.tab ? slugOf(state.tab) : '';
       let pill = $('stuNow'); if (!pill) { pill = el('div', 'stu-now'); pill.id = 'stuNow'; document.body.append(pill); }
       pill.textContent = nm ? nm + ' 화면' : ''; pill.hidden = !nm || state.mode !== 'teacher';
