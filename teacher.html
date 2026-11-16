@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116193628">
+<meta name="build" content="20261116194056">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1468,10 +1468,19 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   async function exFromPdf(file) {   /* 이 대화에서 만든 PDF는 안에 시험 데이터가 들어 있어 그대로 읽고, 다른 PDF는 글자를 읽어 번호·보기(①~⑤)로 나눠요 */
     $('exInfo').textContent = 'PDF를 읽는 중…';
+    const buf = await file.arrayBuffer();
+    /* 1) 이 대화에서 만든 PDF: 파일 안에 시험 데이터가 글자로 들어 있어서 인터넷 없이 바로 읽어요 */
+    try {
+      const m = new TextDecoder('latin1').decode(new Uint8Array(buf)).match(/ALRIMEXAM([0-9a-f]+)/);
+      if (m) return exParse(new TextDecoder('utf-8').decode(Uint8Array.from(m[1].match(/../g), h => parseInt(h, 16))), file.name);
+    } catch (e) {}
+    /* 2) 그 밖의 PDF: PDF 읽기 도구를 인터넷에서 받아 글자를 읽어요 (오래 걸리면 멈추지 않고 안내) */
+    const NOTOOL = 'PDF 읽기 도구를 불러오지 못했어요. 인터넷이 느리거나 막혀 있어요. 이 대화에서 새로 받은 PDF나 .txt 파일을 올려 주세요.';
+    const tmo = (p, ms) => Promise.race([p.catch(() => { throw new Error(NOTOOL); }), new Promise((_, rej) => setTimeout(() => rej(new Error(NOTOOL)), ms))]);
     const CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
-    await loadScript(CDN + 'pdf.worker.min.js'); await loadScript(CDN + 'pdf.min.js');
+    await tmo(loadScript(CDN + 'pdf.worker.min.js'), 20000); await tmo(loadScript(CDN + 'pdf.min.js'), 20000);
     const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = CDN + 'pdf.worker.min.js';
-    const pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise;
+    const pdf = await tmo(lib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise, 20000);
     try {
       const at = await pdf.getAttachments(), a = at && (at['alrim-exam.json'] || Object.values(at).find(x => /\.json$/i.test(x.filename || '')));
       if (a) return exParse(new TextDecoder('utf-8').decode(a.content), a.filename);
