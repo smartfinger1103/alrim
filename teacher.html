@@ -1,10 +1,24 @@
 <!doctype html><html><head>
-<meta name="build" content="20261111194239">
+<meta name="build" content="20261116160525">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
 if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){})}catch(e){}})();</script>
-<meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>알림장 메이커</title>
+<meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.pr-ov { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.pr-box { background: var(--card, #fff); color: var(--ink); width: min(440px, 100%); max-height: 92vh; overflow: auto; border-radius: 18px; padding: 18px 18px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.pr-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pr-top b { font-size: 1.05rem; } .pr-top button { border: 0; background: none; font-size: 1.5rem; cursor: pointer; color: var(--muted); }
+.pr-word { text-align: center; font-size: 2.3rem; font-weight: 700; margin: 18px 0 2px; word-break: break-word; }
+.pr-ipa { text-align: center; color: var(--accent); font-size: 1.05rem; min-height: 1.4em; }
+.pr-stars { text-align: center; font-size: 1.5rem; letter-spacing: 6px; margin: 8px 0; }
+.pr-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.pr-btns button { padding: 14px 8px; font-size: 1.1rem; border-radius: 14px; border: 0; cursor: pointer; font-weight: 700; }
+.pr-listen { background: #E3ECFF; color: #1E4FBF; } .pr-rec { background: #FFE3EA; color: #B0204B; } .pr-rec.on { background: #E0285A; color: #fff; }
+.pr-res { text-align: center; font-size: 1.6rem; font-weight: 800; min-height: 1.5em; } .pr-res.ok { color: #1F9D55; } .pr-res.no { color: #D23B3B; }
+.pr-heard { text-align: center; color: var(--muted); font-size: .92rem; min-height: 1.3em; }
+.pr-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 8px; } .pr-nav button { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.pr-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; } .pr-list button { padding: 4px 9px; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: .85rem; cursor: pointer; } .pr-list button.done { background: #DDF5E6; border-color: #7CC79A; } .pr-list button.cur { outline: 2px solid var(--accent); }
+</style></head><body><title>알림장 메이커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -655,7 +669,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             <p class="hint">찾은 단어는 위 칸에 들어가요. 직접 쓰거나 엑셀에서 복사해 붙여넣어도 돼요. 한글(hwp)은 PDF나 워드로 저장해서 올려 주세요. 넣은 단어는 학생 화면에서 이 과제의 단어 공부로 나와요.</p>
           </div>
         </div>
-        <datalist id="subjects"><option value="단어"><option value="본문"><option value="문법"><option value="독해"><option value="듣기"><option value="말하기"><option value="쓰기"><option value="워크북"></datalist>
+        <datalist id="subjects"><option value="단어"><option value="본문"><option value="문법"><option value="독해"><option value="듣기"><option value="말하기"><option value="쓰기"><option value="발음연습"><option value="워크북"></datalist>
         <div class="row">
           <button type="button" class="primary" id="fAdd">과제 추가</button>
           <button type="button" id="fLesson">과제 없이 수업만 기록</button>
@@ -1491,6 +1505,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     let rows;
     try { rows = csvParse(await (await fetch(lsCfg().csv + '&_=' + Date.now())).text()).slice(1); }
     catch (e) { box.textContent = ''; box.append(el('p', 'hint', '결과를 불러오지 못했어요. 인터넷을 확인하고 다시 눌러 보세요.')); return; }
+    const prs = {};
+    rows.forEach(r => { if ((r[2] || '').trim() === '발음' && (r[1] || '').trim()) prs[r[1].trim() + '|' + (r[4] || '').trim() + '|' + (r[5] || '').trim()] = (r[3] || '').trim(); });
     const wsum = {};
     rows.forEach(r => { if ((r[2] || '').trim() === '단어' && (r[1] || '').trim()) { const w = r[1].trim(), o = wsum[w] || (wsum[w] = { tot: 0, day: {} }), sc = parseInt(r[3]) || 0, d = (r[5] || '').trim(); o.tot += sc; o.day[d] = (o.day[d] || 0) + sc; } });
     const list = rows.map(r => ({ ts: (r[0] || '').trim(), who: (r[1] || '').trim(), test: (r[2] || '').trim(), score: (r[3] || '').trim(), wrong: (r[4] || '').trim(), picks: (r[5] || '').trim() }))
@@ -1504,7 +1520,14 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       wn.forEach(w => wb.append(el('small', null, `${w} · 총 ${fm(wsum[w].tot)} · ${wd.slice(5)} 하루 ${fm(wsum[w].day[wd] || 0)}`)));
       box.append(wb);
     }
-    if (!list.length) { if (!wn.length) box.append(el('p', 'hint', '아직 학생이 푼 기록이 없어요.')); return; }
+    const pk = Object.keys(prs);
+    if (pk.length) {
+      const pbx = el('div', 'row'); pbx.style.cssText = 'flex-direction:column;align-items:stretch;gap:2px;border-bottom:1px solid var(--line);padding:6px 0 8px';
+      pbx.append(el('b', null, '🎤 발음 연습'));
+      pk.slice(-12).forEach(kk => { const [who, task, d] = kk.split('|'), sc = prs[kk], [a, b] = sc.split('/').map(Number); pbx.append(el('small', null, `${who} · ${d.slice(5)} ${task} · ${a >= b ? '✅ 완성' : `진행 중 ${sc}`}`)); });
+      box.append(pbx);
+    }
+    if (!list.length) { if (!wn.length && !pk.length) box.append(el('p', 'hint', '아직 학생이 푼 기록이 없어요.')); return; }
     list.forEach(r => {
       const n = parseInt(r.test), only = r.wrong ? r.wrong.split(',').map(Number).filter(Boolean) : [];
       const row = el('div', 'row'); row.style.cssText = 'justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0';
@@ -1798,7 +1821,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         if (ws.length) {
           // 단어가 붙은 과제는 단어를 다 외워야 완료돼요
           const m = memCount('t:' + it.id, ws);
-          if (!d) tx.append(el('small', 'nb-prog', `단어 ${m}/${ws.length}개 외움 · 다 외우면 자동으로 완료`));
+          if (!d) tx.append(el('small', 'nb-prog', isPron(it) ? `발음 ${m}/${ws.length}개 통과 · 단어마다 3번 PASS하면 완성` : `단어 ${m}/${ws.length}개 외움 · 다 외우면 자동으로 완료`));
           const lvc = [0, 0, 0, 0]; ws.forEach(w => lvc[missLv(state.cls, w)]++);
           if (lvc[1] || lvc[2] || lvc[3]) {
             const lv = el('small', 'nb-lv');
@@ -1808,8 +1831,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             if (lvc[0]) lv.append(el('b', null, `새 단어 ${lvc[0]}`));
             tx.append(lv);
           }
+          if (isPron(it)) { const pb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '발음 다시 연습' : '🎤 발음 연습'); pb.type = 'button'; pb.onclick = () => openPron(it, ws); act.append(pb); } else {
           const wb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '단어 다시 보기' : '단어 공부'); wb.type = 'button';
-          wb.onclick = () => openSet('t:' + it.id); act.append(wb);
+          wb.onclick = () => openSet('t:' + it.id); act.append(wb); }
         } else if (listenOf(it)) {
           const L0 = listenOf(it);
           if (!L0.retake && L0.sets.length > 1) {
@@ -2729,6 +2753,60 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   setInterval(wsFlush, 120000);
   document.addEventListener('visibilitychange', () => { if (document.hidden) wsFlush(); });
   window.addEventListener('pagehide', wsFlush);
+  /* 발음 연습: 의미 없이 듣기 → 녹음(음성 인식) → PASS/NO PASS. 단어마다 3번 PASS하면 완성 */
+  const isPron = (it) => /발음/.test(it.subject || '') || /^\s*\[발음\]|발음\s*연습/.test(it.task || '');
+  let PRIPA = null;
+  function prIpa(en) { if (!PRIPA) return ''; const ts = (en || '').toLowerCase().match(/[a-z']+/g); if (!ts) return ''; const p = ts.map(t => PRIPA[t] || PRIPA[t.replace(/'s$/, '')] || '?'); return p.every(x => x === '?') ? '' : '[' + p.join(' ') + ']'; }
+  function prCnt() { try { return JSON.parse(store.get('pron') || '{}'); } catch (e) { return {}; } }
+  function prSend(it, ws) {
+    if (state.mode === 'teacher' || !state.cls) return;
+    try { const cfg = lsCfg(), f = cfg.f, fd = new URLSearchParams(), key = 't:' + it.id, n = memCount(key, ws);
+      fd.set(f.who, state.cls); fd.set(f.test, '발음'); fd.set(f.score, n + '/' + ws.length); fd.set(f.wrong, String(it.task || '').split('\n')[0].slice(0, 60)); fd.set(f.picks, it.date || todayStr());
+      fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).catch(() => {}); } catch (e) {}
+  }
+  function openPron(it, ws) {
+    if (!PRIPA) fetch('data/ipa.json').then(r => r.json()).then(j => { PRIPA = j; draw(); }).catch(() => { PRIPA = {}; });
+    const key = 't:' + it.id, NEED = 3;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const ov = el('div', 'pr-ov'), box = el('div', 'pr-box'); ov.append(box); document.body.append(ov); document.body.style.overflow = 'hidden'; quiz.open = true;
+    const mem = memSet(key); let i = Math.max(0, ws.findIndex(w => !mem.has(wkey(w)))), rec = null, busy = false;
+    const close = () => { try { rec && rec.abort(); } catch (e) {} try { speechSynthesis.cancel(); } catch (e) {} ov.remove(); document.body.style.overflow = ''; quiz.open = false; wsFlush(); renderNotebook(); };
+    ov.addEventListener('click', e => { if (e.target === ov) close(); });
+    const norm = t => String(t || '').toLowerCase().replace(/[’']/g, "'").replace(/[^a-z' ]/g, ' ').replace(/\s+/g, ' ').trim();
+    function draw(msg, cls, heard) {
+      const w = ws[i], c = prCnt()[key] || {}, n = Math.min(NEED, c[wkey(w)] || 0), dn = memSet(key);
+      box.textContent = '';
+      const top = el('div', 'pr-top'); top.append(el('b', null, `🎤 발음 연습 · ${dn.size}/${ws.length} 완성`)); const x = el('button', null, '×'); x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.onclick = close; top.append(x); box.append(top);
+      box.append(el('div', 'pr-word', w.en), el('div', 'pr-ipa', prIpa(w.en)), el('div', 'pr-stars', '★'.repeat(n) + '☆'.repeat(NEED - n)));
+      const bt = el('div', 'pr-btns'), lb = el('button', 'pr-listen', '🔊 듣기'), rb = el('button', 'pr-rec', '🎙️ 녹음'); lb.type = rb.type = 'button';
+      lb.onclick = () => speak(w.en);
+      rb.onclick = () => {
+        if (!SR) { draw('이 브라우저는 발음 인식이 안 돼요. 크롬(안드로이드)이나 사파리(아이폰)로 열어 주세요.', 'no'); return; }
+        if (busy) { try { rec.stop(); } catch (e) {} return; }
+        try { speechSynthesis.cancel(); } catch (e) {}
+        rec = new SR(); rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 5; busy = true; rb.classList.add('on'); rb.textContent = '⏺ 듣는 중… (말해 보세요)';
+        let got = false;
+        rec.onresult = (ev) => {
+          got = true; const alts = [...ev.results[0]].map(a => norm(a.transcript)), tgt = norm(w.en.split('/')[0]);
+          const ok = alts.some(a => a === tgt || a.replace(/^(a|an|the|to) /, '') === tgt.replace(/^(a|an|the|to) /, '') || (' ' + a + ' ').includes(' ' + tgt + ' '));
+          const C = prCnt(); C[key] = C[key] || {}; let m = C[key][wkey(w)] || 0;
+          if (ok) { m = Math.min(NEED, m + 1); C[key][wkey(w)] = m; store.set('pron', JSON.stringify(C)); if (m >= NEED && !memSet(key).has(wkey(w))) { memAdd(key, w); prSend(it, ws); if (memCount(key, ws) >= ws.length && !isDone(it)) setDone([it], true); } }
+          busy = false; draw(ok ? (m >= NEED ? 'PASS! 이 단어 완성 🎉' : 'PASS! ⭕') : 'NO PASS ❌ 다시 해 봐요', ok ? 'ok' : 'no', '들린 말: ' + (ev.results[0][0].transcript || '-'));
+        };
+        rec.onerror = (ev) => { busy = false; draw(ev.error === 'not-allowed' ? '마이크 권한을 허용해 주세요.' : ev.error === 'no-speech' ? '소리가 안 들렸어요. 다시 해 봐요.' : 'NO PASS ❌ 다시 해 봐요', 'no'); };
+        rec.onend = () => { if (busy && !got) { busy = false; draw('소리가 안 들렸어요. 다시 해 봐요.', 'no'); } };
+        try { rec.start(); } catch (e) { busy = false; draw('녹음을 시작하지 못했어요.', 'no'); }
+      };
+      bt.append(lb, rb); box.append(bt);
+      box.append(el('div', 'pr-res' + (cls ? ' ' + cls : ''), msg || ''), el('div', 'pr-heard', heard || '🔊으로 듣고 🎙️을 눌러 따라 말해요'));
+      const nv = el('div', 'pr-nav'), pv = el('button', null, '◀ 이전'), nx = el('button', null, '다음 ▶'); pv.type = nx.type = 'button';
+      pv.onclick = () => { i = (i - 1 + ws.length) % ws.length; draw(); speak(ws[i].en); };
+      nx.onclick = () => { const d2 = memSet(key); let j = i; for (let t = 1; t <= ws.length; t++) { const q = (i + t) % ws.length; if (!d2.has(wkey(ws[q]))) { j = q; break; } if (t === ws.length) j = (i + 1) % ws.length; } i = j; draw(); speak(ws[i].en); };
+      nv.append(pv, el('small', null, `${i + 1} / ${ws.length}`), nx); box.append(nv);
+      const ls = el('div', 'pr-list'); ws.forEach((w2, j) => { const b = el('button', (dn.has(wkey(w2)) ? 'done' : '') + (j === i ? ' cur' : ''), (dn.has(wkey(w2)) ? '✓ ' : '') + w2.en); b.type = 'button'; b.onclick = () => { i = j; draw(); speak(w2.en); }; ls.append(b); }); box.append(ls);
+    }
+    draw(); setTimeout(() => speak(ws[i].en), 300);
+  }
   function closeQuiz() {
     wsFlush(); quiz.open = false; quiz.only = null;
     $('quiz').hidden = true; document.body.style.overflow = '';
