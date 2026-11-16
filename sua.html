@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116214920">
+<meta name="build" content="20261116225210">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -43,6 +43,37 @@ if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setIt
 .sa-be { font-weight: 700; font-size: 1.02rem; margin-bottom: 4px; color: var(--ink); }
 .sa-bi { width: 100%; box-sizing: border-box; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 1rem; }
 .sa-bm { font-size: .9rem; margin-top: 3px; color: var(--ink); } .sa-bm.mark { font-weight: 700; }
+.pr-box.sa-box { width: min(640px, 100%); }
+.sa-sent { font-size: 1.1rem; line-height: 1.7; margin: 6px 0 10px; padding: 8px 12px; border-radius: 10px; background: var(--soft, #f4f4f4); color: var(--ink); }
+.sa-forms { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
+@media (max-width: 520px) { .sa-forms { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.sa-form { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; border-radius: 12px; border: 2px solid var(--line); background: var(--card, #fff); color: var(--ink); cursor: pointer; font-size: 1rem; }
+.sa-form small { font-size: .72rem; color: var(--muted); }
+.sa-form.bad { border-color: #D32F2F; color: #D32F2F; text-decoration: line-through; background: rgba(211,47,47,.06); }
+.sa-form.good { border-color: #2F9D5B; background: rgba(47,157,91,.14); color: #1F7A43; }
+.sa-guide { font-weight: 700; padding: 8px 10px; border-radius: 10px; background: #EEF1FD; color: #2B3786; margin: 6px 0; text-align: center; letter-spacing: .02em; }
+.sa-need { font-size: .9rem; color: var(--ink); margin: 2px 0 6px; }
+.sa-brs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+.sa-br { flex: 1 1 30%; padding: 9px 6px; border-radius: 10px; border: 2px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; cursor: pointer; }
+.sa-br.on { background: #3F4FB8; border-color: #3F4FB8; color: #fff; }
+.sa-bk { font-weight: 800; font-size: 1.4rem; color: #3F4FB8; cursor: pointer; padding: 0 1px; line-height: 1; }
+.sa-bk.pend { color: #E58A1F; animation: sablink 1s infinite; }
+.sa-bk.bad { color: #D32F2F; text-decoration: line-through; }
+@keyframes sablink { 50% { opacity: .3; } }
+.sa-brans { font-size: 1rem; color: #3F4FB8; font-weight: 600; }
+.sa-pen, .sa-pen-note { font-family: "Nanum Pen Script", "Gaegu", "Segoe Print", "Bradley Hand", cursive; color: #D32F2F; }
+.sa-pen { font-size: 1.15rem; margin-top: 3px; }
+.sa-pen-note { font-size: 1.15rem; line-height: 1.6; margin: 8px 0; padding: 6px 10px; border-left: 4px solid #D32F2F; background: rgba(211,47,47,.06); border-radius: 0 8px 8px 0; }
+.sa-strike { color: #D32F2F; text-decoration: line-through; text-decoration-thickness: 2px; }
+.sa-tile { padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--card, #fff); color: var(--ink); font-size: 1rem; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.sa-ans .sa-tile { background: #EAF1FF; }
+.sa-tile.bad { border: 2px solid #D32F2F; color: #D32F2F; background: rgba(211,47,47,.08); }
+.sa-tile.drag { opacity: .3; }
+.sa-ghost { position: fixed; z-index: 9999; pointer-events: none; box-shadow: 0 8px 20px rgba(0,0,0,.25); transform: scale(1.08); margin: 0; cursor: grabbing; }
+.sa-mk { display: inline-block; width: 3px; min-height: 34px; background: #3F4FB8; border-radius: 2px; }
+.sa-dzh { color: var(--muted); font-size: .9rem; padding: 6px; }
+.sa-ans { min-height: 56px; }
+.sa-pv .tohint { color: #6B4E00; font-size: .82rem; background: #FFF6DC; border-radius: 6px; padding: 3px 8px; margin: 3px 0; }
 .sa-pool, .sa-ans { display: flex; flex-wrap: wrap; gap: 6px; min-height: 46px; padding: 6px; border-radius: 10px; margin: 6px 0; }
 .sa-ans { border: 2px dashed var(--line); } .sa-pool button, .sa-ans button { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card, #fff); color: var(--ink); font-size: 1rem; cursor: pointer; }
 .sa-ans button { background: #EAF1FF; }
@@ -2846,29 +2877,42 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     draw(); setTimeout(() => speak(ws[i].en), 300);
   }
   /* 문장 분석 연습: 성분 찾기(S·V·O) → 의미 단위 끊기 → 해석(모범 해석과 자동 비교) → 순서 맞추기 */
-  function saParse(txt) {
+  function saParse(txt) {   /* 영어 줄: / 끊기 + < > 접속사절 · [ ] 관계사절 · ( ) 분사구문 / # 형식 / = 구문별 해석 / ! 핵심 메모 */
     return String(txt || '').replace(/\r/g, '').split(/\n\s*\n/).map(b => b.trim()).filter(Boolean).map(b => {
-      const ls = b.split('\n').map(x => x.trim()).filter(Boolean), en = ls.filter(x => !/^=/.test(x)).join(' '), eqs = ls.filter(x => /^=/.test(x)).map(x => x.replace(/^=\s*/, ''));
-      const toks = [], cuts = new Set(); let tag = '';
-      en.replace(/\[([SVORC])\s+/gi, ' [$1: ').replace(/\]/g, ' ] ').replace(/\//g, ' / ').split(/\s+/).filter(Boolean).forEach(w => {
-        if (/^\[[SVORC]:$/i.test(w)) { tag = w[1].toUpperCase(); return; }
-        if (w === ']') { tag = ''; return; }
-        if (w === '/') { if (toks.length) cuts.add(toks.length - 1); return; }
-        toks.push({ w, t: tag });
-      });
+      const ls = b.split('\n').map(x => x.trim()).filter(Boolean), enL = [], eqs = [], memo = []; let form = [];
+      ls.forEach(x => { if (/^=/.test(x)) eqs.push(x.replace(/^=\s*/, '')); else if (/^!/.test(x)) memo.push(x.replace(/^!\s*/, '')); else if (/^#/.test(x)) form = [...new Set((x.match(/[1-5]/g) || []).map(Number))]; else enL.push(x); });
+      const en = enL.join(' '), toks = [], cuts = new Set(), br = [], st = [], PN = /^[,.;:!?"”’]+$/, CL = { '>': '<', ']': '[', ')': '(' };
+      let tag = '', cur = '', err = '';
+      const fw = () => { if (!cur) return; if (PN.test(cur) && toks.length) toks[toks.length - 1].w += cur; else toks.push({ w: cur, t: tag }); cur = ''; };
+      for (let k = 0; k < en.length; k++) {
+        const ch = en[k];
+        if (ch === '[' && /^[SVORC]\s/.test(en.slice(k + 1, k + 3))) { fw(); st.push({ ty: 'T' }); tag = en[k + 1]; k += 2; continue; }
+        if (ch === '<' || ch === '[' || ch === '(') { fw(); st.push({ ty: ch, s: toks.length }); continue; }
+        if (ch === '>' || ch === ']' || ch === ')') { fw(); const o = st.pop(); if (!o) { err = '닫는 괄호 ' + ch + ' 의 짝(여는 괄호)이 없어요.'; continue; } if (o.ty === 'T') { tag = ''; continue; } if (o.ty !== CL[ch]) err = '괄호 짝이 안 맞아요: ' + o.ty + ' 로 열고 ' + ch + ' 로 닫았어요.'; if (toks.length > o.s) br.push({ ty: o.ty, s: o.s, e: toks.length - 1 }); continue; }
+        if (ch === '/') { fw(); if (toks.length) cuts.add(toks.length - 1); continue; }
+        if (/\s/.test(ch)) { fw(); continue; }
+        cur += ch;
+      }
+      fw(); if (st.some(o => o.ty !== 'T')) err = '닫지 않은 괄호가 있어요.';
+      /* 규칙: 절·관계사절·분사구문(괄호)의 시작과 끝, in order to · so as to 앞은 무조건 끊어요 */
+      br.forEach(m => { if (m.s > 0) cuts.add(m.s - 1); cuts.add(m.e); });
+      const lw = toks.map(x => x.w.toLowerCase().replace(/[^a-z]/g, ''));
+      lw.forEach((w, i) => { if (i > 0 && ((w === 'in' && lw[i + 1] === 'order' && lw[i + 2] === 'to') || (w === 'so' && lw[i + 1] === 'as' && lw[i + 2] === 'to'))) cuts.add(i - 1); });
       cuts.delete(toks.length - 1);
-      const chunks = []; let cur = []; toks.forEach((x, i) => { cur.push(x.w); if (cuts.has(i) || i === toks.length - 1) { chunks.push(cur.join(' ')); cur = []; } });
-      /* '=' 줄: 구문 수만큼 / 로 나눠 쓴 줄 = 구문별 해석(| 로 정답 여러 개), 그 밖의 줄 = 문장 전체 해석 */
+      const chunks = []; let cw = []; toks.forEach((x, i) => { cw.push(x.w); if (cuts.has(i) || i === toks.length - 1) { chunks.push(cw.join(' ')); cw = []; } });
       let kos = null, bad = 0; const full = [];
-      eqs.forEach(x => {
-        const p = x.split('/').map(z => z.trim()).filter(Boolean);
-        if (!kos && p.length === chunks.length && p.length >= 1) kos = p.map(z => z.split('|').map(w => w.trim()).filter(Boolean));
-        else { if (p.length > 1) bad = p.length; full.push(x.replace(/\s*\/\s*/g, ' ').replace(/\s*\|.*$/, '')); }
-      });
+      eqs.forEach(x => { const p = x.split('/').map(z => z.trim()).filter(Boolean);
+        if (!kos && p.length === chunks.length) kos = p.map(z => z.split('|').map(w => w.trim()).filter(Boolean));
+        else { if (p.length > 1) bad = p.length; full.push(x.replace(/\s*\/\s*/g, ' ').replace(/\|[^\/]*/g, '')); } });
       if (kos && kos.some(a => !a.length)) kos = null;
       const ko = full.join(' ') || (kos ? kos.map(a => a[0]).join(' ') : '');
-      return { toks, cuts, chunks, kos, ko, bad, hasTag: toks.some(x => x.t) };
+      return { toks, cuts, chunks, kos, ko, bad, form, br, err, memo: memo.join(' '), hasTag: toks.some(x => x.t) };
     }).filter(x => x.toks.length);
+  }
+  function saBrText(q, marks) {   /* 괄호 넣은 문장 글자 */
+    marks = marks || q.br; const O = { '<': '<', '[': '[', '(': '(' }, C = { '<': '>', '[': ']', '(': ')' };
+    return q.toks.map((o, i) => { const op = marks.filter(m => m.s === i).sort((a, b) => b.e - a.e).map(m => O[m.ty]).join(''), cl = marks.filter(m => m.e === i).sort((a, b) => b.s - a.s).map(m => C[m.ty]).join('');
+      const pm = cl ? (o.w.match(/[,.;:!?"”’]+$/) || [''])[0] : ''; return op + (pm ? o.w.slice(0, -pm.length) : o.w) + cl + pm; }).join(' ');
   }
   function saStore() { try { return JSON.parse(store.get('sa') || '{}'); } catch (e) { return {}; } }
   function saDoneN(it, sn) { const S = saStore()[it.id] || {}; return sn.filter((_, i) => S[i] === 'done').length; }
@@ -2878,82 +2922,159 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   function openSA(it) {
     const sn = saParse(it.sents); if (!sn.length) return;
-    const ov = el('div', 'pr-ov'), box = el('div', 'pr-box'); ov.append(box); document.body.append(ov); document.body.style.overflow = 'hidden'; quiz.open = true;
+    const ov = el('div', 'pr-ov'), box = el('div', 'pr-box sa-box'); ov.append(box); document.body.append(ov); document.body.style.overflow = 'hidden'; quiz.open = true;
     const close = () => { ov.remove(); document.body.style.overflow = ''; quiz.open = false; wsFlush(); renderNotebook(); };
     ov.addEventListener('click', e => { if (e.target === ov) close(); });
-    let si = Math.max(0, sn.findIndex((_, i) => (saStore()[it.id] || {})[i] !== 'done')), step = 0, tags = [], pick = 'S', tries = 0, inp = [], res = [], ans = [], pool = [], msg = '', ok = null;
-    const STEPS = ['성분 찾기', '구문 해석', '채점', '문장 맞추기'];
-    const usable = (q, k) => k === 0 ? q.hasTag : k === 1 ? !!(q.kos || q.ko) : k === 2 ? false : q.chunks.length > 1;
+    let si = Math.max(0, sn.findIndex((_, i) => (saStore()[it.id] || {})[i] !== 'done')), plan = [], pi = 0, tries = 0, msg = '', ok = null, hint = false;
+    let wrongForm = new Set(), tags = [], pick = 'S', bsel = '', marks = [], pend = null, badMarks = new Set(), inp = [], res = [], graded = false, ans = [], pool = [], T = [], badPos = new Set(), showAns = false;
+    const NAMES = { form: '문장 형식', tag: '성분 찾기', br: '괄호 치기', write: '구문 해석', order: '문장 맞추기' };
+    const FORMS = [[1, '1형식', 'S + V'], [2, '2형식', 'S + V + C'], [3, '3형식', 'S + V + O'], [4, '4형식', 'S + V + IO + DO'], [5, '5형식', 'S + V + O + OC']];
+    const BR = { '<': ['<', '>', '접속사절'], '[': ['[', ']', '관계사절'], '(': ['(', ')', '분사구문'] };
+    const GUIDE = '괄호 표시:  < > 접속사절  ·  [ ] 관계사절  ·  ( ) 분사구문';
+    const mix = (a) => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
     const nz = (t) => String(t || '').replace(/[^가-힣a-zA-Z0-9]/g, '');
     const chunkOk = (a, alts) => { a = nz(a); if (!a) return false; return alts.some(m => { m = nz(m); if (!m) return false; if (a === m) return true; if (Math.min(a.length, m.length) >= 2 && (a.includes(m) || m.includes(a)) && Math.abs(a.length - m.length) <= 4) return true; return saSim(a, m) >= 0.5; }); };
+    const planOf = (q) => ['form', 'tag', 'br', 'write', 'order'].filter(k => k === 'form' ? q.form.length : k === 'tag' ? q.hasTag : k === 'br' ? q.br.length : k === 'write' ? !!(q.kos || q.ko) : q.toks.length > 1);
     function save(v) { const S = saStore(); S[it.id] = S[it.id] || {}; S[it.id][si] = v; store.set('sa', JSON.stringify(S)); }
-    function begin(k) {
-      const q = sn[si]; step = k; while (step < 4 && !usable(q, step)) step++;
-      tries = 0; msg = ''; ok = null; ans = [];
-      if (k === 0) { tags = q.toks.map(() => ''); inp = q.chunks.map(() => ''); res = []; }
-      pool = q.chunks.map((c, i) => ({ c, i })).sort(() => Math.random() - 0.5); if (pool.length > 1 && pool.every((x, i) => x.i === i)) pool.reverse();
-      if (step >= 4) { save('done'); const n = saDoneN(it, sn); sendSA(n); if (n >= sn.length && it.id !== '__pv' && !isDone(it)) setDone([it], true); }
+    function sendSA(n) { if (state.mode === 'teacher' || !state.cls) return; try { const cfg = lsCfg(), f = cfg.f, fd = new URLSearchParams(); fd.set(f.who, state.cls); fd.set(f.test, '문장'); fd.set(f.score, n + '/' + sn.length); fd.set(f.wrong, String(it.task || '').split('\n')[0].slice(0, 60)); fd.set(f.picks, it.date || todayStr()); fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).catch(() => {}); } catch (e) {} }
+    function setStep(k) {
+      const q = sn[si]; pi = k; tries = 0; msg = ''; ok = null; hint = false; const key = plan[pi];
+      if (key === 'form') wrongForm = new Set();
+      if (key === 'tag') tags = q.toks.map(() => '');
+      if (key === 'br') { marks = []; pend = null; badMarks = new Set(); bsel = [...new Set(q.br.map(m => m.ty))][0]; }
+      if (key === 'write') { inp = (q.kos ? q.chunks : [0]).map(() => ''); res = []; graded = false; }
+      if (key === 'order') { const L = q.toks.length - 1; T = q.toks.map((x, i) => i === L ? x.w.replace(/[.!?]+(["”’)]?)$/, '$1') : x.w); pool = mix(T.map((t, i) => ({ t, id: i }))); if (pool.length > 1 && pool.every((x, i) => x.id === i)) pool.reverse(); ans = []; badPos = new Set(); showAns = false; }
+      if (pi >= plan.length) { save('done'); const n = saDoneN(it, sn); sendSA(n); if (n >= sn.length && it.id !== '__pv' && !isDone(it)) setDone([it], true); }
       draw();
     }
-    function sendSA(n) { if (state.mode === 'teacher' || !state.cls) return; try { const cfg = lsCfg(), f = cfg.f, fd = new URLSearchParams(); fd.set(f.who, state.cls); fd.set(f.test, '문장'); fd.set(f.score, n + '/' + sn.length); fd.set(f.wrong, String(it.task || '').split('\n')[0].slice(0, 60)); fd.set(f.picks, it.date || todayStr()); fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).catch(() => {}); } catch (e) {} }
-    function gradeWrite() {
-      const q = sn[si];
-      if (q.kos) { if (!inp.some(v => String(v).trim())) { msg = '뜻을 써 주세요'; ok = false; draw(); return; } res = q.chunks.map((_, i) => chunkOk(inp[i], q.kos[i])); }
-      else { const v = String(inp[0] || '').trim(); if (!v) { msg = '해석을 써 주세요'; ok = false; draw(); return; } res = [saSim(v, q.ko) >= 0.55]; }
-      tries++; step = 2; msg = ''; ok = null; draw();
+    function begin() { plan = planOf(sn[si]); setStep(0); }
+    const next = () => setStep(pi + 1);
+    function tile(p, zone, j) {   /* 단어 카드: 손(마우스)으로 끌어다 놓기, 그냥 누르면 옮겨져요 */
+      const b = el('button', 'sa-tile' + (zone === 'ans' && badPos.has(j) ? ' bad' : ''), p.t); b.type = 'button';
+      b.addEventListener('pointerdown', ev => {
+        if (ev.button > 0) return; ev.preventDefault();
+        const sx = ev.clientX, sy = ev.clientY; let g = null, mk = null;
+        const zoneAt = (x, y) => { const e = document.elementFromPoint(x, y); return e && e.closest('.sa-dz'); };
+        const move = (e) => {
+          if (!g) { if (Math.hypot(e.clientX - sx, e.clientY - sy) < 6) return; g = b.cloneNode(true); g.classList.add('sa-ghost'); document.body.append(g); b.classList.add('drag'); mk = el('span', 'sa-mk'); }
+          g.style.left = (e.clientX - g.offsetWidth / 2) + 'px'; g.style.top = (e.clientY - g.offsetHeight / 2) + 'px';
+          const z = zoneAt(e.clientX, e.clientY);
+          if (z && z.dataset.z === 'ans') { const h = z.querySelector('.sa-dzh'); if (h) h.remove(); const ts = [...z.querySelectorAll('.sa-tile:not(.drag)')]; const at = ts.find(t => { const r = t.getBoundingClientRect(); return e.clientY < r.top || (e.clientY <= r.bottom && e.clientX < r.left + r.width / 2); }); if (at) z.insertBefore(mk, at); else z.append(mk); }
+          else if (mk) mk.remove();
+        };
+        const up = (e) => {
+          document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up);
+          if (!g) { if (zone === 'pool') { pool.splice(j, 1); ans.push(p); } else { ans.splice(j, 1); pool.push(p); } }
+          else {
+            g.remove(); const z = zoneAt(e.clientX, e.clientY);
+            if (z && z.dataset.z === 'ans' && mk.parentNode) { let idx = 0; for (const c of z.children) { if (c === mk) break; if (c.classList.contains('sa-tile') && !c.classList.contains('drag')) idx++; } if (zone === 'ans') ans.splice(j, 1); else pool.splice(j, 1); ans.splice(idx, 0, p); }
+            else if (zone === 'ans') { ans.splice(j, 1); pool.push(p); }
+          }
+          ok = null; msg = ''; badPos = new Set(); draw();
+        };
+        document.addEventListener('pointermove', move); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+      });
+      return b;
     }
     function draw() {
-      const q = sn[si]; box.textContent = '';
+      const q = sn[si], key = plan[pi]; box.textContent = '';
       const top = el('div', 'pr-top'); top.append(el('b', null, `✍️ 문장 ${si + 1} / ${sn.length} · ${saDoneN(it, sn)}개 완성`)); const x = el('button', null, '×'); x.type = 'button'; x.onclick = close; top.append(x); box.append(top);
-      const st = el('div', 'sa-step'); STEPS.forEach((t, k) => st.append(el('span', k === step ? 'on' : (k < step) ? 'ok' : '', (k + 1) + '. ' + t))); box.append(st);
+      const st = el('div', 'sa-step'); plan.forEach((k, j) => st.append(el('span', j === pi ? 'on' : j < pi ? 'ok' : '', (j + 1) + '. ' + NAMES[k]))); box.append(st);
       const act = el('div', 'sa-act'), btn = (t, f, g) => { const b = el('button', g ? 'ghost' : '', t); b.type = 'button'; b.onclick = f; act.append(b); return b; };
-      if (step === 0) {
-        box.append(el('p', 'sa-q', '주어·동사·목적어를 고르고 단어를 눌러 표시해요. 관계대명사나 접속사가 있으면 그 단어도 눌러요. 다시 누르면 지워져요.'));
+      if (key === 'form') {
+        box.append(el('p', 'sa-q', '이 문장은 몇 형식일까요? 맞혀야 다음 단계로 넘어가요.'), el('div', 'sa-sent', q.toks.map(o => o.w).join(' ')));
+        const fg = el('div', 'sa-forms');
+        FORMS.forEach(([n, t, d]) => { const b = el('button', 'sa-form' + (wrongForm.has(n) ? ' bad' : '') + (ok && q.form.includes(n) ? ' good' : '')); b.type = 'button'; b.append(el('b', null, t), el('small', null, d)); b.disabled = wrongForm.has(n) || !!ok;
+          b.onclick = () => { if (q.form.includes(n)) { ok = true; msg = '정답! ⭕ ' + t; draw(); setTimeout(next, 800); } else { wrongForm.add(n); ok = false; msg = '❌ ' + t + '이 아니에요. 다시 골라 봐요'; draw(); } }; fg.append(b); });
+        box.append(fg);
+      } else if (key === 'tag') {
+        box.append(el('p', 'sa-q', '주어·동사·목적어를 고르고 단어를 눌러 표시해요. 관계대명사나 접속사가 있으면 그 단어도 눌러요.'));
         const tg = el('div', 'sa-tags'); [['S', '주어 S'], ['V', '동사 V'], ['O', '목적어 O'], ['R', '관계대명사'], ['C', '접속사'], ['X', '지우개']].forEach(([k, t]) => { const b = el('button', k + (pick === k ? ' on' : ''), t); b.type = 'button'; b.onclick = () => { pick = k; draw(); }; tg.append(b); }); box.append(tg);
         const tk = el('div', 'sa-toks'); q.toks.forEach((o, i) => { const sp = el('span', 'sa-tok ' + tags[i] + (ok === false && tags[i] !== o.t ? ' bad' : ''), o.w); sp.onclick = () => { tags[i] = (pick === 'X' || tags[i] === pick) ? '' : pick; ok = null; msg = ''; draw(); }; tk.append(sp); }); box.append(tk);
-        btn('채점하기', () => { ok = q.toks.every((o, i) => o.t === tags[i]); tries++; msg = ok ? '정답! ⭕' : '빨간 테두리를 다시 봐요 ❌'; if (ok) { draw(); setTimeout(() => begin(1), 700); } else draw(); });
-        if (tries >= 2 && !ok) btn('정답 보기', () => { tags = q.toks.map(o => o.t); ok = true; msg = '정답을 확인하고 다음으로 가요'; draw(); setTimeout(() => begin(1), 1500); }, 1);
-      } else if (step === 1) {
+        btn('채점하기', () => { ok = q.toks.every((o, i) => o.t === tags[i]); tries++; msg = ok ? '정답! ⭕' : '빨간 테두리를 다시 봐요 ❌'; if (ok) { draw(); setTimeout(next, 700); } else draw(); });
+        if (tries >= 2 && !ok) btn('정답 보기', () => { tags = q.toks.map(o => o.t); ok = true; msg = '정답을 확인하고 다음으로 가요'; draw(); setTimeout(next, 1500); }, 1);
+      } else if (key === 'br') {
+        const types = [...new Set(q.br.map(m => m.ty))];
+        box.append(el('div', 'sa-guide', GUIDE));
+        box.append(el('p', 'sa-q', '괄호를 고르고 단어를 한 번 누르면 여는 괄호, 한 번 더 누르면 닫는 괄호가 들어가요. 넣은 괄호를 누르면 지워져요. 모두 맞아야 넘어가요.'));
+        box.append(el('div', 'sa-need', '이 문장에 넣을 괄호: ' + types.map(t => BR[t][0] + ' ' + BR[t][1] + ' ' + BR[t][2] + ' ' + q.br.filter(m => m.ty === t).length + '개').join(' · ')));
+        const tg = el('div', 'sa-brs'); types.forEach(t => { const b = el('button', 'sa-br' + (bsel === t ? ' on' : ''), BR[t][0] + ' ' + BR[t][1] + '  ' + BR[t][2]); b.type = 'button'; b.onclick = () => { bsel = t; if (pend && pend.ty !== t) pend = null; draw(); }; tg.append(b); }); box.append(tg);
+        const bk = (ch, j) => { const s = el('span', 'sa-bk' + (badMarks.has(j) ? ' bad' : ''), ch); s.title = '눌러서 지우기'; s.onclick = () => { marks.splice(j, 1); badMarks = new Set(); ok = null; msg = ''; draw(); }; return s; };
+        const tap = (i) => { if (!pend || pend.ty !== bsel) pend = { ty: bsel, s: i }; else if (i < pend.s) pend.s = i; else { marks.push({ ty: pend.ty, s: pend.s, e: i }); pend = null; } badMarks = new Set(); ok = null; msg = ''; draw(); };
+        const tk = el('div', 'sa-toks sa-brtoks');
+        q.toks.forEach((o, i) => {
+          marks.map((m, j) => ({ m, j })).filter(z => z.m.s === i).sort((a, b) => b.m.e - a.m.e).forEach(z => tk.append(bk(BR[z.m.ty][0], z.j)));
+          if (pend && pend.s === i) tk.append(el('span', 'sa-bk pend', BR[pend.ty][0]));
+          const sp = el('span', 'sa-tok', o.w); sp.onclick = () => tap(i); tk.append(sp);
+          marks.map((m, j) => ({ m, j })).filter(z => z.m.e === i).sort((a, b) => b.m.s - a.m.s).forEach(z => tk.append(bk(BR[z.m.ty][1], z.j)));
+        });
+        box.append(tk);
+        if (hint) box.append(el('div', 'sa-pen-note', '✏ 정답: ' + saBrText(q)));
+        btn('채점하기', () => {
+          if (pend) { msg = '여는 괄호 ' + BR[pend.ty][0] + ' 를 닫아 주세요 (끝 단어를 누르기)'; ok = false; draw(); return; }
+          const kf = m => m.ty + m.s + '-' + m.e, need = new Map(); q.br.forEach(m => need.set(kf(m), (need.get(kf(m)) || 0) + 1));
+          badMarks = new Set(); marks.forEach((m, j) => { const c = need.get(kf(m)) || 0; if (c) need.set(kf(m), c - 1); else badMarks.add(j); });
+          const miss = [...need.values()].reduce((a, v) => a + v, 0); tries++;
+          ok = !badMarks.size && !miss;
+          msg = ok ? '정답! ⭕' : '❌ ' + (badMarks.size ? '빨간 괄호는 자리가 틀렸어요. ' : '') + (miss ? '빠진 괄호가 ' + miss + '개 있어요.' : '');
+          draw(); if (ok) setTimeout(next, 900);
+        });
+        btn('모두 지우기', () => { marks = []; pend = null; badMarks = new Set(); ok = null; msg = ''; draw(); }, 1);
+        if (tries >= 2 && !ok && !hint) btn('힌트 보기', () => { hint = true; draw(); }, 1);
+      } else if (key === 'write') {
+        const all = graded && res.every(Boolean), reveal = graded && (all || tries >= 2);
+        box.append(el('p', 'sa-q', !graded ? (q.kos ? '끊어 놓은 영어 블록마다 우리말 뜻을 써요.' : '끊은 덩어리를 보며 문장 전체를 해석해 써요.') : all ? '모든 블록이 맞았어요! ⭕' : reveal ? '빨간 펜으로 고친 모범 해석을 보고 다음으로 가요.' : '빨간 블록만 다시 써 봐요.'));
         if (q.kos) {
-          box.append(el('p', 'sa-q', '영어 블록마다 뜻을 우리말로 써 넣어요.'));
-          const bl = el('div', 'sa-blks'); q.chunks.forEach((c, i) => { const b = el('div', 'sa-blk' + (res.length ? (res[i] ? ' ok' : ' bad') : '')); b.append(el('div', 'sa-be', c)); const ip = el('input', 'sa-bi'); ip.type = 'text'; ip.placeholder = '뜻'; ip.value = inp[i] || ''; ip.setAttribute('autocomplete', 'off'); ip.oninput = () => { inp[i] = ip.value; }; b.append(ip); bl.append(b); }); box.append(bl);
+          const bl = el('div', 'sa-blks');
+          q.chunks.forEach((c, i) => {
+            const b = el('div', 'sa-blk' + (graded ? (res[i] ? ' ok' : ' bad') : (res[i] ? ' ok' : ''))); b.append(el('div', 'sa-be', c));
+            if (!graded) { const ip = el('input', 'sa-bi'); ip.type = 'text'; ip.placeholder = '뜻'; ip.value = inp[i] || ''; ip.setAttribute('autocomplete', 'off'); ip.disabled = !!res[i]; ip.oninput = () => { inp[i] = ip.value; }; b.append(ip); }
+            else if (res[i]) b.append(el('div', 'sa-bm', '⭕ ' + inp[i]), el('div', 'sa-bm mark', '모범: ' + q.kos[i].join(' 또는 ')));
+            else { b.append(el('div', 'sa-bm sa-strike', inp[i] || '(비어 있음)')); b.append(el('div', 'sa-pen', reveal ? '✏ ' + q.kos[i].join(' / ') : '✏ 다시 써 봐요')); }
+            bl.append(b);
+          });
+          box.append(bl);
         } else {
-          box.append(el('p', 'sa-q', '끊은 덩어리를 보며 문장 전체를 해석해 써요.'));
           box.append(el('div', 'sa-toks', q.chunks.join('  /  ')));
-          const ta = el('textarea', 'sa-ta'); ta.placeholder = '해석을 써 보세요'; ta.value = inp[0] || ''; ta.oninput = () => { inp[0] = ta.value; }; box.append(ta);
+          if (!graded) { const ta = el('textarea', 'sa-ta'); ta.placeholder = '해석을 써 보세요'; ta.value = inp[0] || ''; ta.oninput = () => { inp[0] = ta.value; }; box.append(ta); }
+          else { box.append(el('div', 'sa-bm' + (res[0] ? '' : ' sa-strike'), (res[0] ? '⭕ ' : '') + (inp[0] || ''))); if (reveal) box.append(el('div', 'sa-pen-note', '✏ 모범 해석: ' + q.ko)); }
         }
-        btn('채점하기', gradeWrite);
-      } else if (step === 2) {
-        const all = res.every(Boolean), reveal = all || tries >= 2;
-        box.append(el('p', 'sa-q', all ? '모든 블록이 맞았어요!' : (reveal ? '모범 해석을 보고 다음으로 가요.' : '빨간 블록은 다시 써 봐요.')));
-        if (q.kos) {
-          const bl = el('div', 'sa-blks'); q.chunks.forEach((c, i) => { const b = el('div', 'sa-blk ' + (res[i] ? 'ok' : 'bad')); b.append(el('div', 'sa-be', c), el('div', 'sa-bm', (res[i] ? '⭕ ' : '❌ ') + (inp[i] || '(비어 있음)')));
-            if (res[i] || reveal) b.append(el('div', 'sa-bm mark', '모범: ' + q.kos[i].join(' 또는 '))); bl.append(b); }); box.append(bl);
-        } else {
-          box.append(el('div', 'sa-toks', q.chunks.join('  /  ')), el('div', 'sa-bm', (res[0] ? '⭕ ' : '❌ ') + (inp[0] || '')));
-          if (reveal) box.append(el('div', 'sa-ko', '모범 해석: ' + q.ko));
-        }
-        if (!all && tries < 2) btn('틀린 곳 다시 쓰기', () => { step = 1; msg = ''; draw(); });
-        if (reveal) btn('다음 단계 ▶', () => begin(3));
-      } else if (step === 3) {
-        box.append(el('p', 'sa-q', '해석을 보고, 영어 블록을 순서대로 눌러 문장을 완성해요. 위 칸의 블록을 누르면 다시 빠져요.'));
+        if (reveal && q.memo) box.append(el('div', 'sa-pen-note', '✏ 핵심: ' + q.memo));
+        if (!graded) btn('채점하기', () => {
+          if (q.kos) { if (!inp.some(v => String(v).trim())) { msg = '뜻을 써 주세요'; ok = false; draw(); return; } res = q.chunks.map((_, i) => res[i] || chunkOk(inp[i], q.kos[i])); }
+          else { if (!String(inp[0] || '').trim()) { msg = '해석을 써 주세요'; ok = false; draw(); return; } res = [saSim(inp[0], q.ko) >= 0.55]; }
+          tries++; graded = true; msg = ''; ok = null; draw();
+        });
+        else if (!all && tries < 2) btn('빨간 블록 다시 쓰기', () => { graded = false; draw(); });
+        else btn('다음 단계 ▶', next);
+      } else if (key === 'order') {
+        box.append(el('p', 'sa-q', '우리말 해석을 보고, 영어 단어를 손으로 끌어다 순서대로 넣어요. (단어를 누르기만 해도 들어가요)'));
         if (q.ko) box.append(el('div', 'sa-ko', q.ko));
-        const an = el('div', 'sa-ans'); ans.forEach((p, j) => { const b = el('button', null, p.c); b.type = 'button'; b.onclick = () => { ans.splice(j, 1); pool.push(p); ok = null; msg = ''; draw(); }; an.append(b); }); box.append(an);
-        const pl = el('div', 'sa-pool'); pool.forEach((p, j) => { const b = el('button', null, p.c); b.type = 'button'; b.onclick = () => { pool.splice(j, 1); ans.push(p); ok = null; msg = ''; draw(); }; pl.append(b); }); box.append(pl);
-        btn('채점하기', () => { if (pool.length) { msg = '블록을 모두 옮겨 주세요'; ok = false; draw(); return; } ok = ans.every((p, j) => p.c === q.chunks[j]); tries++; msg = ok ? '완성! 🎉' : '순서가 달라요 ❌ 다시 해 봐요'; draw(); if (ok) setTimeout(() => begin(4), 700); });
-        btn('처음부터', () => { pool = pool.concat(ans); ans = []; ok = null; msg = ''; draw(); }, 1);
+        const an = el('div', 'sa-ans sa-dz'); an.dataset.z = 'ans'; const pl = el('div', 'sa-pool sa-dz'); pl.dataset.z = 'pool';
+        ans.forEach((p, j) => an.append(tile(p, 'ans', j))); if (!ans.length) an.append(el('span', 'sa-dzh', '여기에 단어를 끌어다 놓아요'));
+        pool.forEach((p, j) => pl.append(tile(p, 'pool', j)));
+        box.append(an, pl);
+        if (showAns) box.append(el('div', 'sa-pen-note', '✏ 정답: ' + T.join(' ')));
+        btn('채점하기', () => {
+          if (pool.length) { msg = '단어를 모두 옮겨 주세요'; ok = false; draw(); return; }
+          badPos = new Set(); ans.forEach((p, i) => { if (p.t !== T[i]) badPos.add(i); }); tries++; ok = !badPos.size;
+          msg = ok ? '완성! 🎉' : '❌ 빨간 단어의 자리가 틀렸어요. 다시 해 봐요'; draw(); if (ok) setTimeout(next, 800);
+        });
+        btn('처음부터', () => { pool = mix(pool.concat(ans)); ans = []; badPos = new Set(); ok = null; msg = ''; draw(); }, 1);
+        if (tries >= 3 && !ok && !showAns) btn('정답 보기', () => { showAns = true; draw(); }, 1);
       } else {
-        box.append(el('div', 'pr-res ok', '이 문장 완성! 🎉'), el('div', 'sa-toks', q.chunks.join(' / ')));
+        box.append(el('div', 'pr-res ok', '이 문장 완성! 🎉'), el('div', 'sa-toks', q.br.length ? saBrText(q) : q.chunks.join(' / ')));
         if (q.ko) box.append(el('div', 'sa-ko', q.ko));
+        if (q.memo) box.append(el('div', 'sa-pen-note', '✏ 핵심: ' + q.memo));
         const nx = sn.findIndex((_, i) => (saStore()[it.id] || {})[i] !== 'done');
-        if (nx >= 0) btn('다음 문장 ▶', () => { si = nx; begin(0); }); else btn('모든 문장 완성! 닫기', close);
-        btn('이 문장 다시 연습', () => begin(0), 1);
+        if (nx >= 0) btn('다음 문장 ▶', () => { si = nx; begin(); }); else btn('모든 문장 완성! 닫기', close);
+        btn('이 문장 다시 연습', () => begin(), 1);
       }
       if (msg) box.append(el('div', 'pr-res ' + (ok ? 'ok' : 'no'), msg));
       box.append(act);
-      const nv = el('div', 'pr-list'); sn.forEach((_, j) => { const dn = (saStore()[it.id] || {})[j] === 'done'; const b = el('button', (dn ? 'done' : '') + (j === si ? ' cur' : ''), (dn ? '✓ ' : '') + '문장 ' + (j + 1)); b.type = 'button'; b.onclick = () => { si = j; begin(0); }; nv.append(b); }); box.append(nv);
+      const nv = el('div', 'pr-list'); sn.forEach((_, j) => { const dn = (saStore()[it.id] || {})[j] === 'done'; const b = el('button', (dn ? 'done' : '') + (j === si ? ' cur' : ''), (dn ? '✓ ' : '') + '문장 ' + (j + 1)); b.type = 'button'; b.onclick = () => { si = j; begin(); }; nv.append(b); }); box.append(nv);
     }
-    begin(0);
+    begin();
   }
   /* 학생 화면 오류 → 선생님 화면에 빨간 글씨로 (구글 폼으로 전송, 같은 오류는 한 번만) */
   window.errReport = function (what, where) {
