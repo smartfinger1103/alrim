@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116162443">
+<meta name="build" content="20261116162955">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -69,6 +69,17 @@ if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setIt
 :root:not([data-theme="dark"]) body.tmode aside.preview .canvas-box, :root:not([data-theme="dark"]) body.tmode aside.preview > div:not(.todo-red) { border-radius: 20px; }
 :root:not([data-theme="dark"]) body.tmode .hwc { background: #F2FFFB; border-color: #8FE3CF; border-radius: 18px; }
 b.tm { color: #1E6FE0; font-weight: 700; margin-left: 2px; }
+.pp-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; font-size: .88rem; color: var(--muted); }
+.pp-bar button { flex: none !important; padding: 5px 11px !important; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: .88rem !important; cursor: pointer; }
+.pp-bar button.on { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+.pp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 12px; }
+.pp-grid.dense { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.pp-tile { position: relative; text-align: center; padding: 12px 8px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--panel, #fff); color: var(--ink); cursor: pointer; min-height: 64px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.pp-tile.open { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+.pp-f { font-size: 1.15rem; font-weight: 700; word-break: break-word; } .pp-grid.dense .pp-f { font-size: 1rem; }
+.pp-b { font-size: .92rem; color: var(--accent); word-break: keep-all; }
+.pp-tile.lv1 .pp-f { color: #1E5BD8; } .pp-tile.lv2 .pp-f { color: #C62828; } .pp-tile.lv3 .pp-f { color: #7B2FBE; }
+.pp-tile .lv-tag { position: absolute; top: 4px; right: 6px; font-size: .62rem; }
 </style></head><body><title>알림장 메이커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2867,7 +2878,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     // 과제 내용을 눌렀으면 아직 못 외운 단어부터 바로 무작위로 공부를 시작해요
     if (direct && set) {
       const mem = memSet(set.key), left = set.words.filter(w => !mem.has(wkey(w)));
-      startStudy(set.words, 0);
+      startStudy(left.length && left.length < set.words.length ? left : set.words, 0);
     }
     $('qClose').focus({ preventScroll: true });
   }
@@ -3099,7 +3110,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       chunkSel.append(new Option(`전체 ${ws.length}개`, 'all'));
       // 단어는 항상 전체를 한 번에 공부해요 (20개씩 끊지 않아요)
       if (quiz.chunk && [...chunkSel.options].some(o => o.value === quiz.chunk)) chunkSel.value = quiz.chunk;
-      else chunkSel.value = 'all';
+      else chunkSel.value = (left && n) ? 'left' : 'all';   // 일부만 외웠으면 남은 단어부터
       chunkSel.hidden = !(left && n);
     };
     sel.onchange = () => { quiz.chunk = ''; fillChunks(); };
@@ -3170,9 +3181,17 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   function startStudy(list, i) {
     quiz.studyList = shuffle(list); showStudy(i);   // 매번 순서를 섞어요
   }
+  function ppGet() { const v = parseInt(store.get('pp')); return [1, 5, 10, 20].includes(v) ? v : 1; }
+  function ppBar(i) {
+    const bar = el('div', 'pp-bar'); bar.append(el('span', null, '한 화면에'));
+    [1, 5, 10, 20].forEach(n => { const b = el('button', ppGet() === n ? 'on' : '', n + '개'); b.type = 'button'; b.onclick = () => { store.set('pp', String(n)); showStudy(n === 1 ? i : Math.floor(i / n) * n); }; bar.append(b); });
+    return bar;
+  }
   function showStudy(i) {
+    if (ppGet() > 1) return showStudyMany(Math.floor(i / ppGet()) * ppGet());
     const list = quiz.studyList, w = list[i];
     const b = $('qBody'); b.textContent = '';
+    b.append(ppBar(i));
     b.append(el('div', 'q-prog', `${quiz.set ? quiz.set.label + ' · ' : ''}${i + 1} / ${list.length}`));
     const bar = el('div', 'q-bar'); const fill = el('i'); fill.style.width = ((i + 1) / list.length * 100) + '%'; bar.append(fill); b.append(bar);
     const card = el('div', 'st-card');
@@ -3193,6 +3212,33 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     nav.append(prev, home, next); b.append(nav);
     speak(w.en);
     next.focus({ preventScroll: true });
+  }
+  function showStudyMany(i) {
+    const list = quiz.studyList, P = ppGet(), page = list.slice(i, i + P);
+    const b = $('qBody'); b.textContent = '';
+    b.append(ppBar(i));
+    b.append(el('div', 'q-prog', `${quiz.set ? quiz.set.label + ' · ' : ''}${i + 1}–${i + page.length} / ${list.length}`));
+    const bar = el('div', 'q-bar'); const fill = el('i'); fill.style.width = ((i + page.length) / list.length * 100) + '%'; bar.append(fill); b.append(bar);
+    b.append(el('div', 'q-tip', '단어를 누르면 발음과 함께 ' + (quiz.dir === 'ko' ? '영어' : '뜻') + '가 보여요'));
+    const g = el('div', 'pp-grid' + (P >= 20 ? ' dense' : ''));
+    page.forEach(w => {
+      const lv = missLv(state.cls, w), front = quiz.dir === 'ko' ? w.ko : w.en, back = quiz.dir === 'ko' ? w.en : w.ko;
+      const t = el('button', 'pp-tile' + (lv ? ' lv' + lv : '')); t.type = 'button';
+      const f = el('div', 'pp-f', front), k = el('div', 'pp-b', back); k.hidden = true;
+      if (lv) t.append(el('div', 'lv-tag lv' + lv, LV_TXT[lv]));
+      t.append(f, k);
+      t.onclick = () => { k.hidden = !k.hidden; t.classList.toggle('open', !k.hidden); speak(w.en); };
+      g.append(t);
+    });
+    b.append(g);
+    const nav = el('div', 'st-nav');
+    const prev = el('button', null, '◀ 이전'); prev.type = 'button'; prev.disabled = i === 0; prev.onclick = () => showStudyMany(Math.max(0, i - P));
+    const home = el('button', 'small', '목록'); home.type = 'button'; home.onclick = quizHome;
+    const last = i + P >= list.length;
+    const next = el('button', 'primary', last ? '다 봤어요 · 외우기로 확인' : '다음 ▶'); next.type = 'button';
+    next.onclick = () => (last ? startCards(list, true) : showStudyMany(i + P));
+    nav.append(prev, home, next); b.append(nav);
+    b.scrollTop = 0;
   }
   function startCards(list, full) {
     quiz.full = !!full; quiz.completed = false;
