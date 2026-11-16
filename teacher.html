@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116172600">
+<meta name="build" content="20261116173500">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -677,8 +677,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           </div>
           <details class="sa-in" id="fSentsBox" open>
           <summary>✍️ 문장 연습 (선택)</summary>
-          <textarea class="mono" id="fSents" spellcheck="false" rows="7" placeholder="문장마다 빈 줄로 구분해요. 복사해서 붙여넣어도 돼요.&#10;[S The boy] / who lives next door / [V kicked] / [O the ball] / in the park.&#10;= 옆집에 사는 그 소년은 공원에서 공을 찼다."></textarea>
-          <p class="hint">· <b>/</b> = 의미 단위로 끊는 곳 · <b>[S …]</b> 주어, <b>[V …]</b> 동사, <b>[O …]</b> 목적어 (없으면 안 써도 돼요)<br>· <b>=</b> 로 시작하는 줄 = 모범 해석 (학생 해석을 이것과 비교해서 자동 채점해요)<br>· 끊는 곳(/)이 없으면 끊어 읽기·순서 맞추기 단계는 건너뛰어요.</p>
+          <textarea class="mono" id="fSents" spellcheck="false" rows="7" placeholder="영어 문장만 쓰면 돼요. 여러 문장도 그냥 이어서 써요.&#10;The boy who lives next door kicked the ball in the park.&#10;&#10;과제 추가를 누르면 성분 표시·끊어 읽기·해석이 자동으로 만들어져요."></textarea>
+          <p class="hint">문장만 쓰면 과제 추가 때 <b>[S][V][O]</b> 표시, <b>/</b> 끊어 읽기, <b>=</b> 해석이 자동으로 들어가요. 자동 분석은 틀릴 수 있으니 <b>✨ 자동 분석 미리 보기</b>로 확인하고 고쳐도 돼요.</p>
+          <div class="row"><button type="button" class="small" id="fSentsAuto">✨ 자동 분석 미리 보기</button></div>
           <div id="fSentsPv" class="sa-pv"></div>
         </details>
         </div>
@@ -1082,14 +1083,136 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   const readPron = () => ($('fPron') ? $('fPron').value.trim() : '');
   function fMsg(t) { $('fMsg').textContent = t; }
+  /* 영어 문장 → [S ...] / [V ...] / [O ...] / ... 자동 표시 (규칙 기반 근사치)
+     브라우저에서는 window.nlp(compromise) 사용, node 테스트에서는 require. */
+  function saAutoMark(sentence, nlp) {
+    const SUB = new Set(['when', 'because', 'if', 'although', 'though', 'while', 'since', 'after', 'before', 'unless', 'until', 'as', 'whether', 'once']);
+    const REL = new Set(['who', 'which', 'that', 'whom', 'whose', 'where']);
+    const LINK = new Set(['be', 'is', 'am', 'are', 'was', 'were', 'been', 'being', 'become', 'became', 'seem', 'seems', 'seemed', 'look', 'looks', 'looked', 'feel', 'feels', 'felt', 'sound', 'sounds', 'get', 'got', 'remain', 'stay']);
+    const CONJ = new Set(['and', 'but', 'or', 'so']);
+    const terms = nlp(sentence).terms().json().map(t => {
+      const x = t.terms[0];
+      const txt = x.implicit && (!x.text || /'/.test(x.text)) ? (x.text && /^[A-Z]/.test(x.text) ? x.implicit[0].toUpperCase() + x.implicit.slice(1) : x.implicit) : x.text;
+      return { pre: x.pre || '', text: txt, post: x.post || '', low: (x.implicit || x.normal || x.text).toLowerCase(), tags: new Set(x.tags) };
+    }).filter(t => t.text);
+    const n = terms.length; if (!n) return sentence;
+    const isVerb = (t) => t.tags.has('Verb') && !t.tags.has('Gerund');
+    const isPrep = (t) => t.tags.has('Preposition');
+    const endsClause = (t) => /[,;:]/.test(t.post);
+    // 동사 묶음(조동사+부사+동사) 찾기
+    const groups = [];
+    for (let i = 0; i < n; i++) {
+      if (!isVerb(terms[i]) || terms[i].low === 'to' || (i > 0 && terms[i - 1].low === 'to')) continue;
+      let j = i;
+      while (j + 1 < n && !endsClause(terms[j]) && (isVerb(terms[j + 1]) || (terms[j + 1].tags.has('Adverb') && j + 2 < n && isVerb(terms[j + 2]))) && terms[j + 1].low !== 'to') j++;
+      groups.push([i, j]); i = j;
+    }
+    if (!groups.length) return sentence;
+    // 문장 앞 종속절(When I came home, ...)은 첫 쉼표 뒤부터가 주절
+    let start = 0;
+    if (SUB.has(terms[0].low) || terms[0].tags.has('Preposition')) { const c = terms.findIndex(t => endsClause(t)); if (c >= 0 && c < n - 1) start = c + 1; }
+    // 주절 동사: 관계사절이 차지한 동사를 건너뛴 첫 동사 묶음
+    let inRel = false, relAt = -1, main = null;
+    for (let i = start, g = 0; i < n; i++) {
+      while (g < groups.length && groups[g][0] < i) g++;
+      if (REL.has(terms[i].low) && i > start && (terms[i - 1].tags.has('Noun') || terms[i - 1].tags.has('Pronoun'))) { if (relAt < 0) relAt = i; inRel = true; continue; }
+      if (SUB.has(terms[i].low) && i > start) { inRel = true; continue; }
+      const grp = groups.find(x => x[0] === i);
+      if (grp) { if (inRel) { inRel = false; i = grp[1]; continue; } main = grp; break; }
+    }
+    if (!main) main = groups.find(x => x[0] >= start) || groups[0];
+    // 'All you have to do is ~', 'The book I read was ~' 처럼 주어 안에 절이 있으면 뒤의 be동사가 주절 동사
+    { const cop = groups.find(x => x[0] > main[1] && ['is', 'was', 'are', 'were'].includes(terms[x[0]].low) && !terms.slice(main[1], x[0]).some(t => endsClause(t)));
+      const before = terms.slice(start, main[0]);
+      if (cop && relAt < 0 && before.length >= 2 && before[before.length - 1].tags.has('Pronoun')) main = cop; }
+    const [vs, ve] = main;
+    // 주어: 주절 시작 ~ (관계사 앞 또는 동사 앞)
+    const se = (relAt > start && relAt < vs) ? relAt - 1 : vs - 1;
+    const hasS = se >= start;
+    // 목적어: 동사 바로 뒤 명사구 (be/연결동사면 생략)
+    let os = -1, oe = -1;
+    const verbLow = terms[ve].low;
+    if (!LINK.has(verbLow) && !LINK.has(terms[vs].low) && ve + 1 < n && !endsClause(terms[ve])) {
+      let k = ve + 1;
+      const OBJP = new Set(['me', 'him', 'her', 'us', 'them', 'you', 'it']);
+      const stop = (t) => t.tags.has('Date') || isPrep(t) || REL.has(t.low) || SUB.has(t.low) || CONJ.has(t.low) || t.low === 'to' || isVerb(t);
+      if (!stop(terms[k]) && !terms[k].tags.has('Adverb')) {
+        os = k;
+        if (!(OBJP.has(terms[k].low) && k + 1 < n && (terms[k + 1].tags.has('Determiner') || terms[k + 1].tags.has('Noun')) && !stop(terms[k + 1])))
+          while (k + 1 < n && !endsClause(terms[k]) && !stop(terms[k + 1])) k++;
+        oe = k;
+      }
+    }
+    // 끊는 곳(/): 이 단어 '앞'에서 끊음
+    const cutBefore = new Set();
+    const mark = (i) => { if (i > 0 && i < n) cutBefore.add(i); };
+    if (start) mark(start);
+    if (relAt > 0) mark(relAt);
+    mark(vs); if (os > 0) mark(os); if (oe >= 0) mark(oe + 1); mark(ve + 1);
+    for (let i = 1; i < n; i++) {
+      const t = terms[i];
+      if ((isPrep(t) && !(i - 1 >= vs && i - 1 <= ve && t.tags.has('Particle'))) || SUB.has(t.low) || REL.has(t.low) && i !== relAt && (terms[i-1].tags.has('Noun')) || (t.low === 'to' && terms[i + 1] && terms[i + 1].tags.has('Verb'))) mark(i);
+      if (CONJ.has(t.low) && t.low !== 'to') mark(i);
+      if (t.tags.has('Date') && !terms[i - 1].tags.has('Determiner') && !terms[i-1].tags.has('Date')) mark(i);
+      if (t.tags.has('Determiner') && terms[i + 1] && terms[i + 1].tags.has('Date')) mark(i);
+      if (endsClause(terms[i - 1])) mark(i);
+    }
+    // 대괄호 안에서는 끊지 않음
+    const spans = [];
+    if (hasS) spans.push(['S', start, se]);
+    spans.push(['V', vs, ve]);
+    if (os >= 0) spans.push(['O', os, oe]);
+    spans.forEach(([, a, b]) => { for (let i = a + 1; i <= b; i++) cutBefore.delete(i); });
+    let out = '';
+    for (let i = 0; i < n; i++) {
+      const t = terms[i];
+      if (cutBefore.has(i)) out += ' / ';
+      else if (i) out += ' ';
+      const sp = spans.find(s => s[1] === i);
+      if (sp) out += '[' + sp[0] + ' ';
+      let w = t.pre + t.text + t.post.trim();
+      const sp2 = spans.find(s => s[2] === i);
+      if (sp2) {   // 닫는 괄호는 문장부호 앞에
+        const m = w.match(/^(.*?)([.,!?;:"']*)$/); w = m[1] + ']' + m[2];
+      }
+      out += w;
+    }
+    return out.replace(/\s+/g, ' ').replace(/ \/ \//g, ' /').trim();
+  }
+
+  /* 문장 연습 칸: 표시([S]·/·=)가 없는 문장은 자동으로 성분 표시 + 끊어 읽기 + 해석을 만들어 줌 */
+  const saNeedsAuto = (txt) => String(txt || '').replace(/\r/g, '').split(/\n\s*\n/).some(b => b.trim() && !/[\[\/]|^\s*=/m.test(b));
+  async function saAutoFill() {
+    const box = $('fSents'); if (!box || !saNeedsAuto(box.value)) return true;
+    fMsg('문장을 분석하고 해석하는 중이에요… (몇 초 걸려요)');
+    try { if (!window.nlp) await loadScript('https://cdn.jsdelivr.net/npm/compromise@14.14.0/builds/compromise.js'); } catch (e) {}
+    if (!window.nlp) { fMsg('문장 분석 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.'); return false; }
+    const blocks = box.value.replace(/\r/g, '').split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+    const out = [];
+    for (const b of blocks) {
+      if (/[\[\/]|^\s*=/m.test(b)) { out.push(b); continue; }
+      const sents = (b.replace(/\s*\n\s*/g, ' ').match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || []).map(x => x.trim()).filter(x => /[A-Za-z]/.test(x));
+      const done = await Promise.all(sents.map(async (st) => {
+        let mk = st; try { mk = saAutoMark(st, window.nlp); } catch (e) {}
+        const ko = await dicSent(st);
+        return mk + (ko ? '\n= ' + ko : '');
+      }));
+      out.push(...done);
+    }
+    box.value = out.join('\n\n');
+    box.dispatchEvent(new Event('input'));
+    fMsg('');
+    return true;
+  }
   function addEntry(lessonOnly) {
     const f = readForm();
-    const pron = lessonOnly ? '' : readPron();
+    let pron = lessonOnly ? '' : readPron();
+    if (state.editing && isPronE(D.entries.find(x => x.id === state.editing))) { f.words = pron; pron = ''; }   /* 발음 과제 수정: 발음 단어 칸 내용으로 바꿈 */
     const sents = (lessonOnly || state.editing) ? '' : f.sents;   /* 새 과제: 문장 연습은 따로 과제로 만듦 */
     if (sents) f.sents = '';
     if (!f.date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
     if (lessonOnly) { f.subject = f.task = f.range = f.due = f.note = f.words = ''; }
-    else if (!f.task && ((!pron && !sents) || state.editing)) { fMsg('과제 내용을 적어 주세요. 과제가 없는 날이면 "과제 없이 수업만 기록"을 누르세요.'); $('fTask').focus(); return; }
+    else if (!f.task && !(state.editing ? f.words : (pron || sents))) { fMsg('과제 내용을 적어 주세요. 과제가 없는 날이면 "과제 없이 수업만 기록"을 누르세요.'); $('fTask').focus(); return; }
     if (lessonOnly && D.entries.some(e => e.date === f.date && e.who === f.who)) { fMsg('그날 수업은 이미 기록돼 있어요.'); return; }
     if (state.editing) {
       const e = D.entries.find(x => x.id === state.editing);
@@ -1115,12 +1238,12 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (!lessonOnly) { state.date = f.date; state.auto = f.date === autoDate(); if (f.who) state.cls = f.who; }
     changed();
   }
-  $('fAdd').onclick = () => addEntry(false);
+  $('fAdd').onclick = async () => { const b = $('fAdd'); b.disabled = true; try { if (await saAutoFill()) addEntry(false); } finally { b.disabled = false; } };
   $('fLesson').onclick = () => addEntry(true);
   function startEdit(e) {
     state.editing = e.id;
     $('fDate').value = e.date; $('fWho').value = e.who || ''; $('fSubject').value = e.subject; $('fTask').value = e.task;
-    $('fRange').value = e.range; $('fDue').value = e.due; $('fNote').value = e.note; $('fWords').value = e.words || ''; if ($('fSents')) $('fSents').value = e.sents || ''; fwCount();
+    $('fRange').value = e.range; $('fDue').value = e.due; $('fNote').value = e.note; $('fWords').value = isPronE(e) ? '' : (e.words || ''); if ($('fPron')) { $('fPron').value = isPronE(e) ? (e.words || '') : ''; fpCount(); } if ($('fSents')) $('fSents').value = e.sents || ''; fwCount();
     $('fAdd').textContent = '수정 저장'; $('fCancel').hidden = false; $('fLesson').hidden = true;
     $('form').classList.add('editing'); fMsg('위에서 고친 뒤 "수정 저장"을 누르세요.');
     $('fTask').focus();
@@ -1156,13 +1279,14 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       box.append(g);
     });
   }
-  const wordCount = (e) => (e.words ? parseWords(e.words, '').length : 0);
+  const isPronE = (e) => !!e && (/발음/.test(e.subject || '') || /^\s*\[발음\]|발음\s*연습/.test(e.task || ''));
+  const wordCount = (e) => (e.words ? (isPronE(e) ? pronWords(e.words) : parseWords(e.words, '')).length : 0);
   function entryRow(e, noSubject) {
     const r = el('div', 'erow');
     const tx = el('div', 'etext');
     if (e.task) {
       tx.append(document.createTextNode((e.subject && !noSubject ? '[' + e.subject + '] ' : '') + e.task));
-      const wc = wordCount(e); if (wc) tx.append(el('span', 'wbadge', '단어 ' + wc + '개'));
+      const wc = wordCount(e); if (wc) tx.append(el('span', 'wbadge', (isPronE(e) ? '발음 단어 ' : '단어 ') + wc + '개'));
       const meta = [e.range, e.note ? '준비물 ' + e.note : ''].filter(Boolean).join(' · ');
       if (meta) tx.append(el('small', null, meta));
     } else tx.append(el('small', null, '수업만 기록 (과제 없음)'));
@@ -2766,6 +2890,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   $('fWords').addEventListener('input', () => fwCount());
   function fpCount() { const c = $('fpCount'); if (!c || !$('fPron')) return; const n = $('fPron').value.split('\n').filter(x => x.trim()).length; c.textContent = n ? n + '개' : ''; }
   if ($('fPron')) $('fPron').addEventListener('input', fpCount);
+  if ($('fSentsAuto')) $('fSentsAuto').onclick = async () => { const b = $('fSentsAuto'); b.disabled = true; try { if (!saNeedsAuto($('fSents').value)) fMsg('이미 표시가 된 문장이에요. 표시 없는 문장만 자동 분석해요.'); else await saAutoFill(); } finally { b.disabled = false; } };
   // 캡처 이미지를 붙여넣거나 끌어다 놓으면 단어를 찾아 넣어요
   const imgFiles = (dt) => [...(dt && dt.files && dt.files.length ? dt.files : [])].filter(f => f.type.startsWith('image/'))
     .concat(dt && dt.items ? [...dt.items].filter(i => i.kind === 'file' && i.type.startsWith('image/') && !(dt.files && dt.files.length)).map(i => i.getAsFile()).filter(Boolean) : []);
