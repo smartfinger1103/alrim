@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116194056">
+<meta name="build" content="20261116194427">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1637,6 +1637,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     } else tx.append(el('small', null, '수업만 기록 (과제 없음)'));
     const acts = el('div', 'eacts');
     if (e.task) { const ed = el('button', 'small', '수정'); ed.type = 'button'; ed.onclick = () => startEdit(e); acts.append(ed); }
+    if (e.exam) { const rs = el('button', 'small', '초기화'); rs.type = 'button'; rs.dataset.confirm = '정말 초기화?'; rs.title = '풀이 기록을 없애고 학생이 처음부터 다시 풀게 해요 (맨 아래 저장을 눌러야 반영)';
+      armDelete(rs, () => { e.id = uid(); delete e.chk; fMsg('시험을 초기화했어요. 맨 아래 저장 버튼을 눌러야 학생 화면에서 다시 풀 수 있어요.'); changed(); }); acts.append(rs); }
     const dl = el('button', 'small danger', '삭제'); dl.type = 'button';
     armDelete(dl, () => { D.entries = D.entries.filter(x => x.id !== e.id); if (state.editing === e.id) stopEdit(); changed(); });
     acts.append(dl);
@@ -2297,7 +2299,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const exl = [];
     rows.forEach(r => { if ((r[2] || '').trim() === '시험' && (r[1] || '').trim()) { const p = (r[4] || '').split('|'); exl.push({ who: r[1].trim(), id: p[0] || '', sec: parseInt(r[3]) || 0, pick: p[1] || '', times: (p[2] || '').split(',').map(x => parseInt(x) || 0), title: p[3] || '', date: (r[5] || '').trim() }); } });
     const exs = [], exSeen = new Set();
-    for (let i = exl.length - 1; i >= 0 && exs.length < 12; i--) { const k = exl[i].who + '|' + exl[i].id; if (!exSeen.has(k)) { exSeen.add(k); exs.push(exl[i]); } }
+    for (let i = exl.length - 1; i >= 0 && exs.length < 12; i--) { const k = exl[i].who + '|' + exl[i].id; if (!exSeen.has(k) && D.entries.some(en => en.id === exl[i].id)) { exSeen.add(k); exs.push(exl[i]); } }
     if (exs.length) {
       const xb = el('div', 'row'); xb.style.cssText = 'flex-direction:column;align-items:stretch;gap:4px;border-bottom:1px solid var(--line);padding:6px 0 8px';
       xb.append(el('b', null, '📝 시험 풀이 (제출만 · 채점 없음)'));
