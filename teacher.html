@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116183500">
+<meta name="build" content="20261116183800">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1273,7 +1273,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const f = readForm();
     if (/발음/.test(f.subject)) { f.subject = '단어'; if (!/발음/.test(f.task)) f.task = f.task ? '발음연습 · ' + f.task : '발음연습'; }   /* 과목에 발음연습이라고 써도 단어 아래로 */
     let pron = lessonOnly ? '' : readPron();
-    if (state.editing && isPronE(D.entries.find(x => x.id === state.editing))) { f.words = pron; pron = ''; }   /* 발음 과제 수정: 발음 단어 칸 내용으로 바꿈 */
+    if (state.editing && isPronE(D.entries.find(x => x.id === state.editing))) { f.words = pron; pron = ''; f.task = /^발음연습/.test(f.task) || !f.task ? '발음연습' : f.task; }   /* 발음 과제 수정: 발음 단어 칸 내용으로 바꿈 */
     const sents = (lessonOnly || state.editing) ? '' : f.sents;   /* 새 과제: 문장 연습은 따로 과제로 만듦 */
     if (sents) f.sents = '';
     if (!f.date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
@@ -1292,7 +1292,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       $('fSubject').focus();
     }
     if (pron) {   /* 발음 단어 칸 → 따로 '발음연습' 과제로 만들어 학생 화면의 발음 연습과 연결 */
-      mergeWords('p', f.date, f.who, pron).e.task = '발음연습';
+      fixWordTask(mergeWords('p', f.date, f.who, pron).e);
       fMsg($('fMsg').textContent + ' 발음 연습 과제도 만들었어요.');
     }
     if (sents) {   /* 문장 연습 칸 → 따로 '문장분석' 과제 (학생 화면에 ✍️ 문장 분석 버튼) */
@@ -1319,7 +1319,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (add.length) hit.words = (String(hit.words || '').trim() + '\n' + add.join('\n')).trim();
     fixWordTask(hit); return { e: hit, added: wordCount(hit) - before, merged: true };
   }
-  function fixWordTask(e) { const n = wordCount(e); e.task = isPronE(e) || e.task === '발음연습' ? '발음연습' : (n ? `외울 단어 (${n}개)` : '외울 단어'); }
+  function fixWordTask(e) { const p = isPronE(e) || /^발음연습/.test(e.task || ''); const n = p ? pronWords(e.words || '').length : parseWords(e.words || '', '').length;
+    e.task = p ? (n ? `발음연습 (${n}개)` : '발음연습') : (n ? `외울 단어 (${n}개)` : '외울 단어'); }
   /* 박스별 저장: 그 박스 내용만 따로 과제로 저장 */
   async function saveBox(kind, btn) {
     const date = $('fDate').value, who = $('fWho').value;
@@ -1334,7 +1335,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       state.date = date; state.auto = date === autoDate(); if (who) state.cls = who; changed(); return;
     } else if (kind === 'p') {
       const words = readPron(); if (!words) { fMsg('발음 단어 칸이 비어 있어요.'); return; }
-      const r = mergeWords('p', date, who, words); r.e.task = '발음연습';
+      const r = mergeWords('p', date, who, words); fixWordTask(r.e);
       $('fPron').value = ''; fpCount();
       fMsg(r.merged ? `${kShort(date)} 발음연습에 ${r.added}개를 더했어요. (모두 ${wordCount(r.e)}개)` : `${kShort(date)} 발음연습 ${wordCount(r.e)}개를 저장했어요.`);
       if (state.isSample) state.isSample = false; $('sampleBadge').hidden = true;
@@ -1370,6 +1371,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     changed(); fSummary(); $('fSubject').focus();
   }
   $('fMainSave').onclick = saveMain;
+  setTimeout(() => { if (dedupeWordEntries()) { saveDraft(); rebuild(); } }, 2500);
   /* 문법·독해·단어·듣기 박스: 그 과목으로 바로 저장 */
   function saveSubj(box) {
     const date = $('fDate').value, who = $('fWho').value, subject = box.dataset.subj;
@@ -2126,7 +2128,24 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   $('moreEntries').onclick = () => { state.showAll = !state.showAll; renderEntries(); };
 
   /* ---------- 전체 갱신 ---------- */
-  function changed() { saveDraft(); rebuild(); }
+  /* 같은 날 같은 학생의 '외울 단어' / '발음연습' 과제가 여러 개면 하나로 합침 (단어 중복 제외) */
+  function dedupeWordEntries() {
+    if (!D || !Array.isArray(D.entries)) return false;
+    const kindOf = (e) => e.subject === '단어' || /발음/.test(e.subject || '') ? (isPronE(e) ? 'p' : /^외울 단어/.test(e.task || '') ? 'w' : '') : '';
+    const keyOf = (line) => line.trim().split(/\s+[-–:=]\s+|\t/)[0].trim().toLowerCase();
+    const first = new Map(); let hit = false;
+    D.entries = D.entries.filter(e => {
+      const k = kindOf(e); if (!k || !e.words) { if (k) { e.subject = '단어'; } return true; }
+      e.subject = '단어';
+      const key = e.date + '|' + (e.who || '') + '|' + k, m = first.get(key);
+      if (!m) { first.set(key, e); fixWordTask(e); return true; }
+      const have = new Set(String(m.words).split('\n').filter(x => x.trim()).map(keyOf));
+      String(e.words).split('\n').forEach(x => { if (x.trim() && !have.has(keyOf(x))) { have.add(keyOf(x)); m.words = (m.words.trim() + '\n' + x.trim()).trim(); } });
+      fixWordTask(m); hit = true; return false;
+    });
+    return hit;
+  }
+  function changed() { dedupeWordEntries(); saveDraft(); rebuild(); }
   // 교사 화면 맨 위 학생 탭: 고른 학생의 내용만 보여요
   const shortName = (n) => (/^[가-힣]{3}$/.test(n) ? n.slice(1) : n);
   function syncTab() {
@@ -2500,7 +2519,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         });
         const prn = /발음/.test((it.subject || '') + ' ' + (it.task || ''));
         const due = dueInfo(it), wc = it.words ? (prn ? pronWords(it.words) : parseWords(it.words, '')).length : 0;
-        [['범위', it.range, false], ['준비물', it.note, false], [prn ? '발음' : '단어', wc ? wc + '개' + (prn ? ' 단어 (알림장 링크에서 연습)' : ' (알림장 링크에서 공부)') : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
+        [['범위', it.range, false], ['준비물', it.note, false], ['단어', wc ? wc + '개' + (prn ? ' (알림장 링크에서 발음 연습)' : ' (알림장 링크에서 공부)') : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
           y += 4;
           ctx.font = '28px ' + FD; const kw = ctx.measureText(k).width + 18;
           ctx.font = '30px ' + FB;

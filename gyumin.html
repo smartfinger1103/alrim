@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116183500">
+<meta name="build" content="20261116183800">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1869,7 +1869,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         });
         const prn = /발음/.test((it.subject || '') + ' ' + (it.task || ''));
         const due = dueInfo(it), wc = it.words ? (prn ? pronWords(it.words) : parseWords(it.words, '')).length : 0;
-        [['범위', it.range, false], ['준비물', it.note, false], [prn ? '발음' : '단어', wc ? wc + '개' + (prn ? ' 단어 (알림장 링크에서 연습)' : ' (알림장 링크에서 공부)') : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
+        [['범위', it.range, false], ['준비물', it.note, false], ['단어', wc ? wc + '개' + (prn ? ' (알림장 링크에서 발음 연습)' : ' (알림장 링크에서 공부)') : '', false]].filter(d => d[1]).forEach(([k, v, hot]) => {
           y += 4;
           ctx.font = '28px ' + FD; const kw = ctx.measureText(k).width + 18;
           ctx.font = '30px ' + FB;
