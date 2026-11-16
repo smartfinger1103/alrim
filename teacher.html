@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116162200">
+<meta name="build" content="20261116162250">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -1560,7 +1560,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     return rows;
   }
   /* 숙제 검사: 지난 수업 숙제를 한 것/일부/안 함으로 체크하고 학생 리포트 만들기 */
-  let LSROWS = [], HWC = { date: '', rep: false };
+  let LSROWS = [], LSTAB = null, HWC = { date: '', rep: false };
   function renderHwCheck() {
     const box = $('hwCheck'); if (!box || state.mode !== 'teacher') return; box.textContent = '';
     const who = state.tab || names()[0]; if (!who) return;
@@ -1619,6 +1619,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     let rows;
     try { rows = csvParse(await (await fetch(lsCfg().csv + '&_=' + Date.now())).text()).slice(1); }
     catch (e) { box.textContent = ''; box.append(el('p', 'hint', '결과를 불러오지 못했어요. 인터넷을 확인하고 다시 눌러 보세요.')); return; }
+    if (state.tab) rows = rows.filter(r => (r[1] || '').trim() === state.tab);
     LSROWS = rows; renderHwCheck();
     const errs = []; const lim = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
     rows.forEach(r => { if ((r[2] || '').trim() === '오류' && (r[5] || '').trim() >= lim) errs.push(r); });
@@ -1777,7 +1778,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     g.addEventListener('dblclick', () => { root.style.removeProperty('--rw'); try { localStorage.removeItem('alrim.' + key); } catch (e) {} });
   })();
   function renderTabs() {
-    const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : ''; if (typeof renderHwCheck === 'function') setTimeout(renderHwCheck, 0);
+    const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : ''; if (typeof renderHwCheck === 'function') setTimeout(() => { renderHwCheck(); if (state.mode === 'teacher' && LSROWS.length && LSTAB !== state.tab) { LSTAB = state.tab; lsLoad(); } }, 0);
     { const nm = state.tab ? shortName(state.tab) : '', hv = state.tab ? slugOf(state.tab) : '';
       let pill = $('stuNow'); if (!pill) { pill = el('div', 'stu-now'); pill.id = 'stuNow'; document.body.append(pill); }
       pill.textContent = nm ? nm + ' 화면' : ''; pill.hidden = !nm || state.mode !== 'teacher';
