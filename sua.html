@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116192520">
+<meta name="build" content="20261116193628">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -472,7 +472,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <select id="wtWho" aria-label="학생" hidden></select>
           <select id="wtSrc" aria-label="테스트할 단어"></select>
         </div>
-        <p class="hint"><b>오늘까지 외워 와야 하는 단어</b>가 모두 나와요. 학생이 <b>못 외운 단어에 체크</b>한 뒤 아래 버튼을 누르면, 체크한 단어가 그날 과제의 <b>틀린 단어 재암기</b>로 다시 나가고 학생이 공부할 단어에 들어가요. 체크하지 않은 단어는 외운 걸로 보고 틀린 기록을 지워요.</p>
+        <p class="hint"><b>오늘까지 외워 와야 하는 단어</b>가 모두 나와요. 학생이 <b>못 외운 단어에 체크</b>한 뒤 아래 버튼을 누르면, 체크한 단어가 그날 과제의 <b>암기해야 할 단어</b>에 더해지고 학생이 공부할 단어에 들어가요. 체크하지 않은 단어는 외운 걸로 보고 틀린 기록을 지워요.</p>
         <div class="wordbox" id="wtPasteBox" hidden>
           <div class="row"><b>테스트할 단어</b><span class="hint" id="wtPasteMsg"></span></div>
           <div class="inmodes">
@@ -487,7 +487,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         <div class="row">
           <b id="wtCount"></b>
           <label class="lab" style="flex-direction:row;align-items:center;gap:6px">넣을 수업 날짜<input type="date" id="wtDate" style="width:auto"></label>
-          <button type="button" class="primary" id="wtGo">틀린 단어를 재암기 과제로 넣기</button>
+          <button type="button" class="primary" id="wtGo">못 외운 단어를 암기해야 할 단어에 넣기</button>
         </div>
         <div class="msg" id="wtMsg" role="status"></div>
       </section>
@@ -782,6 +782,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     let d = null; try { d = JSON.parse(o.data); } catch (e) {}
     D.students = (d && Array.isArray(d.students)) ? d.students : [];
     D.entries = (d && Array.isArray(d.entries)) ? d.entries : [];
+    D.entries.forEach(e => { if (e && e.subject === '단어' && /^틀린 ?단어 재암기/.test(e.task || '')) e.task = e.task.replace(/^틀린 ?단어 재암기/, '암기해야 할 단어'); });   /* 틀린 단어만이 아니라 외울 단어도 섞여 있어서 이름을 바꿈 */
     D.miss = (d && d.miss && typeof d.miss === 'object') ? d.miss : {};
     D.notes = (d && Array.isArray(d.notes)) ? d.notes : [];
     let w = null; try { w = JSON.parse(o.words); } catch (e) {}
@@ -1201,7 +1202,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     wrong.forEach(w => merged.set(wkey(w), w));
     const list = [...merged.values()].sort((a, b) => (mm[wkey(b)] || 0) - (mm[wkey(a)] || 0));
     const text = list.map(w => w.en + ' - ' + w.ko).join('\n');
-    const task = `틀린 단어 재암기 (${list.length}개)`;
+    const task = `암기해야 할 단어 (${list.length}개)`;
     if (e) { e.words = text; e.task = task; }
     else D.entries.push({ id: uid(), date, who, subject: '단어', task, range: '', due: '', note: '', words: text, retake: true });
     const red = wrong.filter(w => (mm[wkey(w)] || 0) >= 2).length;

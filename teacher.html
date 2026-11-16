@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116193140">
+<meta name="build" content="20261116193628">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -631,7 +631,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <select id="wtWho" aria-label="학생" hidden></select>
           <select id="wtSrc" aria-label="테스트할 단어"></select>
         </div>
-        <p class="hint"><b>오늘까지 외워 와야 하는 단어</b>가 모두 나와요. 학생이 <b>못 외운 단어에 체크</b>한 뒤 아래 버튼을 누르면, 체크한 단어가 그날 과제의 <b>틀린 단어 재암기</b>로 다시 나가고 학생이 공부할 단어에 들어가요. 체크하지 않은 단어는 외운 걸로 보고 틀린 기록을 지워요.</p>
+        <p class="hint"><b>오늘까지 외워 와야 하는 단어</b>가 모두 나와요. 학생이 <b>못 외운 단어에 체크</b>한 뒤 아래 버튼을 누르면, 체크한 단어가 그날 과제의 <b>암기해야 할 단어</b>에 더해지고 학생이 공부할 단어에 들어가요. 체크하지 않은 단어는 외운 걸로 보고 틀린 기록을 지워요.</p>
         <div class="wordbox" id="wtPasteBox" hidden>
           <div class="row"><b>테스트할 단어</b><span class="hint" id="wtPasteMsg"></span></div>
           <div class="inmodes">
@@ -646,7 +646,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         <div class="row">
           <b id="wtCount"></b>
           <label class="lab" style="flex-direction:row;align-items:center;gap:6px">넣을 수업 날짜<input type="date" id="wtDate" style="width:auto"></label>
-          <button type="button" class="primary" id="wtGo">틀린 단어를 재암기 과제로 넣기</button>
+          <button type="button" class="primary" id="wtGo">못 외운 단어를 암기해야 할 단어에 넣기</button>
         </div>
         <div class="msg" id="wtMsg" role="status"></div>
       </section>
@@ -1050,6 +1050,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     let d = null; try { d = JSON.parse(o.data); } catch (e) {}
     D.students = (d && Array.isArray(d.students)) ? d.students : [];
     D.entries = (d && Array.isArray(d.entries)) ? d.entries : [];
+    D.entries.forEach(e => { if (e && e.subject === '단어' && /^틀린 ?단어 재암기/.test(e.task || '')) e.task = e.task.replace(/^틀린 ?단어 재암기/, '암기해야 할 단어'); });   /* 틀린 단어만이 아니라 외울 단어도 섞여 있어서 이름을 바꿈 */
     D.miss = (d && d.miss && typeof d.miss === 'object') ? d.miss : {};
     D.notes = (d && Array.isArray(d.notes)) ? d.notes : [];
     let w = null; try { w = JSON.parse(o.words); } catch (e) {}
@@ -1344,12 +1345,12 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const add = text.split('\n').filter(x => x.trim() && !have.has(keyOf(x)) && (have.add(keyOf(x)), true));
     const before = wordCount(hit);
     if (add.length) hit.words = (String(hit.words || '').trim() + '\n' + add.join('\n')).trim();
-    if (!isP && add.length) hit.task = '외울 단어';
+    if (!isP && add.length) hit.task = '암기해야 할 단어';
     fixWordTask(hit); return { e: hit, added: wordCount(hit) - before, merged: true };
   }
   function fixWordTask(e) { const p = isPronE(e) || /^발음연습/.test(e.task || '');
-    if (!p && e.task && !/^외울 단어/.test(e.task)) { const n0 = parseWords(e.words || '', '').length; e.task = e.task.replace(/\(\d+개\)/, '(' + n0 + '개)'); return; } const n = p ? pronWords(e.words || '').length : parseWords(e.words || '', '').length;
-    e.task = p ? (n ? `발음연습 (${n}개)` : '발음연습') : (n ? `외울 단어 (${n}개)` : '외울 단어'); }
+    if (!p && e.task && !/^(외울 단어|암기해야 할 단어)/.test(e.task)) { const n0 = parseWords(e.words || '', '').length; e.task = e.task.replace(/\(\d+개\)/, '(' + n0 + '개)'); return; } const n = p ? pronWords(e.words || '').length : parseWords(e.words || '', '').length;
+    e.task = p ? (n ? `발음연습 (${n}개)` : '발음연습') : (n ? `암기해야 할 단어 (${n}개)` : '암기해야 할 단어'); }
   /* 박스별 저장: 그 박스 내용만 따로 과제로 저장 */
   async function saveBox(kind, btn) {
     const date = $('fDate').value, who = $('fWho').value;
@@ -1359,7 +1360,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const words = $('fWords').value.trim(); if (!words) { fMsg('외울 단어 칸이 비어 있어요.'); return; }
       const r = mergeWords('w', date, who, words);
       $('fWords').value = ''; fwCount();
-      fMsg(r.merged ? `${kShort(date)} 외울 단어에 ${r.added}개를 더했어요. (모두 ${wordCount(r.e)}개)` : `${kShort(date)} 외울 단어 ${wordCount(r.e)}개를 저장했어요.`);
+      fMsg(r.merged ? `${kShort(date)} 암기해야 할 단어에 ${r.added}개를 더했어요. (모두 ${wordCount(r.e)}개)` : `${kShort(date)} 암기해야 할 단어 ${wordCount(r.e)}개를 저장했어요.`);
       if (state.isSample) state.isSample = false; $('sampleBadge').hidden = true;
       state.date = date; state.auto = date === autoDate(); if (who) state.cls = who; changed(); return;
     } else if (kind === 'p') {
@@ -1858,7 +1859,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     wrong.forEach(w => merged.set(wkey(w), w));
     const list = [...merged.values()].sort((a, b) => (mm[wkey(b)] || 0) - (mm[wkey(a)] || 0));
     const text = list.map(w => w.en + ' - ' + w.ko).join('\n');
-    const task = `틀린 단어 재암기 (${list.length}개)`;
+    const task = `암기해야 할 단어 (${list.length}개)`;
     if (e) { e.words = text; e.task = task; }
     else D.entries.push({ id: uid(), date, who, subject: '단어', task, range: '', due: '', note: '', words: text, retake: true });
     const red = wrong.filter(w => (mm[wkey(w)] || 0) >= 2).length;
@@ -2414,10 +2415,10 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const k = kindOf(e); if (!k || !e.words) { if (k) { e.subject = '단어'; } return true; }
       e.subject = '단어';
       const key = e.date + '|' + (e.who || '') + '|' + k, m = first.get(key);
-      if (!m) { first.set(key, e); if (k === 'p' || /^외울 단어/.test(e.task || '')) fixWordTask(e); return true; }
+      if (!m) { first.set(key, e); if (k === 'p' || /^(외울 단어|암기해야 할 단어)/.test(e.task || '')) fixWordTask(e); return true; }
       const have = new Set(String(m.words).split('\n').filter(x => x.trim()).map(keyOf));
       String(e.words).split('\n').forEach(x => { if (x.trim() && !have.has(keyOf(x))) { have.add(keyOf(x)); m.words = (m.words.trim() + '\n' + x.trim()).trim(); } });
-      if (k === 'w') m.task = '외울 단어'; fixWordTask(m); hit = true; return false;
+      if (k === 'w') m.task = '암기해야 할 단어'; fixWordTask(m); hit = true; return false;
     });
     return hit;
   }
