@@ -1,11 +1,13 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116181000">
+<meta name="build" content="20261116182500">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
 if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){})}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
+.wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
+.wtime b { font-size: 1.05rem; color: #B0570B; }
 .pr-ov { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .pr-box { background: var(--card, #fff); color: var(--ink); width: min(440px, 100%); max-height: 92vh; overflow: auto; border-radius: 18px; padding: 18px 18px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
 .pr-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -253,7 +255,12 @@ section.tt { border-color: var(--accent); }
 .fbody { display: flex; flex-direction: column; gap: 8px; }
 .fbox.folded .fbody { display: none; }
 .fbox.folded { padding-bottom: 10px; }
-.fmainrow { align-items: center; gap: 10px; }
+.sgrid { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 10px; align-items: start; }
+.sgrid textarea { min-height: 54px; }
+@media (max-width: 700px) { .sgrid { grid-template-columns: minmax(0, 1fr); } }
+.fsum { display: none; color: var(--muted, #667); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.fbox.folded .fsum { display: inline; }
+#fbTask .fields { margin: 0; }
 /* 모든 항목 접기/펼치기 */
 section.step > h2, section.card > h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sfold-btn { margin-left: auto; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card, #fff); color: var(--ink); cursor: pointer; }
@@ -545,6 +552,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <h1 id="sTitle">알림장</h1>
     <p id="sSub"></p>
   </header>
+  <div class="wtime" id="sWTime" hidden></div>
   <div class="row">
     <button type="button" data-snav="prev" id="sPrev">지난 과제</button>
     <button type="button" data-snav="cur" id="sCur">이번 과제</button>
@@ -659,16 +667,48 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         <div class="fields" id="form">
           <label>수업 날짜<input type="date" id="fDate"></label>
           <label hidden>학생<select id="fWho"></select></label>
-          <label>과목<input type="text" id="fSubject" list="subjects" placeholder="단어, 본문, 문법…"></label>
           <input type="hidden" id="fDue">
-          <label class="wide">과제 내용<textarea id="fTask" placeholder="예: Lesson 4 단어 20개 3번씩 쓰고 뜻 외우기"></textarea></label>
-          <p class="hint wide">{빨강:강조}처럼 적으면 학생 화면에서 그 글자만 빨간색으로 보여요. 색은 빨강·파랑 두 가지를 쓸 수 있어요.</p>
-          <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
-          <label>준비물 (선택)<input type="text" id="fNote"></label>
-          <div class="wide row fmainrow"><button type="button" class="primary small" id="fMainSave">이 과제만 저장</button><span class="hint">위 과목·과제 내용만 저장해요. 아래 단어·발음·문장 칸에 쓰던 내용은 그대로 남아요.</span></div>
           <div class="wide trio">
+          <div class="fbox sbox" id="fbG" data-subj="문법">
+            <div class="fhead"><b>📗 문법</b><span class="fsum" id="fsG"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">과제 내용<textarea class="stask" id="fGTask" rows="2" placeholder="예: [메인북] p.32-34 문제 풀기"></textarea></label>
+              <label>범위 (선택)<input type="text" class="srange" id="fGRange" placeholder="p.62–63"></label>
+            </div></div>
+          </div>
+          <div class="fbox sbox" id="fbR" data-subj="독해">
+            <div class="fhead"><b>📕 독해</b><span class="fsum" id="fsR"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">과제 내용<textarea class="stask" id="fRTask" rows="2" placeholder="예: 예습 지문 5개 읽고 해석·단어 찾기"></textarea></label>
+              <label>범위 (선택)<input type="text" class="srange" id="fRRange" placeholder="p.62–63"></label>
+            </div></div>
+          </div>
+          <div class="fbox sbox" id="fbV" data-subj="단어">
+            <div class="fhead"><b>📒 단어</b><span class="fsum" id="fsV"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">과제 내용<textarea class="stask" id="fVTask" rows="2" placeholder="예: ASAP 단어 Unit 2-3 외우기"></textarea></label>
+              <label>범위 (선택)<input type="text" class="srange" id="fVRange" placeholder="p.62–63"></label>
+            </div></div>
+          </div>
+          <div class="fbox sbox" id="fbL" data-subj="듣기">
+            <div class="fhead"><b>🎧 듣기</b><span class="fsum" id="fsL"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">과제 내용<textarea class="stask" id="fLTask" rows="2" placeholder="예: 듣기 22-23회"></textarea></label>
+              <label>범위 (선택)<input type="text" class="srange" id="fLRange" placeholder="p.62–63"></label>
+            </div></div>
+          </div>
+          <div class="fbox" id="fbTask">
+            <div class="fhead"><b>📝 기타 과목 (과목 선택)</b><span class="fsum" id="fsTask"></span><span class="fsp"></span><button type="button" class="small primary" id="fMainSave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="fields">
+              <label>과목<input type="text" id="fSubject" list="subjects" placeholder="단어, 본문, 문법…"></label>
+              <label class="wide">과제 내용<textarea id="fTask" placeholder="예: Lesson 4 단어 20개 3번씩 쓰고 뜻 외우기"></textarea></label>
+              <p class="hint wide">{빨강:강조}처럼 적으면 학생 화면에서 그 글자만 빨간색으로 보여요. 색은 빨강·파랑 두 가지를 쓸 수 있어요.</p>
+              <label>범위 (선택)<input type="text" id="fRange" placeholder="p.62–63"></label>
+              <label>준비물 (선택)<input type="text" id="fNote"></label>
+            </div></div>
+          </div>
           <div class="wordbox fbox" id="fbWords">
-            <div class="fhead"><b>📘 외울 단어 (선택)</b><span class="hint" id="fwCount"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="w">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fhead"><b>📘 외울 단어 (선택)</b><span class="hint fsum-c" id="fwCount"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="w">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
             <div class="fbody">
             <div class="inmodes">
               <div class="capzone" id="fCapZone" tabindex="0" role="button" aria-label="방법 1: 단어장 캡처 붙여넣기">
@@ -693,7 +733,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             </div>
           </div>
           <div class="sa-in fbox" id="fSentsBox">
-            <div class="fhead"><b>✍️ 문장 연습 (선택)</b><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="s">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fhead"><b>✍️ 문장 연습 (선택)</b><span class="fsum" id="fsSents"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="s">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
             <div class="fbody">
           <textarea class="mono" id="fSents" spellcheck="false" rows="7" placeholder="영어 문장만 쓰면 돼요. 여러 문장도 그냥 이어서 써요.&#10;The boy who lives next door kicked the ball in the park.&#10;&#10;과제 추가를 누르면 성분 표시·끊어 읽기·해석이 자동으로 만들어져요."></textarea>
           <p class="hint">문장만 쓰면 과제 추가 때 <b>[S][V][O]</b> 표시, <b>/</b> 끊어 읽기, <b>=</b> 해석이 자동으로 들어가요. 자동 분석은 틀릴 수 있으니 <b>✨ 자동 분석 미리 보기</b>로 확인하고 고쳐도 돼요.</p>
@@ -706,7 +746,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         
         <datalist id="subjects"><option value="단어"><option value="본문"><option value="문법"><option value="독해"><option value="듣기"><option value="말하기"><option value="쓰기"><option value="발음연습"><option value="워크북"></datalist>
         <div class="row">
-          <button type="button" class="primary" id="fAdd">과제 추가</button>
+          <button type="button" class="primary" id="fAdd">전체 한꺼번에 저장</button>
           <button type="button" id="fLesson">과제 없이 수업만 기록</button>
           <button type="button" id="fCancel" hidden>수정 취소</button>
         </div>
@@ -1306,9 +1346,37 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (state.isSample) state.isSample = false;
     $('sampleBadge').hidden = true;
     state.date = f.date; state.auto = f.date === autoDate(); if (f.who) state.cls = f.who;
-    changed(); $('fSubject').focus();
+    changed(); fSummary(); $('fSubject').focus();
   }
   $('fMainSave').onclick = saveMain;
+  /* 문법·독해·단어·듣기 박스: 그 과목으로 바로 저장 */
+  function saveSubj(box) {
+    const date = $('fDate').value, who = $('fWho').value, subject = box.dataset.subj;
+    const tk = box.querySelector('.stask'), rg = box.querySelector('.srange');
+    if (!date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return false; }
+    if (!tk.value.trim()) { fMsg(subject + ' 과제 내용을 적어 주세요.'); tk.focus(); return false; }
+    D.entries.push({ id: uid(), date, who, subject, task: tk.value.trim(), range: rg.value.trim(), due: '', note: '', words: '' });
+    tk.value = ''; rg.value = ''; sSummary(box);
+    fMsg(`${kShort(date)} ${subject} 과제를 저장했어요.`);
+    if (state.isSample) state.isSample = false;
+    $('sampleBadge').hidden = true;
+    state.date = date; state.auto = date === autoDate(); if (who) state.cls = who;
+    changed(); return true;
+  }
+  function sSummary(box) { const t = box.querySelector('.stask').value.trim().split('\n')[0]; box.querySelector('.fsum').textContent = t ? '· ' + t : '· 비어 있음'; }
+  $$('.sbox').forEach(box => {
+    box.querySelector('.ssave').onclick = () => saveSubj(box);
+    box.querySelector('.stask').addEventListener('input', () => sSummary(box)); sSummary(box);
+  });
+  /* 접었을 때 머리줄에 보일 요약 */
+  function fSummary() {
+    const sub = $('fSubject').value.trim(), tk = $('fTask').value.trim().split('\n')[0];
+    $('fsTask').textContent = (sub || tk) ? '· ' + [sub, tk].filter(Boolean).join(' · ') : '· 비어 있음';
+    const sn = $('fSents').value.trim() ? $('fSents').value.replace(/\r/g, '').split(/\n\s*\n/).filter(x => x.trim()).length : 0;
+    $('fsSents').textContent = sn ? `· ${sn}개 문단` : '· 비어 있음';
+  }
+  ['fSubject', 'fTask', 'fSents'].forEach(id => $(id).addEventListener('input', fSummary));
+  fSummary();
   /* 접기 / 펼치기 (상태는 이 기기에 기억) */
   function setFold(box, on) {
     box.classList.toggle('folded', on);
@@ -1335,7 +1403,20 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const h = document.getElementById(g.dataset.go), sec = h && h.closest('section');
     if (sec && sec.classList.contains('sfolded')) { setSFold(sec, false); store.set('sfold:' + h.id, '0'); }
   }, true);
-  $('fAdd').onclick = async () => { const b = $('fAdd'); b.disabled = true; try { if (await saAutoFill()) addEntry(false); } finally { b.disabled = false; } };
+  async function saveAll() {
+    if (state.editing) { addEntry(false); return; }
+    if (!$('fDate').value) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
+    const done = [];
+    $$('.sbox').forEach(box => { if (box.querySelector('.stask').value.trim() && saveSubj(box)) done.push(box.dataset.subj); });
+    if ($('fTask').value.trim()) { if (await saAutoFill()) { addEntry(false); done.push('기타 과제'); } }
+    else {
+      if ($('fWords').value.trim()) { await saveBox('w'); done.push('외울 단어'); }
+      if (readPron()) { await saveBox('p'); done.push('발음연습'); }
+      if ($('fSents').value.trim()) { await saveBox('s'); done.push('문장 분석'); }
+    }
+    fMsg(done.length ? `${kShort($('fDate').value)} 저장했어요: ${done.join(', ')}` : '저장할 내용이 없어요. 박스에 과제를 적어 주세요.');
+  }
+  $('fAdd').onclick = async () => { const b = $('fAdd'); b.disabled = true; try { await saveAll(); } finally { b.disabled = false; } };
   $('fLesson').onclick = () => addEntry(true);
   function startEdit(e) {
     state.editing = e.id;
@@ -1350,7 +1431,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   function stopEdit() {
     state.editing = null;
-    $('fAdd').textContent = '과제 추가'; $('fCancel').hidden = true; $('fLesson').hidden = false;
+    $('fAdd').textContent = '전체 한꺼번에 저장'; $('fCancel').hidden = true; $('fLesson').hidden = false;
     $('form').classList.remove('editing');
     $('fSubject').value = ''; $('fTask').value = ''; $('fRange').value = ''; $('fDue').value = ''; $('fNote').value = ''; $('fWords').value = ''; $('fSents').value = ''; if ($('fPron')) { $('fPron').value = ''; fpCount(); } fwCount();
   }
@@ -3166,6 +3247,25 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     try { fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).catch(() => { WS.sec += sec; }); } catch (e) { WS.sec += sec; }
   }
   setInterval(wsFlush, 120000);
+  /* 학생 화면: 내 단어 학습 누적 시간 (구글 시트 기록 + 아직 안 보낸 시간) */
+  let WT_ROWS = null;
+  const wtFmt = (sec) => { sec = Math.round(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h}시간 ${m}분` : m ? `${m}분` : `${sec}초`; };
+  function wtRender() {
+    const box = $('sWTime'); if (!box || state.mode !== 'student' || !state.cls) return;
+    if (!WT_ROWS) return;
+    const t = todayStr(), wk = shift(t, -6);
+    let tot = 0, today = 0, week = 0;
+    WT_ROWS.forEach(r => { if ((r[1] || '').trim() !== state.cls || (r[2] || '').trim() !== '단어') return; const v = parseInt(r[3]) || 0, d = (r[5] || '').trim(); tot += v; if (d === t) today += v; if (d >= wk) week += v; });
+    const extra = WS.sec; tot += extra; today += extra; week += extra;
+    box.hidden = false; box.textContent = '';
+    box.append('📚 내 단어 공부 누적 ', el('b', null, wtFmt(tot)), ` · 오늘 ${wtFmt(today)} · 최근 7일 ${wtFmt(week)}`);
+  }
+  async function wtLoad() {
+    if (state.mode !== 'student') return;
+    try { WT_ROWS = csvParse(await (await fetch(lsCfg().csv + '&_=' + Date.now(), { cache: 'no-store' })).text()).slice(1); } catch (e) { return; }
+    wtRender();
+  }
+  setTimeout(wtLoad, 1500); setInterval(wtLoad, 180000); setInterval(wtRender, 15000);
   document.addEventListener('visibilitychange', () => { if (document.hidden) wsFlush(); });
   window.addEventListener('pagehide', wsFlush);
   /* 발음 연습: 의미 없이 듣기 → 녹음(음성 인식) → PASS/NO PASS. 단어마다 3번 PASS하면 완성 */
