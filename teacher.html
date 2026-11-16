@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116161442">
+<meta name="build" content="20261116161509">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -509,7 +509,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   <nav class="tnav" aria-label="바로 가기">
     <button type="button" data-go="h0s">선생님 할 일</button>
     <button type="button" data-go="hOv">과제 한눈에 보기</button>
-    <button type="button" data-go="hLs">숙제 결과</button>
+    <button type="button" data-go="hLs">숙제 검사</button>
     <button type="button" data-go="hDic">Teacher's Guide · 지문 해설 · 사전</button>
     <button type="button" data-go="hLib">자료함 (책 · 답지)</button>
     <button type="button" data-go="hWt" class="primary">단어 테스트 · 틀린 단어 체크</button>
@@ -521,7 +521,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   <nav class="tnav tnav-float" aria-label="바로 가기 (고정)">
     <button type="button" data-go="h0s" data-s="할 일">선생님 할 일</button>
     <button type="button" data-go="hOv" data-s="한눈에">과제 한눈에 보기</button>
-    <button type="button" data-go="hLs" data-s="결과">숙제 결과</button>
+    <button type="button" data-go="hLs" data-s="숙제&#10;검사">숙제 검사</button>
     <button type="button" data-go="hDic" data-s="Guide">Teacher's Guide · 지문 해설 · 사전</button>
     <button type="button" data-go="hLib" data-s="자료">자료함 (책 · 답지)</button>
     <button type="button" data-go="hWt" data-s="단어&#10;테스트" class="primary">단어 테스트 · 틀린 단어 체크</button>
@@ -612,7 +612,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       </section>
 
       <section class="step" aria-labelledby="hLs">
-        <h2 id="hLs">숙제 결과 (모아 보기)</h2>
+        <h2 id="hLs">숙제 검사</h2>
         <p class="hint">학생이 앱에서 듣기를 풀면 여기에 쌓여요. 과제에 <b>듣기 18회</b>처럼 적으면 학생 화면에 풀기 버튼이 생겨요. 틀린 문제는 버튼 하나로 다음 수업 과제로 넘길 수 있어요.</p>
         <div class="row">
           <label class="lab" style="flex-direction:row;align-items:center;gap:6px">넣을 수업 날짜<input type="date" id="lsDate" style="width:auto"></label>
