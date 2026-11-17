@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261116225210">
+<meta name="build" content="20261117212215">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -334,6 +334,23 @@ section.sfolded { padding-bottom: 14px; }
 .ex-ro.right .ex-t { border: 2.5px solid #D32F2F; border-radius: 999px; padding: 0 10px; color: #C62828; font-weight: 700; }
 .ex-pen, .ex-pen-note { font-family: "Nanum Pen Script", "Gaegu", "Segoe Print", "Bradley Hand", "Noto Sans KR", cursive; color: #D32F2F; }
 .ex-pen { font-size: 1.02rem; }
+.hc { margin: 6px 0 2px; border: 1.5px solid #E7A3A3; background: #FFF3F3; border-radius: 10px; padding: 5px 8px; font: 500 .8rem/1.45 "IBM Plex Sans KR", sans-serif; color: #8E1F1F; }
+.hc.warn { border-color: #E5C463; background: #FFF8E3; color: #6B4E00; }
+.hc.wait { border-color: #C9D2EA; background: #F3F6FD; color: #3B4A73; }
+.hc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 3px 0; }
+.hc-ic { flex: none; }
+.hc-msg { flex: 1 1 180px; min-width: 0; }
+.hc-fix { flex: none; padding: 3px 10px; border-radius: 99px; border: 0; background: #C62828; color: #fff; font: 700 .78rem "IBM Plex Sans KR", sans-serif; cursor: pointer; }
+.hc.warn .hc-fix { background: #A87400; }
+.hc-fix.ghost { background: transparent; border: 1px solid currentColor; color: inherit; }
+.hc-fix.all { display: block; margin: 5px 0 1px auto; }
+.hc-how { flex-basis: 100%; text-align: right; font-size: .72rem; opacity: .8; }
+.hc-panel { margin: 0 0 10px; } .hc-item { margin: 6px 0; } .hc-t { display: block; font-size: .85rem; margin: 2px 0 0; color: var(--ink); }
+.hc-sum { margin: 4px 0 8px; padding: 6px 10px; border-radius: 10px; font: 700 .82rem/1.4 "IBM Plex Sans KR", sans-serif; }
+.hc-sum.err { background: #FDE7E7; color: #9B1C1C; border: 1.5px solid #E7A3A3; }
+.hc-sum.warn { background: #FFF5D9; color: #6B4E00; border: 1.5px solid #E5C463; }
+.hc-sum.wait { background: #EEF2FC; color: #3B4A73; }
+.hc-sum.ok { background: #E7F6EC; color: #1F6B3C; border: 1.5px solid #9FD3B0; }
 .ex-simbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0 6px; }
 .ex-sims { margin-top: 10px; padding: 8px 10px; border: 1.5px dashed #5B7CFA; border-radius: 10px; background: rgba(91,124,250,.05); }
 .ex-simh { font-weight: 700; color: #3B55C4; margin-bottom: 4px; }
@@ -1019,6 +1036,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
      <div class="gsplit" id="gsplit" role="separator" aria-orientation="vertical" aria-label="좌우 크기 조절 (끌어서 조절, 더블클릭하면 원래대로)" title="끌어서 좌우 크기 조절 · 더블클릭: 원래대로"></div>
     <aside class="preview" aria-label="미리보기">
       <div id="todoRed" class="todo-red" hidden></div>
+      <div id="hcPanel" class="hc-panel" hidden aria-live="polite"></div>
       <div class="canvas-box"><img class="outImg" alt="과제 알림장 미리보기"></div>
       <div class="actions">
         <button class="primary" id="save" type="button">이미지 저장</button>
@@ -2783,6 +2801,130 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     return Object.assign({}, T, { bg: `hsl(${H} ${Math.round((H0 === 330 ? 85 : 70) * K)}% ${H0 === 330 ? 92 : 93}%)`, line: `hsla(${H},${Math.round(45 * K)}%,62%,.35)`, margin: H0 === 330 ? '#CF8A98' : '#E88A8A', ink: '#222B3D', sub: '#55607A',
       accent: `hsl(${H} ${Math.round(60 * K)}% 38%)`, chipBg: `hsl(${H} ${Math.round(70 * K)}% 85%)`, chipInk: `hsl(${H} ${Math.round(60 * K)}% 30%)`, badgeInk: '#FFFFFF', box: 'rgba(255,255,255,0.6)', hot: '#D2462F', lv1: '#1E5BD8', lv2: '#C62828', lv3: '#7B2FBE' });
   }
+  /* ---------- 자동 점검: 단어·발음·듣기·시험·문장 과제를 미리 돌려 보고, 오류와 바로 고치는 버튼을 보여줘요 (선생님 화면만) ---------- */
+  const HC = { audio: new Map(), J: null, loading: false };
+  const hcLines = (t) => String(t || '').split(/\r?\n/);
+  const hcShow = (a) => a.slice(0, 3).join(', ') + (a.length > 3 ? ' 외 ' + (a.length - 3) + '개' : '');
+  function hcAudio(url) {   /* 음원을 실제로 불러와 봐요 */
+    if (HC.audio.has(url)) return HC.audio.get(url);
+    HC.audio.set(url, 'wait'); const a = new Audio(); a.preload = 'metadata';
+    const done = (v) => { if (HC.audio.get(url) !== 'wait') return; HC.audio.set(url, v); try { a.removeAttribute('src'); a.load(); } catch (e) {} renderHC(); };
+    a.onloadedmetadata = () => done('ok'); a.onerror = () => done('err'); setTimeout(() => done('slow'), 15000); a.src = url;
+    return 'wait';
+  }
+  function hcUnbracket(b) {   /* 괄호만 지우고 [S ] 같은 성분 표시는 남겨요 */
+    return b.split('\n').map(l => { if (/^\s*[=!#]/.test(l)) return l; const st = []; let o = '';
+      for (let k = 0; k < l.length; k++) { const c = l[k];
+        if (c === '[') { if (/^[SVORC]\s/.test(l.slice(k + 1, k + 3))) { st.push('T'); o += c; } else st.push('B'); continue; }
+        if (c === ']') { if (st.pop() === 'T') o += c; continue; }
+        if ('<>()'.includes(c)) continue; o += c; }
+      return o.replace(/ {2,}/g, ' '); }).join('\n');
+  }
+  const hcBlocks = (t) => String(t || '').replace(/\r/g, '').split(/\n\s*\n/).filter(b => b.trim());
+  function hcCheck(it) {
+    const P = [], add = (lv, msg, fix) => P.push({ lv, msg, fix });
+    try {
+      if (it.words) {
+        const lines = hcLines(it.words).map(x => x.trim()).filter(x => x && !/^#/.test(x)), tab = lines.some(l => l.includes('\t'));
+        if (isPron(it)) {
+          const ws = pronWords(it.words);
+          if (!ws.length) add('err', '발음 단어를 하나도 읽지 못해서 "발음 연습" 버튼이 안 나와요. 영어 단어를 한 줄에 하나씩 써 주세요.');
+          const bad = lines.filter(l => !/[A-Za-z]/.test(l));
+          if (ws.length && bad.length) add('warn', `영어가 없는 줄 ${bad.length}개는 발음 연습에서 빠져요: ${hcShow(bad)}`, { label: '그 줄 지우기', run: e => { e.words = hcLines(e.words).filter(l => !l.trim() || /^\s*#/.test(l) || /[A-Za-z]/.test(l)).join('\n'); } });
+          const seen = new Set(), dup = []; ws.forEach(w => { const k = w.en.toLowerCase(); if (seen.has(k)) dup.push(w.en); seen.add(k); });
+          if (dup.length) add('warn', `같은 단어가 두 번 있어요: ${hcShow(dup)}`, { label: '중복 지우기', run: e => { const s2 = new Set(); e.words = hcLines(e.words).filter(l => { const w = (pronWords(l)[0] || {}).en; if (!w) return true; const k = w.toLowerCase(); if (s2.has(k)) return false; s2.add(k); return true; }).join('\n'); } });
+        } else {
+          const ws = parseWords(it.words, '');
+          const bad = tab ? [] : lines.filter(l => !parseWords(l, '').length);
+          const rev = bad.filter(l => /^[^A-Za-z]*[가-힣]/.test(l) && /[A-Za-z]/.test(l)), noKo = bad.filter(l => !rev.includes(l));
+          const revFix = (l) => { const m = l.trim().match(/^([^A-Za-z]+?)\s*[-–:=]?\s*([A-Za-z].*)$/); return m ? m[2].trim() + ' - ' + m[1].trim() : l; };
+          if (!ws.length && !rev.length) add('err', '단어를 하나도 읽지 못해서 "단어 공부" 버튼이 안 나와요. "apple - 사과"처럼 영어와 뜻을 함께 써 주세요.');
+          if (rev.length) add('err', `뜻이 영어보다 앞에 있어서 읽지 못한 줄 ${rev.length}개: ${hcShow(rev)}`, { label: '"영어 - 뜻" 순서로 바꾸기', run: e => { e.words = hcLines(e.words).map(l => rev.includes(l.trim()) ? revFix(l) : l).join('\n'); } });
+          if (noKo.length) add('err', `뜻이 없는 줄 ${noKo.length}개는 단어 공부에서 빠져요: ${hcShow(noKo)}`, { label: '뜻 없는 줄 지우기', run: e => { e.words = hcLines(e.words).filter(l => !noKo.includes(l.trim())).join('\n'); } });
+          const seen = new Set(), dup = []; ws.forEach(w => { const k = w.en.toLowerCase(); if (seen.has(k)) dup.push(w.en); seen.add(k); });
+          if (dup.length) add('warn', `같은 단어가 두 번 있어요: ${hcShow(dup)}`, { label: '중복 지우기', run: e => { const s2 = new Set(); e.words = hcLines(e.words).filter(l => { const w = (parseWords(l, '')[0] || {}).en; if (!w) return true; const k = w.toLowerCase(); if (s2.has(k)) return false; s2.add(k); return true; }).join('\n'); } });
+        }
+      }
+      if (exOk(it)) {
+        const qs = it.exam.qs, bq = qs.map((q, i) => (!Array.isArray(q.choices) || q.choices.length < 2) ? i : -1).filter(i => i >= 0);
+        const keep = (e, drop) => { const ks = new Set(drop); if (Array.isArray(e.exam.key)) e.exam.key = e.exam.key.filter((_, i) => !ks.has(i)); e.exam.qs = e.exam.qs.filter((_, i) => !ks.has(i)).map((q, i) => Object.assign(q, { n: i + 1 })); };
+        if (bq.length) add('err', `보기가 2개보다 적은 문제: ${bq.map(i => i + 1).join(', ')}번`, { label: '그 문제 빼기', run: e => keep(e, bq) });
+        const big = qs.map((q, i) => q.choices && q.choices.length > EX_C.length ? i : -1).filter(i => i >= 0);
+        if (big.length) add('err', `보기가 ${EX_C.length}개보다 많은 문제: ${big.map(i => i + 1).join(', ')}번`, { label: `보기를 ${EX_C.length}개로 줄이기`, run: e => big.forEach(i => { e.exam.qs[i].choices = e.exam.qs[i].choices.slice(0, EX_C.length); }) });
+        const dq = qs.map((q, i) => q.choices && new Set(q.choices).size < q.choices.length ? i : -1).filter(i => i >= 0);
+        if (dq.length) add('warn', `같은 보기가 두 번 나오는 문제: ${dq.map(i => i + 1).join(', ')}번`);
+        const K = it.exam.key;
+        if (Array.isArray(K)) {
+          if (K.length !== qs.length) add('err', `정답은 ${K.length}개인데 문제는 ${qs.length}개라 채점이 어긋나요.`, { label: '정답표를 문제 수에 맞추기', run: e => { const k = e.exam.key.slice(0, e.exam.qs.length); while (k.length < e.exam.qs.length) k.push({ a: 0, e: '' }); e.exam.key = k; } });
+          const br = K.map((k, i) => k && k.a && qs[i] && (k.a < 1 || k.a > qs[i].choices.length) ? i : -1).filter(i => i >= 0);
+          if (br.length) add('err', `정답 번호가 보기 범위를 벗어난 문제: ${br.map(i => i + 1).join(', ')}번`, { label: '그 문제는 채점에서 빼기', run: e => br.forEach(i => { e.exam.key[i].a = 0; }) });
+          const nk = qs.filter((_, i) => !K[i] || !K[i].a).length; if (nk && nk < qs.length) add('warn', `정답이 없는 문제 ${nk}개는 채점에서 빠져요.`);
+        }
+      } else if (it.exam) add('err', '시험 문제가 비어 있어서 학생 화면에 시험이 안 나와요.', { label: '빈 시험 지우기', run: e => { delete e.exam; } });
+      if (it.sents) {
+        const sn = saParse(it.sents);
+        if (!sn.length) add('err', '문장을 하나도 읽지 못했어요.');
+        sn.forEach((q, i) => {
+          const N = `문장 ${i + 1}: `;
+          if (q.err) add('err', N + q.err + ' (괄호 치기 단계가 엉켜요)', { label: '그 문장 괄호 지우기', run: e => { const bs = hcBlocks(e.sents); if (bs[i]) { bs[i] = hcUnbracket(bs[i]); e.sents = bs.join('\n\n'); } } });
+          if (q.bad) add('err', N + `끊은 블록은 ${q.chunks.length}개인데 해석은 ${q.bad}개라 블록별로 채점할 수 없어요.`, { label: '문장 전체 해석으로 채점하기', run: e => { const bs = hcBlocks(e.sents); if (bs[i]) { bs[i] = bs[i].split('\n').map(l => /^\s*=/.test(l) && l.includes('/') ? l.replace(/\s*\/\s*/g, ' ') : l).join('\n'); e.sents = bs.join('\n\n'); } } });
+          if (q.kos && q.kos.some(a => !a.length)) add('err', N + '비어 있는 블록 해석이 있어요.');
+          if (q.toks.length > 60) add('warn', N + `단어가 ${q.toks.length}개라 문장 맞추기가 너무 길어요.`);
+        });
+      }
+      const L = (!it.words && !exOk(it)) ? listenOf(it) : null;
+      if (!L && !it.words && !exOk(it) && !it.sents && it.subject === '듣기' && /\d\s*회/.test(it.task || '')) add('warn', '듣기 회차를 읽지 못해서 "듣기 풀기" 버튼 대신 완료 버튼만 나와요. 회차는 1~24회까지 "듣기 22-23회"처럼 써 주세요.');
+      if (L) {
+        if (!HC.J) { if (!HC.loading) { HC.loading = true; lsLoadData().then(J => { HC.J = J || {}; renderHC(); }); } add('wait', '듣기 정답표를 확인하는 중…'); }
+        else {
+          const book = lsBook(HC.J, it.cls || state.cls || '');
+          if (!book) add('err', '이 학생의 듣기 교재(정답표)가 정해져 있지 않아서 학생이 풀 수 없어요.');
+          else {
+            const miss = L.sets.filter(s => !(book.keys || {})[String(s.test)]);
+            if (miss.length) add('err', `${miss.map(s => s.test + '회').join(', ')} 정답표가 「${book.name || book.id}」에 없어서 그 회차는 풀 수 없어요.`, (it.listen && Array.isArray(it.listen.sets) && miss.length < L.sets.length) ? { label: '없는 회차 빼기', run: e => { e.listen.sets = e.listen.sets.filter(s => !miss.some(m => m.test === s.test)); } } : null);
+            const ok1 = L.sets.find(s => (book.keys || {})[String(s.test)]);
+            if (ok1) {
+              const key = book.keys[String(ok1.test)], badN = (ok1.only || []).filter(n => n < 1 || n > key.length);
+              if (badN.length) add('err', `${ok1.test}회에 없는 문제 번호: ${badN.join(', ')}번`);
+              const n1 = (ok1.only && ok1.only.length ? ok1.only : [1])[0], url = book.base + book.prefix + String(ok1.test).padStart(2, '0') + '_' + String(n1).padStart(2, '0') + '.mp3', a = hcAudio(url);
+              if (a === 'wait') add('wait', '음원을 실제로 불러와 보는 중…');
+              else if (a === 'err') add('err', `${ok1.test}회 음원을 불러오지 못했어요. 인터넷 연결이나 음원 주소를 확인해 주세요.`, { label: '다시 확인', run: () => { HC.audio.delete(url); }, nosave: true });
+              else if (a === 'slow') add('warn', '음원 응답이 느려요. 학생 화면에서 재생이 늦을 수 있어요.', { label: '다시 확인', run: () => { HC.audio.delete(url); }, nosave: true });
+            }
+          }
+        }
+      }
+    } catch (er) { add('err', '점검 중 오류가 났어요: ' + (er && er.message || er)); }
+    return P;
+  }
+  const hcInteractive = (it) => !!(it.words || it.exam || it.sents || listenOf(it) || (it.subject === '듣기' && /\d\s*회/.test(it.task || '')));
+  function hcRun(it, f) {
+    if (f.nosave) { f.run(); renderHC(); return; }
+    const e = D.entries.find(x => x.id === it.id); if (!e) { fMsg('이 과제를 찾지 못했어요. 새로 고친 뒤 다시 해 주세요.'); return; }
+    try { f.run(e); } catch (er) { fMsg('고치지 못했어요: ' + er.message); return; }
+    fMsg('🔧 고쳤어요: ' + f.label + ' · 저장(학생 링크 반영)을 눌러야 학생에게 보여요'); changed();
+  }
+  function hcBox(it, P) {
+    const bx = el('div', 'hc' + (P.some(p => p.lv === 'err') ? ' err' : P.some(p => p.lv === 'warn') ? ' warn' : ' wait'));
+    P.forEach(p => {
+      const r = el('div', 'hc-row'); r.append(el('span', 'hc-ic', p.lv === 'err' ? '❗' : p.lv === 'warn' ? '⚠' : '⏳'), el('span', 'hc-msg', p.msg));
+      if (p.fix) { const b = el('button', 'hc-fix', '🔧 해결하기'); b.type = 'button'; b.title = p.fix.label; b.onclick = (ev) => { ev.stopPropagation(); hcRun(it, p.fix); }; r.append(b, el('small', 'hc-how', p.fix.label)); }
+      else if (p.lv !== 'wait') { const b = el('button', 'hc-fix ghost', '✏ 고치러 가기'); b.type = 'button'; b.onclick = (ev) => { ev.stopPropagation(); const e = D.entries.find(x => x.id === it.id); if (e) startEdit(e); }; r.append(b); }
+      bx.append(r);
+    });
+    const fx = P.filter(p => p.fix && !p.fix.nosave);
+    if (fx.length > 1) { const b = el('button', 'hc-fix all', '🔧 모두 해결하기 (' + fx.length + ')'); b.type = 'button'; b.onclick = (ev) => { ev.stopPropagation(); const e = D.entries.find(x => x.id === it.id); if (!e) return; fx.forEach(p => { try { p.fix.run(e); } catch (er) {} }); fMsg('🔧 ' + fx.length + '가지를 고쳤어요 · 저장(학생 링크 반영)을 눌러야 학생에게 보여요'); changed(); }; bx.append(b); }
+    return bx;
+  }
+  function renderHC() {   /* 미리보기 위 자동 점검 칸 */
+    const box = $('hcPanel'); if (!box) return; box.textContent = '';
+    const list = state.mode === 'teacher' ? currentItems().filter(it => !state.off.has(it.id) && hcInteractive(it)) : [];
+    box.hidden = !list.length; if (!list.length) return;
+    const R = list.map(it => ({ it, P: hcCheck(it) })), cnt = (lv) => R.reduce((a, r) => a + r.P.filter(p => p.lv === lv).length, 0), E = cnt('err'), W = cnt('warn'), Wt = cnt('wait');
+    const sm = el('div', 'hc-sum ' + (E ? 'err' : W ? 'warn' : Wt ? 'wait' : 'ok'), E ? `🔎 자동 점검: 오류 ${E}개${W ? ' · 확인 ' + W + '개' : ''} — 🔧 해결하기를 누르면 바로 고쳐져요` : W ? `🔎 자동 점검: 오류 없음 · 확인할 것 ${W}개` : Wt ? '🔎 자동 점검 중…' : `✅ 자동 점검 통과 · 단어·듣기·시험·문장 과제 ${list.length}개를 미리 돌려 봤어요`);
+    box.append(sm);
+    R.filter(r => r.P.length).forEach(r => { const c = el('div', 'hc-item'); c.append(el('b', 'hc-t', (r.it.subject ? r.it.subject + ' · ' : '') + String(r.it.task || '').split('\n')[0].slice(0, 40))); c.append(hcBox(r.it, r.P)); box.append(c); });
+  }
   function renderNotebook() {
     const nb = $('nb'); nb.textContent = '';
     const T = stuTheme(THEMES[state.theme] || THEMES.note);
@@ -3037,6 +3179,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   async function render() {
     const seq = ++renderSeq;
     if (state.mode === 'student') return;
+    try { renderHC(); } catch (e) {}
     const list = currentItems().filter(it => state.mode === 'student' || !state.off.has(it.id));
     const T = stuTheme(THEMES[state.theme] || THEMES.note);
     const S = parseFloat($('size').value) || 1;
