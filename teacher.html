@@ -1,5 +1,6 @@
 <!doctype html><html><head>
-<meta name="build" content="20261118162141">
+<meta name="build" content="20261118162613">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -170,7 +171,8 @@ header.top h1 { font-family: var(--font-display); font-weight: 400; font-size: 2
 header.top p { margin: 0; color: var(--muted); }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 24px; align-items: start; }
 @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-body.tmode .wrap { max-width: min(98vw, 1700px); }
+body.tmode .wrap { max-width: min(max(98vw, 980px), 1700px); }
+@media (max-width: 760px) { body.tmode { min-width: 0; } body.tmode .wrap { max-width: none; } body.tmode code, body.tmode pre { white-space: pre-wrap; word-break: break-all; } .hwc-row { grid-template-columns: minmax(0, 1fr); } .hwc-st { flex-wrap: wrap; } .hwc-st button { flex: 1 0 auto; padding: 8px 10px; } }   /* 휴대폰: 화면 폭에 맞춰요 */
 body.tmode .grid { grid-template-columns: minmax(0, 1fr) 14px minmax(240px, var(--rw, 420px)); gap: 10px; }
 .gsplit { align-self: stretch; cursor: col-resize; border-radius: 8px; background: color-mix(in srgb, var(--muted) 25%, transparent); position: relative; touch-action: none; min-height: 80px; }
 .gsplit::after { content: "⋮"; position: absolute; top: 150px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 1.2rem; }
