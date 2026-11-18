@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-18-mtop">
+<meta name="build" content="2026-11-18-wtime">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -1887,8 +1887,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           // 단어가 붙은 과제는 단어를 다 외워야 완료돼요
           const m = memCount('t:' + it.id, ws);
           if (!d) tx.append(el('small', 'nb-prog', isPron(it) ? `발음 ${m}/${ws.length}개 통과 · 단어마다 3번 PASS하면 완성` : `단어 ${m}/${ws.length}개 외움 · 다 외우면 자동으로 완료`));
+          if (!isPron(it)) { const wl = el('small', 'wt-line'); wl.dataset.from = it.date; wl.style.cssText = 'display:block;font-weight:600'; tx.append(wl); setTimeout(wtLines, 0); }
           const lvc = [0, 0, 0, 0]; ws.forEach(w => lvc[missLv(state.cls, w)]++);
-          if (lvc[1] || lvc[2] || lvc[3]) {
+          if (false) {   /* 학생 화면: 틀림 횟수 표시 안 함 */
             const lv = el('small', 'nb-lv');
             if (lvc[3]) lv.append(el('b', 'lv3', `3번 이상 틀림 ${lvc[3]}`));
             if (lvc[2]) lv.append(el('b', 'lv2', `2번 틀림 ${lvc[2]}`));
@@ -2804,18 +2805,32 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     }
     $('qClose').focus({ preventScroll: true });
   }
-  /* 단어학습 시간: 창이 열려 있고 화면이 보이며 최근 1분 안에 손을 댄 시간만 센다 → 구글 폼으로 전송 */
+  /* 단어학습 시간: 창이 열려 있고 화면이 보이며 최근 10초 안에 손을 댄 시간만 센다 → 구글 폼으로 전송 */
   const WS = { sec: 0, last: Date.now(), act: Date.now() };
   ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev => document.addEventListener(ev, () => { WS.act = Date.now(); }, true));
+  /* 10초 동안 아무 동작(터치·클릭·키·스크롤·마우스)이 없으면 멈춤 */
+  ['pointermove', 'wheel', 'input'].forEach(ev => document.addEventListener(ev, () => { WS.act = Date.now(); }, true));
+  WS.ses = 0;
   setInterval(() => {
     const now = Date.now();
-    // 발음 연습·문장 분석 창(.pr-ov)이 열려 있는 시간은 단어 공부 시간에서 뺌
-    if (typeof quiz !== 'undefined' && quiz.open && !document.querySelector('.pr-ov') && !document.hidden && now - WS.act < 60000) WS.sec += Math.min(5, (now - WS.last) / 1000);
+    const on = typeof quiz !== 'undefined' && quiz.open && !document.querySelector('.pr-ov') && !document.hidden;
+    const run = on && now - WS.act < 10000;
+    if (run) { const d = Math.min(1.5, (now - WS.last) / 1000); WS.sec += d; WS.ses += d; }
     WS.last = now;
-  }, 5000);
+    wtBadge(on, run); if (run) wtLines();
+  }, 1000);
+  function wtBadge(on, run) {
+    let b = document.getElementById('wtBadge');
+    if (!on) { if (b) b.hidden = true; WS.ses = 0; return; }
+    if (!b) { b = document.createElement('div'); b.id = 'wtBadge'; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:10000;padding:6px 14px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.18);pointer-events:none;white-space:nowrap'; document.body.append(b); }
+    b.hidden = false;
+    const tot = wtTotal() + WS.sec + (WS.sent || 0), m = Math.floor(WS.ses / 60), sx = String(Math.floor(WS.ses % 60)).padStart(2, '0');
+    b.style.background = run ? '#4f46e5' : '#9ca3af'; b.style.color = '#fff';
+    b.textContent = (run ? '⏱ 단어 학습 총 ' : '⏸ 멈춤 · 단어 학습 총 ') + wtFmtS(tot);
+  }
   function wsFlush() {
     if (state.mode === 'teacher' || !state.cls || WS.sec < 10) return;
-    const sec = Math.round(WS.sec); WS.sec = 0;
+    const sec = Math.round(WS.sec); WS.sec = 0; WS.sent = (WS.sent || 0) + sec;  /* 시트에 반영되기 전까지 화면 합계에 포함 */
     const cfg = lsCfg(), f = cfg.f, fd = new URLSearchParams();
     fd.set(f.who, state.cls); fd.set(f.test, '단어'); fd.set(f.score, String(sec)); fd.set(f.wrong, ''); fd.set(f.picks, todayStr());
     try { fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).catch(() => { WS.sec += sec; }); } catch (e) { WS.sec += sec; }
@@ -2826,20 +2841,27 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   const wtFmt = (sec) => { sec = Math.round(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h}시간 ${m}분` : m ? `${m}분` : `${sec}초`; };
   function wtRender() {
     const box = $('sWTime'); if (!box || state.mode !== 'student' || !state.cls) return;
-    if (!WT_ROWS) return;
     const t = todayStr(), wk = shift(t, -6);
     let tot = 0, today = 0, week = 0;
-    WT_ROWS.forEach(r => { if ((r[1] || '').trim() !== state.cls || (r[2] || '').trim() !== '단어') return; const v = parseInt(r[3]) || 0, d = (r[5] || '').trim(); tot += v; if (d === t) today += v; if (d >= wk) week += v; });
-    const extra = WS.sec; tot += extra; today += extra; week += extra;
+    (WT_ROWS || []).forEach(r => { if ((r[1] || '').trim() !== state.cls || (r[2] || '').trim() !== '단어') return; const v = parseInt(r[3]) || 0, d = (r[5] || '').trim(); tot += v; if (d === t) today += v; if (d >= wk) week += v; });
+    const extra = WS.sec + (WS.sent || 0); tot += extra; today += extra; week += extra;
     box.hidden = false; box.textContent = '';
-    box.append('📚 내 단어 공부 누적 ', el('b', null, wtFmt(tot)), ` · 오늘 ${wtFmt(today)} · 최근 7일 ${wtFmt(week)}`);
+    box.append('📚 단어 학습 총 누적 시간 ', el('b', null, wtFmtS(tot))); wtLines();
   }
+  const wtFmtS = (sec) => { sec = Math.floor(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60; return (h ? h + '시간 ' : '') + (h || m ? m + '분 ' : '') + x + '초'; };
+  /* 과제 목록의 단어 과제마다: 그 과제 날짜부터 쌓인 단어 학습 시간 / 최소 30분 */
+  const WT_MIN = 1800;
+  function wtSince(from) { let t = 0; (WT_ROWS || []).forEach(r => { if ((r[1] || '').trim() === state.cls && (r[2] || '').trim() === '단어' && (r[5] || '').trim() >= from) t += parseInt(r[3]) || 0; }); return t + WS.sec + (WS.sent || 0); }
+  function wtLines() { document.querySelectorAll('.wt-line').forEach(x => { const v = wtSince(x.dataset.from || ''), ok = v >= WT_MIN;
+    x.style.color = ok ? '#15803d' : '#dc2626'; x.textContent = (ok ? '✅ ' : '⏱ ') + '단어 학습 ' + wtFmtS(v) + (ok ? ' · 최소 30분 채움' : ' / 최소 30분'); }); }
+  function wtTotal() { let tot = 0; (WT_ROWS || []).forEach(r => { if ((r[1] || '').trim() === state.cls && (r[2] || '').trim() === '단어') tot += parseInt(r[3]) || 0; }); return tot; }
   async function wtLoad() {
     if (state.mode !== 'student') return;
-    try { WT_ROWS = csvParse(await (await fetch(lsCfg().csv + '&_=' + Date.now(), { cache: 'no-store' })).text()).slice(1); } catch (e) { return; }
+    try { const rows = csvParse(await (await fetch(lsCfg().csv + '&_=' + Date.now(), { cache: 'no-store' })).text()).slice(1);
+      const old = WT_ROWS ? wtTotal() : null; WT_ROWS = rows; if (old !== null && WS.sent) WS.sent = Math.max(0, WS.sent - (wtTotal() - old)); } catch (e) { return; }
     wtRender();
   }
-  setTimeout(wtLoad, 1500); setInterval(wtLoad, 180000); setInterval(wtRender, 15000);
+  setTimeout(wtLoad, 1500); setInterval(wtLoad, 180000); setInterval(wtRender, 5000); setTimeout(wtRender, 300);
   document.addEventListener('visibilitychange', () => { if (document.hidden) wsFlush(); });
   window.addEventListener('pagehide', wsFlush);
   /* 발음 연습: 의미 없이 듣기 → 녹음(음성 인식) → PASS/NO PASS. 단어마다 3번 PASS하면 완성 */
