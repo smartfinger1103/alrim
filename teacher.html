@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261118171658">
+<meta name="build" content="2026-11-18-pron-merge">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="2026-11-18-pron-merge">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="2026-11-18-pron-merge">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -1259,7 +1259,19 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   }
   function currentItems() {
     if (state.mode === 'student') { const sd = studentDates(); if (state.date !== sd.cur && state.date !== sd.prev) return []; }
-    return items().filter(it => (it.date === state.date || carriedTo(it, state.date)) && forMe(it));
+    return mergePron(items().filter(it => (it.date === state.date || carriedTo(it, state.date)) && forMe(it)));
+  }
+  /* 발음연습은 이월된 것 + 이번 것 무조건 하나로 합침 (단어 중복 제외) */
+  function mergePron(list) {
+    const isP = (it) => /발음/.test(it.subject || '') || /^\s*\[발음\]|발음\s*연습/.test(it.task || '');
+    const ps = list.filter(isP); if (ps.length < 2) return list;
+    const base = ps.find(it => it.date === state.date) || ps[ps.length - 1];
+    const seen = new Set(), lines = [];
+    [base, ...ps.filter(p => p !== base)].forEach(p => String(p.words || '').split(/\r?\n/).forEach(l => { const k = l.trim().toLowerCase(); if (k && !seen.has(k)) { seen.add(k); lines.push(l.trim()); } }));
+    const m = Object.assign({}, base, { subject: '단어', words: lines.join('\n'), task: lines.length ? `발음연습 (${lines.length}개)` : '발음연습', mergedFrom: ps.map(p => p.id) });
+    const out = []; let put = false;
+    list.forEach(it => { if (!isP(it)) out.push(it); else if (!put) { out.push(m); put = true; } });
+    return out;
   }
   /* 과제 이월: carry = 넘긴 횟수. 그 과제 날짜 다음 수업(과제 날짜) carry개에도 같은 과제로 보여요 (진도는 그대로 이어짐) */
   function carriedTo(it, d) {
