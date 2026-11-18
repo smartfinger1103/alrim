@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261118160701">
+<meta name="build" content="20261118160803">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -582,6 +582,13 @@ section.step[aria-labelledby="hLib"] { --h: 55; }
 .tnav-float button.main { font-size: 0; padding: 26px 0; border-radius: 14px; }
 .tnav-float button.main::after { font-size: 1.15rem; font-weight: 800; white-space: nowrap; }
 .wrap { padding-left: max(108px, env(safe-area-inset-left, 0px)); }
+/* 과제 적기 하위 탭 (왼쪽 세로 메뉴, 과제적기 바로 아래) */
+.tnav-float .tsubs { display: flex; flex-direction: column; gap: 3px; margin: -2px 0 4px 10px; padding: 4px 0 4px 6px; border-left: 3px solid var(--nv-ac, #3F4FB8); }
+:root:root:root body .tnav-float .tsubs .tsub { font-size: 0; padding: 5px 0; border-radius: 9px; background: var(--nv-soft, #EEF1FD); border: 1px solid var(--nv-line, #CDD4F3); color: var(--nv-txt, #2B3786); box-shadow: none; transform: none; cursor: pointer; }
+:root:root:root body .tnav-float .tsubs .tsub::after { content: attr(data-s); font-size: .74rem; font-weight: 700; white-space: nowrap; }
+:root:root:root body .tnav-float .tsubs .tsub:hover { background: var(--nv-ac, #3F4FB8); border-color: var(--nv-ac, #3F4FB8); color: #fff; }
+@keyframes fbflash { 0% { box-shadow: 0 0 0 4px rgba(63,79,184,.55); } 100% { box-shadow: 0 0 0 0 rgba(63,79,184,0); } }
+.fbox.flash { animation: fbflash 1.6s ease-out; }
 @media (max-width: 560px) { .tnav-float { display: none; } .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); } }
 /* 수업 중 단어 테스트 */
 .wt-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.84rem; color: var(--muted); }
@@ -706,7 +713,6 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="hWt" class="primary big">단어 테스트 · 틀린 단어 체크</button>
     <button type="button" data-go="h2s" class="big main">과제 적기</button>
     <button type="button" data-go="hPast" class="big">지난 과제 보기</button>
-    <button type="button" data-go="h3s">알림장 만들기</button>
     <button type="button" data-go="h6s" class="big">저장 · 학생 링크 반영</button>
     <button type="button" data-go="hOv">과제 한눈에 보기</button>
     <button type="button" data-go="hLib">자료함 (책 · 답지)</button>
@@ -717,8 +723,17 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" data-go="hLs" data-s="숙제&#10;검사" class="big">숙제 검사</button>
     <button type="button" data-go="hWt" data-s="단어&#10;테스트" class="primary big">단어 테스트 · 틀린 단어 체크</button>
     <button type="button" data-go="h2s" data-s="과제적기" class="big main">과제 적기</button>
+    <div class="tsubs" role="group" aria-label="과제 적기 항목">
+    <button type="button" class="tsub" data-box="fbG" data-s="문법" title="과제 적기 · 문법로 바로 가기">문법</button>
+    <button type="button" class="tsub" data-box="fbR" data-s="독해" title="과제 적기 · 독해로 바로 가기">독해</button>
+    <button type="button" class="tsub" data-box="fbWords" data-s="외울 단어" title="과제 적기 · 외울 단어로 바로 가기">외울 단어</button>
+    <button type="button" class="tsub" data-box="fbPron" data-s="발음 단어" title="과제 적기 · 발음 단어로 바로 가기">발음 단어</button>
+    <button type="button" class="tsub" data-box="fbL" data-s="듣기" title="과제 적기 · 듣기로 바로 가기">듣기</button>
+    <button type="button" class="tsub" data-box="fSentsBox" data-s="문장 연습" title="과제 적기 · 문장 연습로 바로 가기">문장 연습</button>
+    <button type="button" class="tsub" data-box="fbTask" data-s="기타 과목" title="과제 적기 · 기타 과목로 바로 가기">기타 과목</button>
+    <button type="button" class="tsub" data-box="fbExam" data-s="시험 내기" title="과제 적기 · 시험 내기로 바로 가기">시험 내기</button>
+    </div>
     <button type="button" data-go="hPast" data-s="지난&#10;과제" class="big">지난 과제 보기</button>
-    <button type="button" data-go="h3s" data-s="만들기">알림장 만들기</button>
     <button type="button" data-go="h6s" data-s="저장" class="big">저장 · 학생 링크 반영</button>
     <button type="button" data-go="hOv" data-s="한눈에">과제 한눈에 보기</button>
     <button type="button" data-go="hLib" data-s="자료">자료함 (책 · 답지)</button>
@@ -2004,6 +2019,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (WT.src === 'paste') $('wtPaste').value = '';
     changed();
   };
+  $$('.tsub').forEach(b => b.onclick = () => { const box = $(b.dataset.box); if (!box) return; if (box.classList.contains('folded')) { setFold(box, false); store.set('fold:' + box.id, '0'); } box.scrollIntoView({ behavior: 'smooth', block: 'start' }); box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash'); });   /* 과제 적기 항목으로 바로 가기 */
   $$('.tnav [data-go]').forEach(b => b.onclick = () => { const t = $(b.dataset.go); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); const sec = t.closest('section'); if (sec) { sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash'); } });
   $$('.tnav [data-bottom]').forEach(b => b.onclick = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
   $$('.tnav [data-top]').forEach(b => b.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' }));
