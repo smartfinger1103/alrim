@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261118163128">
+<meta name="build" content="20261118164329">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -336,6 +336,13 @@ section.sfolded { padding-bottom: 14px; }
 .ex-ro.right .ex-t { border: 2.5px solid #D32F2F; border-radius: 999px; padding: 0 10px; color: #C62828; font-weight: 700; }
 .ex-pen, .ex-pen-note { font-family: "Nanum Pen Script", "Gaegu", "Segoe Print", "Bradley Hand", "Noto Sans KR", cursive; color: #D32F2F; }
 .ex-pen { font-size: 1.02rem; }
+.pv-nav { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; } .pv-nav b { flex: 1; text-align: center; font-size: 1rem; } .pv-nav #pvPrev, .pv-nav #pvNext { width: 42px; height: 38px; padding: 0; font-size: 1.1rem; border-radius: 10px; }
+.pv-cal { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; margin: 0 0 10px; background: var(--panel); display: grid; gap: 6px; }
+.pc-h { display: flex; align-items: center; justify-content: space-between; } .pc-g { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; text-align: center; }
+.pc-w { font-size: .75rem; color: var(--muted); } .pc-w.sun { color: #C62828; }
+.pc-d { padding: 6px 0; border-radius: 8px; font-size: .85rem; border: 1px solid transparent; background: transparent; } .pc-d:disabled { opacity: .35; cursor: default; }
+.pc-d.has { background: #EEF1FD; border-color: #CDD4F3; color: #2B3786; font-weight: 700; } .pc-d.cur { background: #3F4FB8; color: #fff; } .pc-d.today { outline: 2px solid #E58A1F; outline-offset: -2px; }
+
 /* AI 시험 만들기 */
 .ai-box { border: 1.5px solid #CDD4F3; background: linear-gradient(180deg, #F5F7FF, transparent 120px); border-radius: 14px; padding: 10px 12px; margin: 0 0 12px; display: grid; gap: 8px; }
 .ai-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; } .ai-head b { font-size: 1.02rem; color: #2B3786; }
@@ -1113,6 +1120,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <aside class="preview" aria-label="미리보기">
       <div id="todoRed" class="todo-red" hidden></div>
       <div id="hcPanel" class="hc-panel" hidden aria-live="polite"></div>
+      <div class="pv-nav" id="pvNav"><button type="button" id="pvPrev" title="이전 과제">◀</button><b id="pvDate"></b><button type="button" id="pvNext" title="다음 과제">▶</button><button type="button" id="pvToday" class="small">지금</button><button type="button" id="pvCalBtn" class="small">📅 달력</button></div>
+      <div class="pv-cal" id="pvCal" hidden></div>
       <div class="canvas-box"><img class="outImg" alt="과제 알림장 미리보기"></div>
       <div class="actions">
         <button class="primary" id="save" type="button">이미지 저장</button>
@@ -3086,6 +3095,33 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     renderTodo();
     render();
   }
+  /* 미리보기 위 날짜 이동 (◀ ▶ · 달력) */
+  let pvCalM = null;
+  function pvNavUpd() {
+    if (!$('pvDate')) return; const ds = assignDates();
+    $('pvDate').textContent = kShort(state.date) + (state.date === autoDate() ? ' · 지금 과제' : '');
+    $('pvPrev').disabled = !ds.some(x => x < state.date); $('pvNext').disabled = !ds.some(x => x > state.date);
+    if (!$('pvCal').hidden) pvCalDraw();
+  }
+  function pvCalDraw() {
+    const box = $('pvCal'); box.textContent = ''; const ds = new Set(assignDates());
+    if (!pvCalM) pvCalM = state.date.slice(0, 7);
+    const [y, m] = pvCalM.split('-').map(Number), first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate();
+    const hd = el('div', 'pc-h'), pb = el('button', 'small', '‹'), nb = el('button', 'small', '›'); pb.type = nb.type = 'button';
+    const mv = (k) => { const d = new Date(y, m - 1 + k, 1); pvCalM = d.getFullYear() + '-' + pad(d.getMonth() + 1); pvCalDraw(); };
+    pb.onclick = () => mv(-1); nb.onclick = () => mv(1); hd.append(pb, el('b', null, y + '년 ' + m + '월'), nb); box.append(hd);
+    const g = el('div', 'pc-g'); WD.forEach((w, k) => g.append(el('span', 'pc-w' + (k === 0 ? ' sun' : ''), w)));
+    for (let k = 0; k < first.getDay(); k++) g.append(el('span'));
+    for (let d = 1; d <= days; d++) { const iso = y + '-' + pad(m) + '-' + pad(d), b = el('button', 'pc-d' + (ds.has(iso) ? ' has' : '') + (iso === state.date ? ' cur' : '') + (iso === todayStr() ? ' today' : ''), String(d)); b.type = 'button';
+      if (ds.has(iso)) b.onclick = () => { setDate(iso, iso === autoDate()); }; else b.disabled = true; g.append(b); }
+    box.append(g, el('small', 'hint', '색칠된 날이 과제가 있는 수업 날이에요. 눌러서 그날 숙제를 봐요.'));
+  }
+  if ($('pvPrev')) {
+    $('pvPrev').onclick = () => { const d = assignDates().filter(x => x < state.date).pop(); if (d) setDate(d, d === autoDate()); };
+    $('pvNext').onclick = () => { const d = assignDates().find(x => x > state.date); if (d) setDate(d, d === autoDate()); };
+    $('pvToday').onclick = () => setDate(autoDate(), true);
+    $('pvCalBtn').onclick = () => { const c = $('pvCal'); c.hidden = !c.hidden; pvCalM = state.date.slice(0, 7); if (!c.hidden) pvCalDraw(); };
+  }
   function setDate(d, auto) { state.date = d; state.auto = auto; state.off.clear(); setupQuiz(); refresh(); }
   function navMsg(m) { const n = $('navMsg'); n.textContent = m; n.hidden = false; clearTimeout(navMsg.t); navMsg.t = setTimeout(() => { n.hidden = true; }, 2500); }
   $$('[data-nav]').forEach(b => b.onclick = () => {
@@ -3522,6 +3558,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     const seq = ++renderSeq;
     if (state.mode === 'student') return;
     try { renderHC(); } catch (e) {}
+    try { pvNavUpd(); } catch (e) {}
     const list = currentItems().filter(it => state.mode === 'student' || !state.off.has(it.id));
     const T = stuTheme(THEMES[state.theme] || THEMES.note);
     const S = parseFloat($('size').value) || 1;
