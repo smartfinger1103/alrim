@@ -1889,7 +1889,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           if (!d) tx.append(el('small', 'nb-prog', isPron(it) ? `발음 ${m}/${ws.length}개 통과 · 단어마다 3번 PASS하면 완성` : `단어 ${m}/${ws.length}개 외움 · 다 외우면 자동으로 완료`));
           if (!isPron(it)) { const wl = el('small', 'wt-line'); wl.dataset.from = it.date; wl.style.cssText = 'display:block;font-weight:600'; tx.append(wl); setTimeout(wtLines, 0); }
           const lvc = [0, 0, 0, 0]; ws.forEach(w => lvc[missLv(state.cls, w)]++);
-          if (false) {   /* 학생 화면: 틀림 횟수 표시 안 함 */
+          if (lvc[1] || lvc[2] || lvc[3]) {
             const lv = el('small', 'nb-lv');
             if (lvc[3]) lv.append(el('b', 'lv3', `3번 이상 틀림 ${lvc[3]}`));
             if (lvc[2]) lv.append(el('b', 'lv2', `2번 틀림 ${lvc[2]}`));
