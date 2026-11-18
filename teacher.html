@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261118160803">
+<meta name="build" content="20261118162141">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -334,6 +334,23 @@ section.sfolded { padding-bottom: 14px; }
 .ex-ro.right .ex-t { border: 2.5px solid #D32F2F; border-radius: 999px; padding: 0 10px; color: #C62828; font-weight: 700; }
 .ex-pen, .ex-pen-note { font-family: "Nanum Pen Script", "Gaegu", "Segoe Print", "Bradley Hand", "Noto Sans KR", cursive; color: #D32F2F; }
 .ex-pen { font-size: 1.02rem; }
+/* AI 시험 만들기 */
+.ai-box { border: 1.5px solid #CDD4F3; background: linear-gradient(180deg, #F5F7FF, transparent 120px); border-radius: 14px; padding: 10px 12px; margin: 0 0 12px; display: grid; gap: 8px; }
+.ai-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; } .ai-head b { font-size: 1.02rem; color: #2B3786; }
+.ai-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px 8px; } .ai-grid label { display: grid; gap: 2px; font-size: .82rem; grid-column: span 2; } .ai-grid label.w2 { grid-column: span 3; }
+@media (max-width: 700px) { .ai-grid label, .ai-grid label.w2 { grid-column: span 6; } }
+.ai-f { display: grid; gap: 2px; font-size: .82rem; } .ai-f textarea, .ai-f input, .ai-grid input, .ai-grid select { font-size: .95rem; }
+.ai-msg { font-size: .88rem; font-weight: 600; color: #2F6F4E; min-height: 1em; } .ai-msg.bad { color: #B42318; }
+.ai-set summary, #aiPasteBox summary { cursor: pointer; font-size: .85rem; color: var(--muted); } .ai-set, #aiPasteBox { display: grid; gap: 6px; } #aiPasteBox textarea { width: 100%; box-sizing: border-box; }
+.ai-edh { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; } .ai-edh .ai-f { flex: 1 1 260px; }
+#aiEd { display: grid; gap: 10px; max-height: 70vh; overflow: auto; padding-right: 4px; }
+.ai-q { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; display: grid; gap: 6px; background: var(--card, #fff); }
+.ai-qh { display: flex; align-items: center; gap: 6px; } .ai-qh b { font-size: 1.05rem; } .ai-qh select { width: auto; }
+.ai-chs { display: grid; gap: 4px; } .ai-ch { display: flex; align-items: center; gap: 6px; padding: 2px 6px; border-radius: 8px; border: 1.5px solid transparent; } .ai-ch input[type=text] { flex: 1; }
+#aiEd label.ai-ch { display: flex !important; flex-direction: row !important; align-items: center; gap: 6px; margin: 0; } #aiEd label.ai-ch > span { flex: none; width: 1.4em; text-align: center; } #aiEd label.ai-ch input[type=text] { flex: 1 1 auto; width: auto; min-width: 0; margin: 0; } #aiEd label.ai-ch input[type=radio] { flex: none; width: 18px !important; height: 18px; margin: 0; padding: 0; }
+.ai-ch.on { border-color: #2F9D5B; background: rgba(47,157,91,.1); } .ai-ch input[type=radio] { width: 18px; height: 18px; accent-color: #2F9D5B; }
+.ai-del { color: #B42318; }
+
 .po-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(20,24,40,.55); display: flex; align-items: center; justify-content: center; padding: 12px; }
 .po-box { width: min(900px, 100%); height: min(96vh, 1200px); background: var(--card, #fff); color: var(--ink); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
 .po-top { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); } .po-top b { flex: 1; font-size: .98rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -589,6 +606,11 @@ section.step[aria-labelledby="hLib"] { --h: 55; }
 :root:root:root body .tnav-float .tsubs .tsub:hover { background: var(--nv-ac, #3F4FB8); border-color: var(--nv-ac, #3F4FB8); color: #fff; }
 @keyframes fbflash { 0% { box-shadow: 0 0 0 4px rgba(63,79,184,.55); } 100% { box-shadow: 0 0 0 0 rgba(63,79,184,0); } }
 .fbox.flash { animation: fbflash 1.6s ease-out; }
+body.tmode.lpad .wrap { padding-left: var(--lpad) !important; margin-left: 0; max-width: none; }
+.lsplit { position: fixed; top: 0; bottom: 0; width: 12px; cursor: col-resize; z-index: 39; touch-action: none; }
+.lsplit::after { content: ""; position: absolute; top: 50%; left: 4px; width: 4px; height: 70px; border-radius: 4px; transform: translateY(-50%); background: color-mix(in srgb, var(--muted) 35%, transparent); }
+.lsplit:hover::after, .lsplit.on::after { background: #3F4FB8; height: 120px; }
+@media (max-width: 560px) { .lsplit { display: none; } }
 @media (max-width: 560px) { .tnav-float { display: none; } .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); } }
 /* 수업 중 단어 테스트 */
 .wt-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.84rem; color: var(--muted); }
@@ -877,8 +899,35 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             </div></div>
           </div>
           <div class="fbox" id="fbExam">
-            <div class="fhead"><b>📝 시험문제 올리기 (객관식 · 파일)</b><span class="fsum" id="fsExam"></span><span class="fsp"></span><button type="button" class="small primary" id="exSave" disabled>과제로 올리기</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fhead"><b>📝 시험 내기 (AI 출제 · 파일 · 객관식/주관식)</b><span class="fsum" id="fsExam"></span><span class="fsp"></span><button type="button" class="small primary" id="exSave" disabled>과제로 올리기</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
             <div class="fbody">
+              <div class="ai-box">
+                <div class="ai-head"><b>🤖 AI로 시험 만들기</b><span class="hint">레벨·문법 주제·항목을 넣고 만들면, 고친 뒤 바로 과제로 낼 수 있어요.</span></div>
+                <div class="ai-grid">
+                  <label>레벨<select id="aiLv"><option>중1</option><option>중2</option><option selected>중3</option><option>고1</option><option>고2</option><option>고3</option></select></label>
+                  <label>객관식<input type="number" id="aiMc" min="0" max="40" value="10"></label>
+                  <label>주관식<input type="number" id="aiSa" min="0" max="40" value="5"></label>
+                  <label class="w2">문법 주제<input type="text" id="aiTopic" placeholder="예: 시제, 관계대명사, to부정사"></label>
+                  <label class="w2">다룰 항목 (쉼표로)<input type="text" id="aiItems" placeholder="예: 현재완료, 과거, 진행형, 미래"></label>
+                </div>
+                <label class="ai-f">원하는 내용 (자연스럽게 적어요)<textarea id="aiReq" rows="2" placeholder="예: 내신 스타일로, 어법상 틀린 것 고르기를 3문제 넣고, 주관식은 틀린 곳 고쳐 쓰기로"></textarea></label>
+                <div class="row"><button type="button" class="small primary" id="aiGen">✨ 문제 만들기</button><button type="button" class="small" id="aiCopyP" title="API 키 없이: 요청문을 복사해 Claude 대화창에 붙여넣어요">📋 요청문 복사 (무료)</button></div>
+                <div class="ai-msg" id="aiMsg" role="status"></div>
+                <details id="aiPasteBox"><summary>결과 붙여넣기 (요청문 복사로 만들 때)</summary><textarea id="aiPaste" rows="4" placeholder="Claude가 준 결과 전체를 여기에 붙여넣어요"></textarea><button type="button" class="small primary" id="aiPasteGo">불러오기</button></details>
+                <details class="ai-set"><summary>AI 연결 설정 (API 키)</summary>
+                  <label class="ai-f">Anthropic API 키<input type="password" id="aiKey" placeholder="sk-ant-..." autocomplete="off"></label>
+                  <label class="ai-f">모델<select id="aiModel"><option value="claude-opus-5-5">Claude Opus 5.5 (추천 · 가장 정교)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (빠르고 비용↓)</option><option value="claude-haiku-5-5">Claude Haiku 5.5 (빠름, 비용↓)</option></select></label>
+                  <small class="hint" id="aiKeyState"></small><small class="hint">키는 이 기기 브라우저에만 저장되고 학생 링크에는 올라가지 않아요. console.anthropic.com 에서 만들 수 있어요.</small>
+                </details>
+                <div id="aiEdWrap" hidden>
+                  <div class="ai-edh"><label class="ai-f">시험 제목<input type="text" id="aiTitle"></label><small id="aiCount" class="hint"></small></div>
+                  <div id="aiEd"></div>
+                  <div class="row"><select id="aiAddTy"><option value="mc">객관식</option><option value="short">주관식</option></select><button type="button" class="small" id="aiAdd">＋ 문제 추가</button></div>
+                  <label class="ai-f">자연어로 고치기<textarea id="aiRevReq" rows="2" placeholder="예: 5번을 더 어렵게, 주관식을 2개 더, 해설을 더 자세히"></textarea></label>
+                  <div class="row"><button type="button" class="small" id="aiRev">✏ 요청대로 고치기</button><button type="button" class="small ghost" id="aiCopyR">📋 수정 요청문 복사</button><button type="button" class="small ghost" id="aiNew">🔄 새로 만들기</button></div>
+                  <div class="row"><button type="button" class="small" id="aiTry">학생 화면으로 미리 풀어보기</button><button type="button" class="small primary" id="aiSave">📤 과제로 올리기</button></div>
+                </div>
+              </div>
               <div class="capzone file" id="exZone">
                 <b>시험 파일 올리기</b>
                 <span><b>PDF</b> · .json · .txt 시험 파일을 올리면, 학생 화면에서 <b>한 문제씩</b> 풀고 <b>제출만</b> 해요 (학생에게는 점수를 안 보여줘요). 파일에 <b>정답·해설</b>이 들어 있으면 <b>숙제 검사</b> 탭에서 자동 채점되고, <b>틀린 문제 보기</b>로 빨간 펜 해설을 볼 수 있어요. 푸는 데 걸린 시간도 함께 나와요.</span>
@@ -1535,6 +1584,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   $('fMainSave').onclick = saveMain;
   /* ---------- 시험문제 파일 올리기 (.json / .txt) → 학생 과제로 ---------- */
   let EXU = null;
+  const exKd = (k) => !!(k && (k.a || (Array.isArray(k.t) && k.t.length)));   /* 정답이 있는 문항 (객관식 번호 또는 주관식 답) */
+  const exNorm = (t) => String(t || '').toLowerCase().replace(/[’‘`]/g, "'").replace(/[“”]/g, '"').replace(/[.,!?;:"]+/g, ' ').replace(/\s+/g, ' ').trim();
   function exParse(text, fname) {
     text = String(text || '').replace(/^﻿/, '');
     if (!text.trim()) throw new Error('파일이 비어 있어요.');
@@ -1546,7 +1597,10 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const arr = Array.isArray(j) ? j : (j.questions || j.qs || []);
       if (!Array.isArray(arr)) throw new Error('문제 목록(questions)을 찾지 못했어요.');
       title = Array.isArray(j) ? '' : cl(j.title || j.name);
-      qs = arr.map(q => ({ inst: cl(q.inst || q.instruction), body: cl(q.body || q.q || q.question || q.text), choices: (Array.isArray(q.choices || q.options) ? (q.choices || q.options) : []).map(cl).filter(Boolean), ans: parseInt(q.ans != null ? q.ans : (q.answer != null ? q.answer : q['정답'])) || 0, expl: cl(q.expl || q.explanation || q['해설']), sim: (Array.isArray(q.sim || q.similar) ? (q.sim || q.similar) : []).map(z => ({ inst: cl(z.inst || z.instruction), body: cl(z.body || z.q || z.question), choices: (Array.isArray(z.choices || z.options) ? (z.choices || z.options) : []).map(cl).filter(Boolean), ans: parseInt(z.ans != null ? z.ans : z.answer) || 0, expl: cl(z.expl || z.explanation) })).filter(z => z.choices.length > 1 && z.ans >= 1 && z.ans <= z.choices.length).map(z => { if (!z.inst) delete z.inst; if (!z.body) delete z.body; return z; }) }));
+      qs = arr.map(q => { const ch = (Array.isArray(q.choices || q.options) ? (q.choices || q.options) : []).map(cl).filter(Boolean), A = q.answers != null ? q.answers : (q.answer != null ? q.answer : (q.ans != null ? q.ans : q['정답']));
+        const short = /short|주관|subj/i.test(q.type || '') || (!ch.length && A != null && (Array.isArray(A) || isNaN(parseInt(A))));
+        return { short, inst: cl(q.inst || q.instruction), body: cl(q.body || q.q || q.question || q.text), choices: short ? [] : ch, ans: short ? 0 : (parseInt(A) || 0), alt: short ? (Array.isArray(A) ? A : String(A || '').split('|')).map(cl).filter(Boolean) : [], expl: cl(q.expl || q.explanation || q['해설']),
+          sim: (Array.isArray(q.sim || q.similar) ? (q.sim || q.similar) : []).map(z => ({ inst: cl(z.inst || z.instruction), body: cl(z.body || z.q || z.question), choices: (Array.isArray(z.choices || z.options) ? (z.choices || z.options) : []).map(cl).filter(Boolean), ans: parseInt(z.ans != null ? z.ans : z.answer) || 0, expl: cl(z.expl || z.explanation) })).filter(z => z.choices.length > 1 && z.ans >= 1 && z.ans <= z.choices.length).map(z => { if (!z.inst) delete z.inst; if (!z.body) delete z.body; return z; }) }; });
     } else {
       const MK = /^[①②③④⑤⑥]/;
       let inst = '', cur = null;
@@ -1572,25 +1626,25 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     }
     if (!qs.length) throw new Error('문제를 찾지 못했어요. 번호(1. 2. …)와 보기(① ② …) 형식을 확인해 주세요.');
     if (qs.length > 100) throw new Error('문제는 한 번에 100개까지 올릴 수 있어요.');
-    const bad = []; qs.forEach((q, i) => { if (q.choices.length < 2 || q.choices.length > 6) bad.push(i + 1); });
+    const bad = []; qs.forEach((q, i) => { if (!q.short && (q.choices.length < 2 || q.choices.length > 6)) bad.push(i + 1); });
     if (bad.length) throw new Error(bad.slice(0, 8).join(', ') + '번 문제의 보기(① ~ ⑤)를 찾지 못했어요.');
-    const key = qs.map(q => Object.assign({ a: (q.ans >= 1 && q.ans <= q.choices.length) ? q.ans : 0, e: q.expl || '' }, (q.sim && q.sim.length) ? { s: q.sim } : {}));   /* 정답·해설은 문제와 따로 보관 */
-    qs = qs.map((q, i) => ({ n: i + 1, inst: q.inst, body: q.body, choices: q.choices }));
+    const key = qs.map(q => Object.assign({ a: (!q.short && q.ans >= 1 && q.ans <= q.choices.length) ? q.ans : 0, e: q.expl || '' }, (q.short && q.alt && q.alt.length) ? { t: q.alt } : {}, (q.sim && q.sim.length) ? { s: q.sim } : {}));   /* 정답·해설은 문제와 따로 보관 */
+    qs = qs.map((q, i) => Object.assign({ n: i + 1, inst: q.inst, body: q.body, choices: q.choices }, q.short ? { type: 'short' } : {}));
     qs.forEach(q => { if (!q.body) delete q.body; if (!q.inst) delete q.inst; });
-    return { title: title || String(fname || '시험').replace(/\.[^.]+$/, ''), qs, key: key.some(k => k.a) ? key : null };
+    return { title: title || String(fname || '시험').replace(/\.[^.]+$/, ''), qs, key: key.some(exKd) ? key : null };
   }
   function exUiReset() {
     EXU = null; $('exTitle').value = ''; $('exFile').value = ''; $('exInfo').textContent = ''; $('exPv').textContent = ''; $('exSave').disabled = true; $('exTry').disabled = true; $('fsExam').textContent = '';
   }
   function exUiShow() {
     $('exTitle').value = EXU.title; $('exSave').disabled = false; $('exTry').disabled = false;
-    { const kn = EXU.key ? EXU.key.filter(k => k.a).length : 0; $('exInfo').textContent = '문제 ' + EXU.qs.length + '개를 읽었어요. ' + (kn ? '정답·해설 ' + kn + '개가 들어 있어 자동 채점돼요 ✓ ' + (EXU.key.some(k => k.s) ? '(유사문제 ' + EXU.key.reduce((a, k) => a + (k.s ? k.s.length : 0), 0) + '개 포함) ' : '') : '정답이 없는 파일이라 채점은 안 되고 제출·시간만 보여요. ') + '아래에서 확인하고 "과제로 올리기"를 누르세요.'; }
+    { const kn = EXU.key ? EXU.key.filter(exKd).length : 0; $('exInfo').textContent = '문제 ' + EXU.qs.length + '개를 읽었어요. ' + (kn ? '정답·해설 ' + kn + '개가 들어 있어 자동 채점돼요 ✓ ' + (EXU.key.some(k => k.s) ? '(유사문제 ' + EXU.key.reduce((a, k) => a + (k.s ? k.s.length : 0), 0) + '개 포함) ' : '') : '정답이 없는 파일이라 채점은 안 되고 제출·시간만 보여요. ') + '아래에서 확인하고 "과제로 올리기"를 누르세요.'; }
     $('fsExam').textContent = EXU.title + ' · ' + EXU.qs.length + '문항';
     const pv = $('exPv'); pv.textContent = '';
     const dt = el('details'); dt.append(el('summary', null, '문제 미리보기 (' + EXU.qs.length + '문항)'));
     EXU.qs.forEach(q => {
       const d = el('div', 'ex-pvq'); const h = el('div'); h.innerHTML = '<b>' + q.n + '.</b> ' + (q.inst ? '<small>' + exHtml(q.inst) + '</small><br>' : '') + (q.body ? exHtml(q.body) : '');
-      const c = el('small'); c.innerHTML = q.choices.map((x, k) => EX_C[k] + ' ' + exHtml(x)).join(' &nbsp; '); d.append(h, c); dt.append(d);
+      const c = el('small'); c.innerHTML = q.choices.length ? q.choices.map((x, k) => EX_C[k] + ' ' + exHtml(x)).join(' &nbsp; ') : '<b>[주관식]</b>'; d.append(h, c); dt.append(d);
     });
     pv.append(dt);
   }
@@ -1636,6 +1690,128 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   };
   $('exTitle').oninput = () => { if (EXU) { EXU.title = $('exTitle').value.trim() || EXU.title; $('fsExam').textContent = EXU.title + ' · ' + EXU.qs.length + '문항'; } };
   $('exTry').onclick = () => { if (EXU) openExam({ id: '__pv', task: EXU.title, exam: { title: EXU.title, qs: EXU.qs } }); };
+  /* ---------- AI로 시험 만들기: 레벨·문법 주제·항목·객관식/주관식 수·자연어 요청 → 문제 생성 → 직접 수정 → 과제로 올리기 ---------- */
+  const AI = { qs: [], title: '', busy: false };
+  const AIK = 'alrim:ai-key', AIM = 'alrim:ai-model';
+  const aiKey = () => { try { return localStorage.getItem(AIK) || ''; } catch (e) { return ''; } };
+  function aiSpec() {
+    return { lv: $('aiLv').value, topic: $('aiTopic').value.trim(), items: $('aiItems').value.trim(), mc: Math.max(0, Math.min(40, parseInt($('aiMc').value) || 0)), sa: Math.max(0, Math.min(40, parseInt($('aiSa').value) || 0)), req: $('aiReq').value.trim() };
+  }
+  const AI_FMT = `출력 형식 (JSON만, 다른 말 없이):
+{"title":"시험 제목","questions":[
+ {"type":"mc","inst":"지시문","body":"문제 본문(필요 없으면 빈 문자열)","choices":["보기1","보기2","보기3","보기4","보기5"],"answer":2,"expl":"짧은 한국어 해설"},
+ {"type":"short","inst":"지시문","body":"문제 본문","answer":["정답","허용되는 다른 정답"],"expl":"짧은 한국어 해설"}
+]}
+표기 규칙: 빈칸은 _____ (밑줄 5개), 밑줄 친 부분은 {{ }}로 감싸기, 보기 상자는 본문 맨 앞에 [보기] 를 붙이기, 줄바꿈은 \\n.
+객관식 answer는 정답 보기의 번호(1~5)이고, 정답 번호가 한쪽으로 몰리지 않게 고르게 섞어 주세요.
+주관식 answer는 채점에 쓸 정답 목록이에요. 축약형 등 맞게 볼 답을 모두 넣고, 답이 하나로 정해지는 문제(빈칸에 알맞은 형태 쓰기, 단어 배열, 틀린 곳 고쳐 쓰기 등)로 만들어 주세요.`;
+  function aiPrompt(sp) {
+    return `당신은 한국 ${sp.lv} 학생을 가르치는 영어 선생님이에요. 내신 시험 수준의 영어 문법 시험 문제를 만들어 주세요.
+- 학년 수준: ${sp.lv} (어휘·문장 길이·난이도를 이 수준에 맞추기)
+- 문법 주제: ${sp.topic || '(선생님 요청 참고)'}
+${sp.items ? '- 꼭 다룰 항목: ' + sp.items + ' (항목이 고르게 나오도록)\n' : ''}- 객관식 ${sp.mc}문제 (보기 5개), 주관식 ${sp.sa}문제 — 객관식을 먼저, 주관식을 뒤에
+${sp.req ? '- 선생님 요청: ' + sp.req + ' (이 요청을 하나도 빠짐없이 그대로 반영)\n' : ''}- 문제끼리 겹치지 않게, 정답이 확실하게 하나인 문제로
+반드시 지킬 것: 객관식은 정확히 ${sp.mc}개, 주관식은 정확히 ${sp.sa}개. 다룰 항목은 빠짐없이, 고르게.
+다 만든 뒤 출력하기 전에 스스로 검토하세요: ① 문항 수와 유형이 설정과 똑같은지 ② 모든 항목·요청이 반영됐는지 ③ 정답이 유일하고 오답 보기가 확실히 틀렸는지 ④ 영어가 자연스럽고 ${sp.lv} 수준에 맞는지 ⑤ 해설이 정답 근거를 정확히 말하는지. 문제가 있으면 고친 최종본만 출력하세요.
+${AI_FMT}`;
+  }
+  function aiRevisePrompt(req) {
+    return `아래는 지금 만든 영어 문법 시험(JSON)이에요. 선생님 요청대로 고친 전체 시험을 같은 형식으로 다시 주세요. 요청과 관계없는 문제는 그대로 두세요.
+선생님 요청: ${req}
+${AI_FMT}
+지금 시험:
+${JSON.stringify(aiToJson(), null, 0)}`;
+  }
+  async function aiCall(prompt) {
+    const key = aiKey(); if (!key) throw new Error('AI 연결 설정에 API 키를 넣어 주세요. (또는 "요청문 복사"로 무료로 만들 수 있어요)');
+    const model = (localStorage.getItem(AIM) || 'claude-opus-5-5');
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 180000);
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', signal: ctl.signal, headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model, max_tokens: 16000, messages: [{ role: 'user', content: prompt }] }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(r.status === 401 ? 'API 키가 맞지 않아요. AI 연결 설정을 확인해 주세요.' : r.status === 429 ? 'AI 사용량이 잠시 몰렸어요. 조금 뒤 다시 눌러 주세요.' : 'AI 오류: ' + ((j.error && j.error.message) || r.status));
+      return (j.content || []).map(c => c.text || '').join('');
+    } catch (e) { if (e.name === 'AbortError') throw new Error('AI 응답이 너무 오래 걸려요. 문항 수를 줄여 다시 해 보세요.'); throw e; }
+    finally { clearTimeout(tm); }
+  }
+  function aiParse(text) {   /* AI 답에서 JSON만 꺼내 편집용 문제로 바꿔요 */
+    const t = String(text || ''), a = t.indexOf('{'), b = t.lastIndexOf('}');
+    if (a < 0 || b < a) throw new Error('결과에서 문제(JSON)를 찾지 못했어요. 결과 전체를 그대로 붙여넣어 주세요.');
+    let j; try { j = JSON.parse(t.slice(a, b + 1)); } catch (e) { throw new Error('결과 형식이 깨져 있어요. 다시 만들어 주세요.'); }
+    const arr = j.questions || j.qs || []; if (!Array.isArray(arr) || !arr.length) throw new Error('문제가 비어 있어요.');
+    const cl = (x) => String(x == null ? '' : x).trim();
+    return { title: cl(j.title), qs: arr.map(q => { const ch = (Array.isArray(q.choices) ? q.choices : []).map(cl).filter(Boolean), short = /short|주관/i.test(q.type || '') || !ch.length;
+      return short ? { type: 'short', inst: cl(q.inst), body: cl(q.body), choices: [], ans: (Array.isArray(q.answer) ? q.answer : String(q.answer || '').split('|')).map(cl).filter(Boolean), expl: cl(q.expl) }
+                   : { type: 'mc', inst: cl(q.inst), body: cl(q.body), choices: ch.slice(0, 6), ans: Math.min(ch.length, Math.max(1, parseInt(q.answer) || 1)), expl: cl(q.expl) }; }) };
+  }
+  function aiToJson() {
+    return { title: AI.title, questions: AI.qs.map(q => q.type === 'short' ? { type: 'short', inst: q.inst, body: q.body, answer: q.ans, expl: q.expl } : { type: 'mc', inst: q.inst, body: q.body, choices: q.choices, answer: q.ans, expl: q.expl }) };
+  }
+  function aiLoad(res, keepTitle) {
+    AI.qs = res.qs; if (!keepTitle || !AI.title) AI.title = res.title || (aiSpec().lv + ' ' + (aiSpec().topic || '문법') + ' ' + res.qs.length + '문항');
+    $('aiTitle').value = AI.title; aiDraw(); $('aiEdWrap').hidden = false;
+  }
+  function aiMsg(t, bad) { const m = $('aiMsg'); m.textContent = t; m.classList.toggle('bad', !!bad); }
+  async function aiRun(btn, label, fn) {
+    if (AI.busy) return; AI.busy = true; const o = btn.textContent; btn.disabled = true; btn.textContent = label; aiMsg('🤖 ' + label);
+    try { await fn(); } catch (e) { aiMsg('⚠ ' + (e.message || e), true); } finally { AI.busy = false; btn.disabled = false; btn.textContent = o; }
+  }
+  async function aiCopy(text, what) {
+    let ok = false; try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {}
+    if (!ok) { const ta = document.createElement('textarea'); ta.value = text; document.body.append(ta); ta.select(); try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); }
+    $('aiPasteBox').open = true;
+    aiMsg(ok ? `📋 ${what}을 복사했어요. Claude 대화창(claude.ai)에 붙여넣고, 나온 결과 전체를 아래 "결과 붙여넣기" 칸에 붙여넣은 뒤 [불러오기]를 누르세요.` : '복사하지 못했어요. 브라우저 권한을 확인해 주세요.', !ok);
+  }
+  function aiDraw() {   /* 문제 편집기: 지시문·본문·보기·정답·해설을 바로 고쳐요 */
+    const box = $('aiEd'); box.textContent = '';
+    const mcN = AI.qs.filter(q => q.type !== 'short').length; $('aiCount').textContent = `객관식 ${mcN} · 주관식 ${AI.qs.length - mcN} · 모두 ${AI.qs.length}문항`;
+    AI.qs.forEach((q, i) => {
+      const c = el('div', 'ai-q'), hd = el('div', 'ai-qh');
+      hd.append(el('b', null, (i + 1) + '.'));
+      const ty = el('select'); [['mc', '객관식'], ['short', '주관식']].forEach(([v, t]) => { const o = el('option', null, t); o.value = v; ty.append(o); }); ty.value = q.type;
+      ty.onchange = () => { if (ty.value === 'short') { q.type = 'short'; q.ans = q.choices[q.ans - 1] ? [q.choices[q.ans - 1]] : []; q.choices = []; } else { q.type = 'mc'; q.choices = ['', '', '', '', '']; q.ans = 1; } aiDraw(); };
+      const up = el('button', 'small ghost', '↑'), dn = el('button', 'small ghost', '↓'), del = el('button', 'small ghost ai-del', '🗑 삭제');
+      [up, dn, del].forEach(b => b.type = 'button'); up.disabled = !i; dn.disabled = i === AI.qs.length - 1;
+      up.onclick = () => { AI.qs.splice(i - 1, 0, AI.qs.splice(i, 1)[0]); aiDraw(); }; dn.onclick = () => { AI.qs.splice(i + 1, 0, AI.qs.splice(i, 1)[0]); aiDraw(); };
+      del.onclick = () => { AI.qs.splice(i, 1); aiDraw(); };
+      hd.append(ty, el('span', 'fsp'), up, dn, del); c.append(hd);
+      const fld = (lab, val, set, multi) => { const l = el('label', 'ai-f'); l.append(el('span', null, lab)); const ip = el(multi ? 'textarea' : 'input'); if (multi) ip.rows = 2; else ip.type = 'text'; ip.value = val || ''; ip.oninput = () => set(ip.value); l.append(ip); c.append(l); return ip; };
+      fld('지시문', q.inst, v => q.inst = v);
+      fld('본문 (빈칸 _____ · 밑줄 {{ }} · [보기])', q.body, v => q.body = v, true);
+      if (q.type === 'short') fld('정답 (맞게 볼 답이 여러 개면 | 로)', q.ans.join(' | '), v => q.ans = v.split('|').map(x => x.trim()).filter(Boolean));
+      else {
+        const cw = el('div', 'ai-chs');
+        q.choices.forEach((t, k) => { const r = el('label', 'ai-ch' + (q.ans === k + 1 ? ' on' : '')); const rd = el('input'); rd.type = 'radio'; rd.name = 'aians' + i; rd.checked = q.ans === k + 1; rd.title = '정답으로 고르기'; rd.onchange = () => { q.ans = k + 1; aiDraw(); };
+          const ip = el('input'); ip.type = 'text'; ip.value = t; ip.oninput = () => { q.choices[k] = ip.value; }; r.append(rd, el('span', null, EX_C[k]), ip); cw.append(r); });
+        c.append(cw, el('small', 'hint', '동그라미를 눌러 정답을 골라요 (초록색이 정답)'));
+      }
+      fld('해설', q.expl, v => q.expl = v);
+      box.append(c);
+    });
+  }
+  function aiCheck() {   /* 올리기 전에 빠진 곳 확인 */
+    const bad = [];
+    AI.qs.forEach((q, i) => { if (q.type === 'short') { if (!q.ans.length) bad.push((i + 1) + '번 정답'); } else { q.choices = q.choices.map(x => x.trim()); if (q.choices.filter(Boolean).length < q.choices.length || q.choices.length < 2) bad.push((i + 1) + '번 보기'); } if (!q.inst.trim() && !q.body.trim()) bad.push((i + 1) + '번 문제 내용'); });
+    return bad;
+  }
+  function aiToEXU() { AI.title = $('aiTitle').value.trim() || AI.title; return exParse(JSON.stringify(aiToJson()), AI.title); }
+  $('aiGen').onclick = () => { const sp = aiSpec(); if (!sp.mc && !sp.sa) { aiMsg('문항 수를 1개 이상 넣어 주세요.', true); return; } if (!sp.topic && !sp.req) { aiMsg('문법 주제나 요청 내용을 적어 주세요.', true); return; }
+    aiRun($('aiGen'), '문제를 만드는 중… (30초~2분)', async () => { const r = aiParse(await aiCall(aiPrompt(sp))); aiLoad(r); aiMsg(aiCnt(sp, r) || `✅ ${r.qs.length}문항을 만들었어요. 아래에서 고치고 [과제로 올리기]를 누르세요.`, !!aiCnt(sp, r)); }); };
+  function aiCnt(sp, r) { const m = r.qs.filter(q => q.type !== 'short').length, a = r.qs.length - m; return (m !== sp.mc || a !== sp.sa) ? `⚠ 설정은 객관식 ${sp.mc}·주관식 ${sp.sa}인데 객관식 ${m}·주관식 ${a}개가 나왔어요. 「자연어로 고치기」로 맞추거나 새로 만들어 주세요.` : ''; }
+  $('aiNew').onclick = () => { const sp = aiSpec(); aiRun($('aiNew'), '새로 만드는 중…', async () => { const r = aiParse(await aiCall(aiPrompt(sp) + '\n(앞서 만든 것과 다른 새 문제로)')); AI.title = ''; aiLoad(r); aiMsg(aiCnt(sp, r) || `🔄 새 문제 ${r.qs.length}개를 만들었어요.`, !!aiCnt(sp, r)); }); };
+  $('aiRev').onclick = () => { const req = $('aiRevReq').value.trim(); if (!req) { aiMsg('수정 요청을 적어 주세요. 예) 5번을 더 어렵게, 주관식 2개 더', true); return; } if (!AI.qs.length) return;
+    aiRun($('aiRev'), '고치는 중…', async () => { const r = aiParse(await aiCall(aiRevisePrompt(req))); aiLoad(r, true); $('aiRevReq').value = ''; aiMsg(`✏ 요청대로 고쳤어요 (${r.qs.length}문항).`); }); };
+  $('aiCopyP').onclick = () => { const sp = aiSpec(); if (!sp.mc && !sp.sa) { aiMsg('문항 수를 1개 이상 넣어 주세요.', true); return; } aiCopy(aiPrompt(sp), '출제 요청문'); };
+  $('aiCopyR').onclick = () => { const req = $('aiRevReq').value.trim(); if (!req) { aiMsg('수정 요청을 적어 주세요.', true); return; } aiCopy(aiRevisePrompt(req), '수정 요청문'); };
+  $('aiPasteGo').onclick = () => { try { const r = aiParse($('aiPaste').value); aiLoad(r, !!AI.qs.length && /고친|수정/.test($('aiMsg').textContent)); $('aiPaste').value = ''; aiMsg(`✅ ${r.qs.length}문항을 불러왔어요. 아래에서 고칠 수 있어요.`); } catch (e) { aiMsg('⚠ ' + e.message, true); } };
+  $('aiAdd').onclick = () => { AI.qs.push($('aiAddTy').value === 'short' ? { type: 'short', inst: '', body: '', choices: [], ans: [], expl: '' } : { type: 'mc', inst: '', body: '', choices: ['', '', '', '', ''], ans: 1, expl: '' }); aiDraw(); $('aiEd').lastChild && $('aiEd').lastChild.scrollIntoView({ block: 'nearest' }); };
+  $('aiTitle').oninput = () => { AI.title = $('aiTitle').value; };
+  $('aiTry').onclick = () => { const bad = aiCheck(); if (bad.length) { aiMsg('⚠ 비어 있는 곳: ' + bad.slice(0, 6).join(', '), true); return; } try { const u = aiToEXU(); openExam({ id: '__pv', task: u.title, exam: { title: u.title, qs: u.qs } }); } catch (e) { aiMsg('⚠ ' + e.message, true); } };
+  $('aiSave').onclick = () => { const bad = aiCheck(); if (bad.length) { aiMsg('⚠ 비어 있는 곳: ' + bad.slice(0, 6).join(', '), true); return; } if (!AI.qs.length) return;
+    try { EXU = aiToEXU(); $('exTitle').value = EXU.title; $('exSave').onclick(); if (!EXU) { aiMsg('✅ "' + AI.title + '" 시험을 과제로 올렸어요. 학생 링크에 반영하려면 저장 버튼을 눌러 주세요.'); } } catch (e) { aiMsg('⚠ ' + e.message, true); } };
+  { const k = aiKey(); $('aiKey').value = k; $('aiModel').value = localStorage.getItem(AIM) || 'claude-opus-5-5'; $('aiKeyState').textContent = k ? '✓ 연결됨 (이 기기에만 저장)' : '키가 없으면 "요청문 복사"로 무료로 만들 수 있어요.'; }
+  $('aiKey').onchange = () => { const v = $('aiKey').value.trim(); try { if (v) localStorage.setItem(AIK, v); else localStorage.removeItem(AIK); } catch (e) {} $('aiKeyState').textContent = v ? '✓ 저장했어요 (이 기기에만)' : '키를 지웠어요.'; };
+  $('aiModel').onchange = () => { try { localStorage.setItem(AIM, $('aiModel').value); } catch (e) {} };
   $('exSave').onclick = () => {
     if (!EXU) return;
     const date = $('fDate').value, who = $('fWho').value, title = ($('exTitle').value || '').trim() || EXU.title;
@@ -2087,13 +2263,16 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   /* 시험 자동 채점: 정답·해설은 과제 안의 exam.key([{a:정답번호, e:해설}])에서 읽고, 없으면 아래 기본 목록에서 제목으로 찾아요 */
   const EX_KEYS = {"시제 연습 20제 (REVIEW TEST 유형)":[{"a":2,"e":"twice, since → 현재완료(경험). \"가 본 적 있다\"는 have been to, have gone to는 \"가고 여기 없다\"는 뜻.","s":[{"inst":"빈칸에 들어갈 알맞은 말을 고르시오.","choices":["went","is going","has been","goes","was going"],"ans":3,"expl":"since 2020 + 횟수(three times) → 현재완료 경험. \"가 본 적 있다\"는 have(has) been to.","body":"My uncle ________ to Japan three times since 2020."},{"inst":"빈칸에 들어갈 알맞은 말을 고르시오.","choices":["has been","went","goes","is going","was going"],"ans":1,"expl":"So far(지금까지)는 현재완료와 함께 쓴다. 경험은 has been to.","body":"So far, Mina ________ to Paris twice."},{"inst":"빈칸에 들어갈 알맞은 말을 고르시오.","choices":["am","will be","was being","have been","have gone"],"ans":4,"expl":"three times before → 경험의 현재완료 have been. have gone은 \"가고 지금 없다\"는 뜻이라 \"여기(here)\"와 맞지 않는다.","body":"A: Is this your first time in Seoul?\nB: No, I ________ here three times before."}]},{"a":5,"e":"의문사 When 의문문에는 현재완료를 쓸 수 없고 과거시제(did + 동사원형)를 쓴다.","s":[{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["have – come","did – come","do – come","did – came","have – came"],"ans":2,"expl":"When으로 때를 묻는 의문문에는 현재완료를 쓸 수 없고 과거(did + 동사원형)를 쓴다.","body":"When ________ you ________ to Korea?"},{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["has – left","does – leave","did – left","did – leave","has – leave"],"ans":4,"expl":"yesterday → 과거. did 뒤에는 동사원형(leave)을 쓴다.","body":"What time ________ Mr. Han ________ home yesterday?"},{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["has – bought","does – buy","did – bought","is – buying","did – buy"],"ans":5,"expl":"last week → 과거. did + 동사원형(buy), did 뒤에 과거형(bought)은 쓰지 않는다.","body":"Where ________ your sister ________ this bag last week?"}]},{"a":3,"e":"이미 정해진 가까운 미래의 일정은 현재진행형(am having)으로 나타낼 수 있다.","s":[{"inst":"빈칸에 들어갈 알맞은 말을 고르시오.","choices":["are taking","took","have taken","were taking","had taken"],"ans":1,"expl":"next Friday처럼 이미 정해진 가까운 미래의 일정은 현재진행형(are taking)으로 나타낼 수 있다.","body":"We ________ a school trip to Gyeongju next Friday, so please sign this form."},{"inst":"빈칸에 들어갈 알맞은 말을 고르시오.","choices":["visited","has visited","was visiting","is visiting","had visited"],"ans":4,"expl":"this weekend의 이미 정해진 계획 → 현재진행형(is visiting).","body":"Sora ________ her grandparents this weekend, so she can't come to the party."},{"inst":"빈칸에 들어갈 알맞은 말을 고르시오.","choices":["saw","am seeing","have seen","was seeing","had seen"],"ans":2,"expl":"tomorrow morning의 확정된 약속 → 현재진행형(am seeing).","body":"I ________ a doctor tomorrow morning. That's why I can't come."}]},{"a":4,"e":"when she was a child → 과거(learned), since last month → 현재완료(has learned).","s":[{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["has lived – lived","lived – lived","has lived – has lived","is living – lived","lived – has lived"],"ans":5,"expl":"when he was young → 과거(lived), since 2015 → 현재완료(has lived).","body":"• Mr. Park ________ in Busan when he was young.\n• Mr. Park ________ in Seoul since 2015."},{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["have played – played","played – played","played – have played","have played – have played","play – played"],"ans":3,"expl":"when I was in elementary school → 과거(played), since last year → 현재완료(have played).","body":"• I ________ the piano for five years when I was in elementary school.\n• I ________ the violin since last year."},{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["had – has had","has had – had","had – had","has had – has had","had – is having"],"ans":1,"expl":"last week → 과거(had), since Monday → 현재완료(has had). have(걸리다·가지다)는 진행형을 쓰지 않는다.","body":"• Emma ________ a cold last week.\n• Emma ________ a cold since Monday."}]},{"a":1,"e":"since → 현재완료(have known, know는 상태동사라 진행형 불가). right now → \"~에 대해 생각하는 중\"은 동작이므로 am thinking.","s":[{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["knows – thinks","has known – is thinking","is knowing – thinks","knew – thought","has known – thinks"],"ans":2,"expl":"for ten years → 현재완료(has known, know는 상태동사). right now의 \"생각하는 중\"은 동작이라 is thinking.","body":"• She ________ Tom for ten years.\n• She ________ about Tom right now."},{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["am having – have","have – have","am having – am having","have – am having","had – have"],"ans":4,"expl":"소유의 have는 상태동사라 진행형을 쓰지 않는다. \"점심을 먹다\"의 have는 동작이라 now와 함께 am having.","body":"• I ________ a new bike. It's so cool!\n• I ________ lunch with my friend now."},{"inst":"빈칸에 들어갈 말이 순서대로 짝지어진 것을 고르시오.","choices":["likes – listens","is liking – listens","liked – listened","has liked – listens","has liked – is listening"],"ans":5,"expl":"since 2020 → 현재완료(has liked, like는 상태동사). now의 동작 → is listening.","body":"• Jisu ________ this singer since 2020.\n• Jisu ________ to the singer's new song now."}]},{"a":3,"e":"현재완료는 last Sunday 같은 과거의 특정 시점과 함께 쓸 수 없다 → visited. (having lunch는 동작이라 진행형 가능, 확정된 일정은 현재형 가능)","s":[{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["I have seen that movie three times.","He has lived in Daegu since 2018.","She has bought a new bag yesterday.","We have just finished lunch.","Look! The bus is coming."],"ans":3,"expl":"yesterday 같은 과거의 특정 시점은 현재완료와 함께 쓸 수 없다 → bought."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["Jane has never eaten sushi.","My mom is cooking dinner now.","The sun rises in the east.","We have waited here for an hour.","They have played soccer two hours ago."],"ans":5,"expl":"two hours ago는 과거의 시점이므로 played를 쓴다."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["I have already done my homework.","Have you finished your homework last night?","Mina has been sick since Friday.","He is studying in his room now.","The train leaves at six tomorrow."],"ans":2,"expl":"last night은 과거 시점 → Did you finish your homework last night?"}]},{"a":5,"e":"belong(소속)은 상태동사라 진행형을 쓰지 않는다 → belongs.","s":[{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["She is washing her hands.","We were having breakfast at seven.","Dad has worked here since 2010.","I am knowing the answer to this question.","They are playing badminton now."],"ans":4,"expl":"know는 상태동사라 진행형을 쓰지 않는다 → I know."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["Minho is wanting a new phone.","Mom is making kimchi stew now.","I have lived here for three years.","He was sleeping when I called.","My sister has a nice voice."],"ans":1,"expl":"want는 상태동사라 진행형을 쓰지 않는다 → Minho wants a new phone."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["The kids are singing in the hall.","I have been busy since Monday.","We were watching TV at nine last night.","My cousin has two dogs.","He is owning two cars."],"ans":5,"expl":"own(소유하다)은 상태동사라 진행형을 쓰지 않는다 → He owns two cars."}]},{"a":1,"e":"경험(\"가 본 적 있다\")은 have been to. have gone to는 \"가 버리고 지금 없다\"는 뜻이라 1인칭 경험에는 어색하다.","s":[{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["Look! The baby is smiling.","We have gone to Canada twice.","She has never seen snow.","If it rains tomorrow, we will stay home.","He was watching TV when I came in."],"ans":2,"expl":"경험(\"가 본 적 있다\")은 have been to. have gone to는 \"가 버리고 지금 없다\"는 뜻이라 1인칭 경험에는 어색하다."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["The movie has just started.","It was raining when I left.","My dad is reading a newspaper now.","I have gone to the new cafe many times.","I will call you if I am free tomorrow."],"ans":4,"expl":"\"여러 번 가 봤다\"는 경험이므로 have been to를 쓴다. have gone to는 \"가 버리고 지금 없다\"."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["If it will be sunny tomorrow, we will go hiking.","Look! It has stopped raining.","He has never been late for class.","I was taking a shower when you called.","We have lived here since 2019."],"ans":1,"expl":"if(조건) 부사절에서는 미래의 일도 현재시제로 쓴다 → If it is sunny tomorrow, ..."}]},{"a":2,"e":"be going to 뒤에는 동사원형 → I'm going to meet Jake.","s":[{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["I was reading a book at nine last night.","He has already left for school.","Did you clean your room yesterday?","My grandparents have lived here for 30 years.","She is going to buying a new coat."],"ans":5,"expl":"be going to 뒤에는 동사원형 → She is going to buy a new coat."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["Mina was sleeping at ten.","I have just eaten lunch.","We are going to visited the zoo next Sunday.","Did he call you last night?","They have been friends since 2010."],"ans":3,"expl":"be going to 뒤에는 동사원형 → We are going to visit the zoo."},{"inst":"다음 중 어법상 틀린 것을 고르시오.","choices":["They are going to build a new library.","She will goes to the party tonight.","He has been busy since last week.","We were having dinner at seven.","Did you see the game yesterday?"],"ans":2,"expl":"will 뒤에는 동사원형 → She will go to the party tonight."}]},{"a":4,"e":"① last night → lost ② have(소유)는 진행형 불가 → has ④ Have you seen ~? ⑤ be going to + 동사원형.","s":[{"inst":"다음 중 어법상 옳은 것을 고르시오.","choices":["She has taught English since 2015.","I have visited Rome last summer.","He is having a big house.","Did she has finished lunch?","We are going to went home."],"ans":1,"expl":"since 2015 + 현재완료(has taught)가 맞다. 나머지는 last summer → visited, have(소유)는 진행형 불가, did 뒤 동사원형, be going to 뒤 동사원형으로 고친다."},{"inst":"다음 중 어법상 옳은 것을 고르시오.","choices":["I am knowing his name.","She has gone to the library yesterday.","They have been married for ten years.","Will you to come tomorrow?","Did you saw her yesterday?"],"ans":3,"expl":"for ten years + 현재완료(have been married)가 맞다. know는 진행형 불가, yesterday → went, will 뒤에는 to 없이 동사원형, did 뒤에는 동사원형(see)."},{"inst":"다음 중 어법상 옳은 것을 고르시오.","choices":["I have lost my keys two days ago.","Is he belonging to the club?","We have lived here since five years.","She is going to bought a car.","Did you watch the game last night?"],"ans":5,"expl":"last night + 과거 의문문 Did you watch ~?가 맞다. 나머지는 two days ago → lost, belong은 진행형 불가, since 뒤에는 시점(for five years), be going to + 동사원형."}]},{"a":1,"e":"① haven't heard ② has had ③ Will she come ⑤ went (last year는 과거).","s":[{"inst":"다음 중 어법상 옳은 것을 고르시오.","choices":["I haven't see her since Monday.","How long has your brother worked here?","She is having a headache since morning.","Will it rains tomorrow?","They have moved to Seoul last month."],"ans":2,"expl":"How long ~? → 현재완료가 맞다. 나머지는 haven't seen, has had(+since), Will it rain, last month → moved로 고친다."},{"inst":"다음 중 어법상 옳은 것을 고르시오.","choices":["He has visited Paris last year.","It is raining since this morning.","Do you have eaten lunch?","I have known her since middle school.","We will goes by bus."],"ans":4,"expl":"since middle school + 현재완료(have known)가 맞다. 나머지는 last year → visited, has been raining, Have you eaten / Do you eat, will + 동사원형."},{"inst":"다음 중 어법상 옳은 것을 고르시오.","choices":["I didn't eat anything since morning.","He is having a cold since Monday.","They has lived here for years.","Will you helps me?","She has been sick since last Friday."],"ans":5,"expl":"since last Friday + 현재완료가 맞다. 나머지는 haven't eaten, has had, They have lived(주어 복수), Will you help로 고친다."}]},{"a":5,"e":"last summer는 과거 시점이므로 과거시제 went. (Have you ever ~?로 물어도 구체적인 때를 말하면 과거로 답한다.)","s":[{"inst":"자연스러운 대화가 되도록 빈칸에 알맞은 말을 고르시오.","choices":["eat","have eaten","ate","am eating","have been eating"],"ans":3,"expl":"last month는 과거 시점이므로 과거시제 ate. (Have you ever ~?로 물어도 구체적인 때를 말하면 과거로 답한다.)","body":"A: Have you ever eaten Thai food?\nB: Yes, I ________ it at a restaurant last month."},{"inst":"자연스러운 대화가 되도록 빈칸에 알맞은 말을 고르시오.","choices":["went","has gone","has been","goes","is going"],"ans":1,"expl":"in 2022는 과거의 특정 시점 → went.","body":"A: Has Jisu ever been abroad?\nB: Yes, she ________ to Japan in 2022."},{"inst":"자연스러운 대화가 되도록 빈칸에 알맞은 말을 고르시오.","choices":["see","have seen","am seeing","have been seeing","saw"],"ans":5,"expl":"yesterday → 과거시제 saw.","body":"A: Have you seen the new movie?\nB: Yes. I ________ it with my friends yesterday."}]},{"a":2,"e":"Since I was ten → 계속을 묻는 How long ~? 질문은 현재완료.","s":[{"inst":"자연스러운 대화가 되도록 빈칸에 알맞은 말을 고르시오.","choices":["have – lived","did – live","do – live","are – living","will – live"],"ans":1,"expl":"Since 2015로 답하는 How long ~? 질문은 계속을 묻는 현재완료(have lived).","body":"A: How long ________ they ________ in this town?\nB: Since 2015."},{"inst":"자연스러운 대화가 되도록 빈칸에 알맞은 말을 고르시오.","choices":["did – be","has – was","has – been","is – been","does – be"],"ans":3,"expl":"Since last Monday → 현재완료 has been.","body":"A: How long ________ Mina ________ sick?\nB: Since last Monday."},{"inst":"자연스러운 대화가 되도록 빈칸에 알맞은 말을 고르시오.","choices":["did – have","have – had","do – have","are – having","will – have"],"ans":2,"expl":"Since ~ → 현재완료. 소유의 have는 상태동사라 have had로 쓴다.","body":"A: How long ________ you ________ this bike?\nB: Since my birthday last month."}]},{"a":3,"e":"보기는 현재완료의 결과 용법(잃어버려서 지금 없다). has gone도 결과(가 버리고 지금 없다). 계속/경험/완료와 구별.","s":[{"inst":"다음 중 보기의 밑줄 친 부분과 쓰임이 같은 것을 고르시오.","choices":["I {{have visited}} Rome twice.","She {{has taught}} here for five years.","They {{have just arrived}} at the station.","Sam {{has gone}} to London.","We {{have lived}} here since 2018."],"ans":4,"expl":"보기는 결과 용법(두고 와서 지금 없다). has gone to(가 버리고 지금 없다)도 결과. 나머지는 경험·계속·완료.","body":"[보기] He {{has left}} his phone at home."},{"inst":"다음 중 보기의 밑줄 친 부분과 쓰임이 같은 것을 고르시오.","choices":["She {{has been}} to Rome three times.","My uncle {{has worked}} at the bank since 2010.","I {{have just finished}} my homework.","Tom {{has lost}} his bag.","{{Have}} you ever {{seen}} a whale?"],"ans":2,"expl":"보기는 계속 용법(for ten years). has worked at the bank since 2010도 계속. 나머지는 경험·완료·결과.","body":"[보기] We {{have lived}} here for ten years."},{"inst":"다음 중 보기의 밑줄 친 부분과 쓰임이 같은 것을 고르시오.","choices":["Mina {{has already eaten}} lunch.","He {{has never ridden}} a horse.","She {{has studied}} English for three years.","They {{have gone}} to Busan.","{{Have}} you ever {{been}} to Spain?"],"ans":1,"expl":"보기는 완료 용법(just). has already eaten도 완료(already). 나머지는 경험·계속·결과.","body":"[보기] I {{have just cleaned}} my room."}]},{"a":1,"e":"보기는 계속 용법(since ~). has worked for fifteen years도 계속. 나머지는 경험·완료·결과.","s":[{"inst":"다음 중 보기의 밑줄 친 부분과 쓰임이 같은 것을 고르시오.","choices":["{{Have}} you ever {{met}} a famous person?","My brother {{has been}} to Jeju twice.","I {{have lost}} my watch.","We {{have just arrived}}.","Mr. Lee {{has taught}} math for ten years."],"ans":5,"expl":"보기는 계속 용법(since last year). has taught math for ten years도 계속. 나머지는 경험·결과·완료.","body":"[보기] She {{has had}} this bike since last year."},{"inst":"다음 중 보기의 밑줄 친 부분과 쓰임이 같은 것을 고르시오.","choices":["I {{have lived}} here since 2019.","She {{has just left}} home.","{{Have}} you ever {{ridden}} a horse?","Tom {{has lost}} his key.","We {{have known}} her for years."],"ans":3,"expl":"보기는 경험 용법(never). Have you ever ridden ~?도 경험(ever). 나머지는 계속·완료·결과.","body":"[보기] He {{has never seen}} snow."},{"inst":"다음 중 보기의 밑줄 친 부분과 쓰임이 같은 것을 고르시오.","choices":["She {{has already finished}} her report.","I {{have been}} to Paris twice.","He {{has lived}} in Daegu for ten years.","They {{have gone}} to Canada.","My sister {{has never eaten}} octopus."],"ans":1,"expl":"보기는 완료 용법(just). has already finished도 완료(already). 나머지는 경험·계속·결과.","body":"[보기] The movie {{has just started}}."}]},{"a":4,"e":"④ have visited → visited (on Saturday처럼 과거의 때가 나오면 현재완료 불가).","s":[{"inst":"다음 글의 밑줄 친 부분 중 어법상 틀린 것을 고르시오.","body":"Sora ①{{has played}} the cello since she was eight. Last Sunday, she ②{{had}} a concert at the city hall. Many people ③{{came}} to see her. She ④{{has felt}} very nervous before the show, but she ⑤{{played}} well.","choices":["has played","had","came","has felt","played"],"ans":4,"expl":"④ has felt → felt (Last Sunday 공연 때의 과거 이야기이므로 현재완료를 쓸 수 없다)."},{"inst":"다음 글의 밑줄 친 부분 중 어법상 틀린 것을 고르시오.","body":"Mr. Kim ①{{has lived}} in Incheon for twenty years. Yesterday, he ②{{met}} his old friend at a cafe. They ③{{have talked}} for two hours, and then they ④{{went}} to the park. He ⑤{{is going to meet}} his friend again next week.","choices":["has lived","met","have talked","went","is going to meet"],"ans":3,"expl":"③ have talked → talked (Yesterday의 일이므로 과거시제)."},{"inst":"다음 글의 밑줄 친 부분 중 어법상 틀린 것을 고르시오.","body":"Yuna ①{{wants}} to be a pilot. She ②{{has learned}} English since she was seven. Last month, she ③{{visited}} an airport with her class. She ④{{is taking}} pictures of the planes when a pilot ⑤{{talked}} to her.","choices":["wants","has learned","visited","is taking","talked"],"ans":4,"expl":"④ is taking → was taking (Last month의 일이고 when 뒤가 과거이므로 과거진행)."}]},{"a":5,"e":"⑤ was planning → is planning (Now는 현재).","s":[{"inst":"다음 글의 밑줄 친 부분 중 어법상 틀린 것을 고르시오.","body":"Minho ①{{has collected}} coins since he was nine. He ②{{is having}} about three hundred coins now. Last week, he ③{{bought}} a rare coin online. He ④{{showed}} it to his friends yesterday, and they ⑤{{were}} all surprised.","choices":["has collected","is having","bought","showed","were"],"ans":2,"expl":"② is having → has (소유의 have는 상태동사라 진행형을 쓸 수 없다)."},{"inst":"다음 글의 밑줄 친 부분 중 어법상 틀린 것을 고르시오.","body":"Hana ①{{has been}} a member of the dance club since March. She ②{{practices}} every day after school. Last Friday, she ③{{has performed}} on the school stage. Everyone ④{{clapped}} loudly, and she ⑤{{felt}} proud.","choices":["has been","practices","has performed","clapped","felt"],"ans":3,"expl":"③ has performed → performed (Last Friday는 과거의 특정 시점)."},{"inst":"다음 글의 밑줄 친 부분 중 어법상 틀린 것을 고르시오.","body":"Our class ①{{is going to visit}} a farm next Tuesday. We ②{{have prepared}} for the trip since last week. Yesterday, our teacher ③{{gave}} us a list of things to bring. I ④{{am knowing}} what to pack already, so I ⑤{{am}} ready.","choices":["is going to visit","have prepared","gave","am knowing","am"],"ans":4,"expl":"④ am knowing → know (know는 상태동사라 진행형을 쓸 수 없다)."}]},{"a":3,"e":"know는 상태동사(진행형 불가), 기간 for ten years + 현재완료. since 뒤에는 시작 시점이 온다.","s":[{"inst":"다음 우리말과 일치하도록 알맞은 영어 문장을 고르시오.","choices":["He is teaching at this school for three years.","He has taught at this school since three years.","He teaches at this school for three years.","He has taught at this school for three years.","He taught at this school since three years."],"ans":4,"expl":"\"~해 왔다(계속)\" + 기간 for three years → 현재완료. since 뒤에는 기간이 아니라 시작 시점이 온다.","body":"그는 3년 동안 이 학교에서 가르쳐 왔다."},{"inst":"다음 우리말과 일치하도록 알맞은 영어 문장을 고르시오.","choices":["I watched a movie with my friend last weekend.","I have watched a movie with my friend last weekend.","I am watching a movie with my friend last weekend.","I watch a movie with my friend last weekend.","I have been watching a movie with my friend last weekend."],"ans":1,"expl":"last weekend는 과거의 특정 시점이므로 과거시제(watched)를 쓴다.","body":"나는 지난 주말에 친구와 영화를 봤다."},{"inst":"다음 우리말과 일치하도록 알맞은 영어 문장을 고르시오.","choices":["She is living in Seoul since 2020.","She has lived in Seoul since 2020.","She lived in Seoul since 2020.","She has lived in Seoul for 2020.","She lives in Seoul for 2020."],"ans":2,"expl":"since 2020(시작 시점) + 계속 → 현재완료. for 뒤에는 기간(for ten years)이 온다.","body":"그녀는 2020년부터 서울에 살고 있다."}]},{"a":2,"e":"\"산 지 2년\"이 아니라 \"2년째 가지고 있다\" → 현재완료 has had.","s":[{"inst":"다음 두 문장을 한 문장으로 바꿀 때, 빈칸에 알맞은 말을 고르시오.","choices":["lived","has moved","is living","moves","has lived"],"ans":5,"expl":"\"2019년부터 지금까지 살고 있다\" → since + 현재완료(has lived).","body":"Tom moved to Busan in 2019. He still lives there.\n→ Tom ________ in Busan since 2019."},{"inst":"다음 두 문장을 한 문장으로 바꿀 때, 빈칸에 알맞은 말을 고르시오.","choices":["became","has become","has been","is","is being"],"ans":3,"expl":"\"3년째 회원이다\" → 현재완료 has been. (has become ~ for three years는 어색하다.)","body":"Mina became a member of the club three years ago. She is still a member.\n→ Mina ________ a member of the club for three years."},{"inst":"다음 두 문장을 한 문장으로 바꿀 때, 빈칸에 알맞은 말을 고르시오.","choices":["have been","got","have got","were","are being"],"ans":1,"expl":"\"2005년부터 결혼한 상태\" → 현재완료 have been married.","body":"My parents got married in 2005. They are still married.\n→ My parents ________ married since 2005."}]},{"a":4,"e":"last night(과거의 때)과 현재완료 has done은 함께 쓸 수 없다.","s":[{"inst":"다음 빈칸에 들어갈 말로 알맞지 않은 것을 고르시오.","choices":["cleaned","has cleaned","didn't clean","was cleaning","finished cleaning"],"ans":2,"expl":"yesterday는 과거 시점이므로 현재완료(has cleaned)는 알맞지 않다.","body":"Mina ________ her room yesterday."},{"inst":"다음 빈칸에 들어갈 말로 알맞지 않은 것을 고르시오.","choices":["went","didn't go","were going","have gone","drove"],"ans":4,"expl":"three days ago는 과거 시점이므로 현재완료(have gone)는 쓸 수 없다.","body":"We ________ to the beach three days ago."},{"inst":"다음 빈칸에 들어갈 말로 알맞지 않은 것을 고르시오.","choices":["sent","didn't send","has sent","was sending","wrote"],"ans":3,"expl":"last night은 과거 시점이므로 현재완료(has sent)는 알맞지 않다.","body":"He ________ me a text message at nine last night."}]}]};
   const EX_OPEN = new Set();
-  function exKeyOf(ent) { const x = ent && ent.exam; if (!x) return null; if (Array.isArray(x.key) && x.key.some(k => k && k.a)) return x.key; const k = EX_KEYS[x.title]; return (k && k.length === (x.qs || []).length) ? k : null; }
-  function exGrade(ent, pick) {
+  function exKeyOf(ent) { const x = ent && ent.exam; if (!x) return null; if (Array.isArray(x.key) && x.key.some(exKd)) return x.key; const k = EX_KEYS[x.title]; return (k && k.length === (x.qs || []).length) ? k : null; }
+  function exGrade(ent, pick, txt) {   /* 객관식은 번호, 주관식은 허용 답 목록과 비교 (대소문자·문장부호·띄어쓰기 무시) */
     const key = exKeyOf(ent); if (!key) return null;
     let ok = 0, tot = 0; const wrong = [];
-    (ent.exam.qs || []).forEach((q, i) => { const k = key[i]; if (!k || !k.a) return; tot++; if ((+String(pick || '')[i] || 0) === k.a) ok++; else wrong.push(i); });
+    (ent.exam.qs || []).forEach((q, i) => { const k = key[i]; if (!exKd(k)) return; tot++;
+      const right = (q.choices && q.choices.length) ? (+String(pick || '')[i] || 0) === k.a : (Array.isArray(k.t) && k.t.some(t => exNorm(t) === exNorm((txt || [])[i])) && !!exNorm((txt || [])[i]));
+      if (right) ok++; else wrong.push(i); });
     return tot ? { ok, tot, wrong } : null;
   }
+  const exTxt = (seg) => String(seg || '').split('~').map(x => { try { return decodeURIComponent(x); } catch (e) { return x; } });
   const exSims = (k) => (k && Array.isArray(k.s)) ? k.s.filter(q => q && Array.isArray(q.choices) && q.choices.length > 1 && q.ans >= 1) : [];
   const exEsc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const exPf = (t) => exEsc(t).replace(/\{\{([\s\S]*?)\}\}/g, '<u>$1</u>').replace(/_{3,}/g, '<span class="bl"></span>').replace(/^\[보기\]\s*/, '<b class="bg">보기</b> ').replace(/\n/g, '<br>');
@@ -2103,13 +2282,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     + '.pn{position:absolute;bottom:7mm;left:0;right:0;text-align:center;font-size:9pt;color:#888}@media print{body{background:#fff;padding:0}.page{margin:0;box-shadow:none;break-after:page}.page:last-child{break-after:auto}}'
     + 'h1{font-size:1.45em;margin:0;padding:0 0 .25em}.meta{display:flex;gap:2em;border-bottom:2px solid #111;padding:0 0 .45em;margin:0 0 1em;font-size:.95em}.h2{font-size:1.12em;font-weight:700;border-left:5px solid #111;padding-left:8px;margin:.9em 0 .6em}'
     + '.q{display:flex;gap:8px;padding:0 0 1.15em}.n{font-weight:700;min-width:3.4em;font-size:1.04em}.c{flex:1;min-width:0}.inst{font-weight:600;font-size:.95em;margin-bottom:3px}.body{border:1px solid #666;padding:.45em .8em;margin:3px 0 5px;font-size:1.04em}.bg{background:#ddd;padding:0 5px;border-radius:3px;font-size:.86em}.ch div{margin:1px 0}.bl{display:inline-block;min-width:70px;border-bottom:1.5px solid #111;margin:0 3px}'
-    + '.ak{padding:0 0 .7em}.ak b{font-size:1.04em}.ak div{font-size:.92em;color:#333}';
+    + '.sa{margin-top:.5em}.sal{display:inline-block;width:75%;border-bottom:1.5px solid #111;height:1.2em;vertical-align:bottom}.ak{padding:0 0 .7em}.ak b{font-size:1.04em}.ak div{font-size:.92em;color:#333}';
   function poBlk(b) {
     if (b.t === 'h1') return '<h1>' + exEsc(b.x) + '</h1>';
     if (b.t === 'meta') return '<div class="meta"><span>이름: ' + exEsc(b.who) + '</span><span>날짜: ____________</span><span>' + exEsc(b.sub) + '</span></div>';
     if (b.t === 'h2') return '<div class="h2">' + exEsc(b.x) + '</div>';
     if (b.t === 'ak') return '<div class="ak"><b>' + exEsc(b.label) + ' 정답 ' + exPf(b.head) + '</b><div>' + exPf(b.expl || '') + '</div></div>';
-    const q = b.q; return '<div class="q"><div class="n">' + exEsc(b.label) + '</div><div class="c">' + (q.inst ? '<div class="inst">' + exEsc(q.inst) + '</div>' : '') + (q.body ? '<div class="body">' + exPf(q.body) + '</div>' : '') + '<div class="ch">' + q.choices.map((t, j) => '<div>' + EX_C[j] + ' ' + exPf(t) + '</div>').join('') + '</div></div></div>';
+    const q = b.q; return '<div class="q"><div class="n">' + exEsc(b.label) + '</div><div class="c">' + (q.inst ? '<div class="inst">' + exEsc(q.inst) + '</div>' : '') + (q.body ? '<div class="body">' + exPf(q.body) + '</div>' : '') + (q.choices && q.choices.length ? '<div class="ch">' + q.choices.map((t, j) => '<div>' + EX_C[j] + ' ' + exPf(t) + '</div>').join('') + '</div>' : '<div class="sa">답: <span class="sal"></span></div>') + '</div></div>';
   }
   function poPaginate(doc, blocks, fs) {   /* 문제가 쪽 사이에서 잘리지 않게 쪽을 나눠요 */
     doc.body.className = ''; doc.body.innerHTML = '<div class="flow" style="--fs:' + fs + 'pt">' + blocks.map(poBlk).join('') + '</div><div id="ph" style="height:265mm"></div>';
@@ -2149,7 +2328,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       else { const q = b.q, IND = 560;
         body += p(r(b.label + '  ', S(1.04), true) + (q.inst ? r(q.inst, S(.95), true) : ''), { keep: 1, after: 40 });
         if (q.body) body += p(runs(q.body, S(1.04)), { keep: 1, box: 1, ind: IND + 120, before: 30, after: 60 });
-        q.choices.forEach((c, j) => { body += p(r(EX_C[j] + ' ', B) + runs(c, B), { keep: j < q.choices.length - 1, ind: IND, after: j === q.choices.length - 1 ? 170 : 0 }); }); }
+        if (!q.choices || !q.choices.length) body += p(r('답: ', B) + r('\u00a0'.repeat(60), B, false, true), { ind: IND, before: 80, after: 220 });
+        else q.choices.forEach((c, j) => { body += p(r(EX_C[j] + ' ', B) + runs(c, B), { keep: j < q.choices.length - 1, ind: IND, after: j === q.choices.length - 1 ? 170 : 0 }); }); }
     });
     const doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="907" w:right="850" w:bottom="907" w:left="850" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>';
     return poZip([
@@ -2222,8 +2402,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       g.wrong.forEach(i => { const ss = exSims(key[i]); if (!ss.length) return; bl.push({ t: 'h2', x: (i + 1) + '번 유형 · 유사문제' }); ss.forEach((q, j) => { n++; bl.push({ t: 'q', label: (i + 1) + '-' + (j + 1) + '.', q }); }); });
       exOutput([{ t: 'h1', x: ent.exam.title + ' · 유사문제 연습' }, { t: 'meta', who: x.who, sub: '유사문제 ' + n + '문항' }].concat(bl), x.who + '_' + ent.exam.title + '_유사문제_' + todayStr()); return;
     }
-    const ak = (q, a, e, label) => ({ t: 'ak', label, head: EX_C[a - 1] + ' ' + (q.choices[a - 1] || ''), expl: e || '' });
-    g.wrong.forEach(i => { bl.push({ t: 'h2', x: (i + 1) + '번 유형' }); bl.push(ak(ent.exam.qs[i], key[i].a, key[i].e, (i + 1) + '번 (원래 문제)')); exSims(key[i]).forEach((q, j) => { n++; bl.push(ak(q, q.ans, q.expl, (i + 1) + '-' + (j + 1))); }); });
+    const ak = (q, a, e, label, tt) => ({ t: 'ak', label, head: (q.choices && q.choices.length) ? EX_C[a - 1] + ' ' + (q.choices[a - 1] || '') : (tt || []).join(' / '), expl: e || '' });
+    g.wrong.forEach(i => { bl.push({ t: 'h2', x: (i + 1) + '번 유형' }); bl.push(ak(ent.exam.qs[i], key[i].a, key[i].e, (i + 1) + '번 (원래 문제)', key[i].t)); exSims(key[i]).forEach((q, j) => { n++; bl.push(ak(q, q.ans, q.expl, (i + 1) + '-' + (j + 1))); }); });
     exOutput([{ t: 'h1', x: ent.exam.title + ' · 정답·해설 (선생님용)' }, { t: 'meta', who: x.who, sub: '틀린 문제 ' + g.wrong.length + '개 + 유사문제 ' + n + '개' }].concat(bl), x.who + '_' + ent.exam.title + '_정답해설_' + todayStr());
   }
   function exWrongPanel(ent, x, g) {   /* 틀린 문제만, 문제 번호와 함께 빨간 펜으로: 고른 답 ✗ · 정답 ✓ · 이유 + 유사문제 */
@@ -2241,12 +2421,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     p1.onclick = () => exPrintSim(ent, x, g, false); p2.onclick = () => exPrintSim(ent, x, g, true);
     const choiceRows = (q, c, ans) => { const ch = el('div', 'ex-rc'); q.choices.forEach((t, j) => { const row = el('div', 'ex-ro' + (j + 1 === c ? ' pick' : '') + (j + 1 === ans ? ' right' : '')); row.innerHTML = '<span class="ex-t">' + EX_C[j] + ' ' + exHtml(t) + '</span>' + (j + 1 === c ? ' <span class="ex-pen">← 내가 고른 답 ✗</span>' : '') + (j + 1 === ans ? ' <span class="ex-pen">← 정답 ✓</span>' : ''); ch.append(row); }); return ch; };
     g.wrong.forEach(i => {
-      const q = ent.exam.qs[i], k = key[i], c = +String(x.pick || '')[i] || 0, card = el('div', 'ex-rq');
+      const q = ent.exam.qs[i], k = key[i], c = +String(x.pick || '')[i] || 0, sh = !(q.choices && q.choices.length), tx = (x.txt || [])[i] || '', card = el('div', 'ex-rq');
       const h = el('div', 'ex-rn'); h.append(el('span', 'ex-x', '✗'), el('b', null, (i + 1) + '번'), el('small', null, x.times && x.times[i] != null ? ' ' + exFmt(x.times[i]) + ' 걸림' : '')); card.append(h);
       const b = el('div', 'ex-rb'); b.innerHTML = (q.inst ? '<small>' + exHtml(q.inst) + '</small><br>' : '') + (q.body ? exHtml(q.body) : ''); card.append(b);
-      card.append(choiceRows(q, c, k.a));
+      if (sh) { const sa = el('div', 'ex-rc'); const r1 = el('div', 'ex-ro pick'); r1.innerHTML = '<span class="ex-t">' + exHtml(tx || '(비어 있음)') + '</span> <span class="ex-pen">← 쓴 답 ✗</span>'; const r2 = el('div', 'ex-ro right'); r2.innerHTML = '<span class="ex-t">' + exHtml((k.t || [])[0] || '') + '</span> <span class="ex-pen">← 정답 ✓</span>'; sa.append(r1, r2); card.append(sa); }
+      else card.append(choiceRows(q, c, k.a));
       const note = el('div', 'ex-pen-note');
-      note.append(el('div', null, c ? '✗ ' + (c) + '번을 골랐는데 틀렸어요. 정답은 ' + k.a + '번!' : '✗ 답을 고르지 않았어요. 정답은 ' + k.a + '번!'));
+      note.append(el('div', null, sh ? (tx ? '✗ "' + tx + '"라고 썼는데 틀렸어요. 정답은 "' + (k.t || [])[0] + '"' + ((k.t || []).length > 1 ? ' (또는 ' + k.t.slice(1).join(', ') + ')' : '') + '!' : '✗ 답을 쓰지 않았어요. 정답은 "' + (k.t || [])[0] + '"!') : (c ? '✗ ' + (c) + '번을 골랐는데 틀렸어요. 정답은 ' + k.a + '번!' : '✗ 답을 고르지 않았어요. 정답은 ' + k.a + '번!')));
       if (k.e) note.append(el('div', null, '✏ 이유: ' + k.e));
       card.append(note);
       const sims = exSims(k);
@@ -2290,7 +2471,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 .ex-opt .ex-no{flex:none;font-weight:700}
 .ex-opt[aria-pressed=true]{border-color:var(--accent,#2E6B57);background:var(--soft,#E6EFEA)}
 .ex-nav{display:flex;gap:8px;position:sticky;bottom:0;background:var(--panel,#fff);padding:8px 0 2px}.ex-nav .ls-btn{flex:1}
-.ex-big{font-size:28px;font-weight:700}.ex-rules{display:grid;gap:6px;color:var(--muted,#5E6D67);line-height:1.5}`;
+.ex-big{font-size:28px;font-weight:700}.ex-rules{display:grid;gap:6px;color:var(--muted,#5E6D67);line-height:1.5}
+.ex-in{width:100%;box-sizing:border-box;font:inherit;font-size:19px;padding:13px 14px;border-radius:12px;border:2px solid var(--line,#DCE3DE);background:transparent;color:inherit}.ex-in:focus{outline:none;border-color:var(--accent,#2E6B57)}.ex-tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--soft,#E6EFEA);margin-left:6px}`;
     document.head.append(st);
   }
   /* 제출 결과 → 구글 폼 → 선생님 화면: 종류 '시험', 점수칸=걸린 초, 틀린칸='시험번호|고른답|문항별초|제목', 날짜칸=날짜 */
@@ -2299,7 +2481,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     try {
       const cfg = lsCfg(), f = cfg.f, fd = new URLSearchParams();
       fd.set(f.who, state.cls); fd.set(f.test, '시험'); fd.set(f.score, String(S.sec));
-      fd.set(f.wrong, [it.id, S.pick.join(''), S.times.map(t => Math.round(t)).join(','), String((it.exam && it.exam.title) || it.task || '').replace(/\|/g, ' ').slice(0, 40)].join('|'));
+      fd.set(f.wrong, [it.id, S.pick.join(''), S.times.map(t => Math.round(t)).join(','), String((it.exam && it.exam.title) || it.task || '').replace(/\|/g, ' ').slice(0, 40), (S.txt && S.txt.some(Boolean)) ? S.txt.map(t => encodeURIComponent(t || '').replace(/~/g, '%7E')).join('~') : ''].join('|'));
       fd.set(f.picks, S.date || todayStr());
       fetch(cfg.form, { method: 'POST', mode: 'no-cors', body: fd, keepalive: true }).then(() => { S.sent = true; exPut(it, S); }).catch(() => {});
     } catch (e) {}
@@ -2314,7 +2496,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const PV = it.id === '__pv', qs = it.exam.qs, N = qs.length;
     let S = PV ? null : exGet(it);
     if (S && S.done) return;
-    if (!S || !Array.isArray(S.pick) || S.pick.length !== N) S = { pick: Array(N).fill(0), times: Array(N).fill(0), idx: 0, started: false, done: false };
+    if (!S || !Array.isArray(S.pick) || S.pick.length !== N) S = { pick: Array(N).fill(0), times: Array(N).fill(0), txt: Array(N).fill(''), idx: 0, started: false, done: false };
+    if (!Array.isArray(S.txt) || S.txt.length !== N) S.txt = Array(N).fill('');
+    const isShort = (q) => !Array.isArray(q.choices) || !q.choices.length, nShort = qs.filter(isShort).length;   /* 보기가 없으면 주관식 */
     lsStyle(); exStyle();
     const prevOv = document.body.style.overflow; document.body.style.overflow = 'hidden';
     const ov = el('div', 'ls-ov'), box = el('div', 'ls-box ex-box'); ov.append(box); document.body.append(ov);
@@ -2327,6 +2511,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const onKey = (ev) => {
       if (ev.key === 'Escape') { close(); return; }
       if (mode !== 'q') return;
+      if (isShort(qs[S.idx])) return;
       if (/^[1-6]$/.test(ev.key) && +ev.key <= qs[S.idx].choices.length) pickAt(+ev.key);
       else if (ev.key === 'Enter' && S.pick[S.idx]) next(false);
     };
@@ -2339,7 +2524,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     function updTime() { const tm = Q('.ex-time'); if (tm) tm.textContent = '이 문제 ' + exClock(S.times[S.idx]) + ' · 전체 ' + exClock(total()); }
     function drawStart() {
       mode = 'start'; box.textContent = ''; head();
-      box.append(el('div', 'ex-big', S.started ? S.idx + 1 + '번부터 이어서 풀어요' : '객관식 ' + N + '문제'));
+      box.append(el('div', 'ex-big', S.started ? S.idx + 1 + '번부터 이어서 풀어요' : (nShort ? (N - nShort ? '객관식 ' + (N - nShort) + ' · 주관식 ' + nShort + '문제' : '주관식 ' + N + '문제') : '객관식 ' + N + '문제')));
       const ul = el('div', 'ex-rules');
       ['· 한 문제씩 나와요. 다음으로 넘어가면 앞 문제로 돌아갈 수 없어요.', '· 채점은 하지 않아요. 아는 만큼 풀고 끝까지 제출하면 돼요.', '· 모르는 문제는 "잘 모르겠어요"를 눌러 넘어가요.', '· 푸는 데 걸린 시간이 선생님께 전달돼요. 화면을 보고 있는 시간만 재요.'].forEach(t => ul.append(el('div', null, t)));
       box.append(ul);
@@ -2351,8 +2536,11 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const q = qs[S.idx], n = S.idx + 1; box.textContent = ''; head();
       const meta = el('div', 'ex-meta'); meta.append(el('b', null, n + ' / ' + N), el('span', 'ex-time')); box.append(meta);
       const bar = el('div', 'ex-bar'), bi = el('i'); bi.style.width = ((n - 1) / N * 100) + '%'; bar.append(bi); box.append(bar);
-      if (q.inst) box.append(el('div', 'ex-inst', q.inst));
+      if (q.inst || isShort(q)) { const ins = el('div', 'ex-inst', q.inst || ''); if (isShort(q)) ins.append(el('span', 'ex-tag', '주관식')); box.append(ins); }
       if (q.body) { const b = el('div', 'ex-body'); b.innerHTML = exHtml(q.body); box.append(b); }
+      if (isShort(q)) { const ip = el('input', 'ex-in'); ip.type = 'text'; ip.id = 'exIn'; ip.placeholder = '답을 써요'; ip.setAttribute('autocomplete', 'off'); ip.setAttribute('autocapitalize', 'off'); ip.spellcheck = false; ip.value = S.txt[S.idx] || '';
+        ip.oninput = () => { S.txt[S.idx] = ip.value; S.pick[S.idx] = ip.value.trim() ? 'w' : 0; save(); const nx = Q('#exNext'); if (nx) nx.disabled = !S.pick[S.idx]; };
+        ip.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); if (S.pick[S.idx]) next(false); } }; box.append(ip); setTimeout(() => ip.focus(), 30); }
       const opts = el('div', 'ex-opts');
       q.choices.forEach((c, k) => { const b = el('button', 'ex-opt'); b.type = 'button'; b.setAttribute('aria-pressed', S.pick[S.idx] === k + 1 ? 'true' : 'false'); b.innerHTML = '<span class="ex-no">' + EX_C[k] + '</span><span>' + exHtml(c) + '</span>'; b.onclick = () => pickAt(k + 1); opts.append(b); });
       box.append(opts);
@@ -2367,7 +2555,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const nx = Q('#exNext'); if (nx) nx.disabled = false;
     }
     function next(skip) {
-      lap(); if (skip) S.pick[S.idx] = 0;
+      lap(); if (skip) { S.pick[S.idx] = 0; S.txt[S.idx] = ''; }
       if (S.idx < N - 1) { S.idx++; save(); drawQ(); } else finish();
     }
     function finish() {
@@ -2537,7 +2725,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const key = (t) => R0.filter(r => (r[1] || '').trim() === who && (r[2] || '').trim() === t && (r[5] || '').trim() === e.date && (r[4] || '').trim() === String(e.task || '').split('\n')[0].slice(0, 60)).pop();
       if (e.words && isPron(e)) { const r = key('발음'); out.push('발음 ' + (r ? r[3] : '기록 없음')); }
       if (e.sents) { const r = key('문장'); out.push('문장 분석 ' + (r ? r[3] : '기록 없음')); }
-      if (e.exam) { const r = R0.filter(r => (r[1] || '').trim() === who && (r[2] || '').trim() === '시험' && (r[4] || '').split('|')[0] === e.id).pop(); { const g = r ? exGrade(e, (r[4] || '').split('|')[1] || '') : null; out.push('시험 ' + (r ? (g ? g.ok + '/' + g.tot + ' · ' : '') + '제출 · 걸린 시간 ' + exFmt(parseInt(r[3]) || 0) : '제출 기록 없음')); } }
+      if (e.exam) { const r = R0.filter(r => (r[1] || '').trim() === who && (r[2] || '').trim() === '시험' && (r[4] || '').split('|')[0] === e.id).pop(); { const g = r ? exGrade(e, (r[4] || '').split('|')[1] || '', exTxt((r[4] || '').split('|')[4])) : null; out.push('시험 ' + (r ? (g ? g.ok + '/' + g.tot + ' · ' : '') + '제출 · 걸린 시간 ' + exFmt(parseInt(r[3]) || 0) : '제출 기록 없음')); } }
       return out;
     };
     const stOf = (e) => (e.chk && e.chk[who]) || '';
@@ -2618,14 +2806,14 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       box.append(eb);
     }
     const exl = [];
-    rows.forEach(r => { if ((r[2] || '').trim() === '시험' && (r[1] || '').trim()) { const p = (r[4] || '').split('|'); exl.push({ who: r[1].trim(), id: p[0] || '', sec: parseInt(r[3]) || 0, pick: p[1] || '', times: (p[2] || '').split(',').map(x => parseInt(x) || 0), title: p[3] || '', date: (r[5] || '').trim() }); } });
+    rows.forEach(r => { if ((r[2] || '').trim() === '시험' && (r[1] || '').trim()) { const p = (r[4] || '').split('|'); exl.push({ who: r[1].trim(), id: p[0] || '', sec: parseInt(r[3]) || 0, pick: p[1] || '', times: (p[2] || '').split(',').map(x => parseInt(x) || 0), title: p[3] || '', txt: exTxt(p[4]), date: (r[5] || '').trim() }); } });
     const exs = [], exSeen = new Set();
     for (let i = exl.length - 1; i >= 0 && exs.length < 12; i--) { const k = exl[i].who + '|' + exl[i].id; if (!exSeen.has(k) && D.entries.some(en => en.id === exl[i].id)) { exSeen.add(k); exs.push(exl[i]); } }
     if (exs.length) {
       const xb = el('div', 'row'); xb.style.cssText = 'flex-direction:column;align-items:stretch;gap:4px;border-bottom:1px solid var(--line);padding:6px 0 8px';
       xb.append(el('b', null, '📝 시험 풀이' + (exs.some(x => exKeyOf(D.entries.find(e => e.id === x.id))) ? ' · 자동 채점' : ' (제출만 · 채점 없음)')));
       exs.forEach(x => {
-        const ent = D.entries.find(e => e.id === x.id), title = (ent && ent.exam && ent.exam.title) || x.title || '시험', g = exGrade(ent, x.pick);
+        const ent = D.entries.find(e => e.id === x.id), title = (ent && ent.exam && ent.exam.title) || x.title || '시험', g = exGrade(ent, x.pick, x.txt);
         const ans = [...x.pick].filter(c => c !== '0').length, mx = x.times.reduce((b, t, i) => t > x.times[b] ? i : b, 0);
         const ln = el('div'); ln.append(el('b', null, x.who), ' · ' + title + ' · ');
         if (g) ln.append(el('b', 'ex-score', g.ok + ' / ' + g.tot), ' · ');
@@ -2645,7 +2833,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         if (x.times.length) {
           const dt = el('details'); dt.append(el('summary', null, '문항별 시간 · 고른 답 보기'));
           const gd = el('div'); gd.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:2px 10px;font-size:.85rem';
-          x.times.forEach((t, i) => { const c = +x.pick[i] || 0, mk = g && exKeyOf(ent) && exKeyOf(ent)[i] && exKeyOf(ent)[i].a ? (c === exKeyOf(ent)[i].a ? ' ⭕' : ' ❌') : ''; gd.append(el('span', null, (i + 1) + '번 ' + (c ? EX_C[c - 1] : '—') + mk + ' · ' + exFmt(t))); });
+          x.times.forEach((t, i) => { const q = ent && ent.exam.qs[i], sh = q && !(q.choices && q.choices.length), c = +x.pick[i] || 0, K = exKeyOf(ent), mk = g && K && exKd(K[i]) ? (g.wrong.includes(i) ? ' ❌' : ' ⭕') : ''; gd.append(el('span', null, (i + 1) + '번 ' + (sh ? '「' + ((x.txt || [])[i] || '—') + '」' : (c ? EX_C[c - 1] : '—')) + mk + ' · ' + exFmt(t))); });
           dt.append(gd); xb.append(dt);
         }
       });
@@ -2777,6 +2965,24 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (WT.who !== t) { WT.who = t; WT.src = ''; WT.wrong.clear(); WT.half.clear(); }
     state.cls = t;
   }
+  /* 왼쪽 여백(세로 메뉴 ↔ 본문) 조절: 손잡이를 끌면 바뀌고 이 기기에 기억해요 */
+  (function () {
+    const h = document.createElement('div'); h.className = 'lsplit'; h.title = '끌어서 왼쪽 여백 조절 · 더블클릭: 원래대로'; h.setAttribute('role', 'separator'); h.setAttribute('aria-label', '왼쪽 여백 조절'); document.body.append(h);
+    const root = document.body, K = 'alrim.lpad';
+    const W = () => [...document.querySelectorAll('.wrap')].find(w => w.getClientRects().length && w.getBoundingClientRect().width > 0);
+    const navR = () => { const n = document.querySelector('.tnav-float'); const r = n && n.getBoundingClientRect(); return r && r.width ? r.right : 0; };
+    const place = () => { const w = W(), nr = navR(); if (!w || !nr || !root.classList.contains('tmode')) { h.hidden = true; return; } h.hidden = false; const cl = w.getBoundingClientRect().left + parseFloat(getComputedStyle(w).paddingLeft); h.style.left = Math.max(nr + 1, cl - 13) + 'px'; };
+    const set = (px, save) => { px = Math.round(Math.max(navR() + 6, Math.min(px, window.innerWidth * 0.5))); root.classList.add('lpad'); root.style.setProperty('--lpad', px + 'px'); if (save) { try { localStorage.setItem(K, String(px)); } catch (e) {} } place(); };
+    try { const v = parseInt(localStorage.getItem(K)); if (v) { root.classList.add('lpad'); root.style.setProperty('--lpad', v + 'px'); } } catch (e) {}
+    h.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); h.setPointerCapture(e.pointerId); h.classList.add('on');
+      const mv = (ev) => set(ev.clientX + 12);
+      const up = () => { h.classList.remove('on'); h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); const v = parseInt(getComputedStyle(root).getPropertyValue('--lpad')); if (v) set(v, true); };
+      h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+    h.addEventListener('dblclick', () => { root.classList.remove('lpad'); root.style.removeProperty('--lpad'); try { localStorage.removeItem(K); } catch (e) {} place(); });
+    window.addEventListener('resize', place); setInterval(place, 1500); setTimeout(place, 300);
+  })();
   /* 좌우 단 크기 조절: 가운데 손잡이를 끌면 오른쪽 미리보기 폭이 바뀌어요 */
   (function () {
     const g = $('gsplit'), grid = document.querySelector('.grid'); if (!g || !grid) return;
@@ -2980,7 +3186,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         }
       }
       if (exOk(it)) {
-        const qs = it.exam.qs, bq = qs.map((q, i) => (!Array.isArray(q.choices) || q.choices.length < 2) ? i : -1).filter(i => i >= 0);
+        const qs = it.exam.qs, bq = qs.map((q, i) => (q.type !== 'short' && (!Array.isArray(q.choices) || q.choices.length < 2)) ? i : -1).filter(i => i >= 0);
         const keep = (e, drop) => { const ks = new Set(drop); if (Array.isArray(e.exam.key)) e.exam.key = e.exam.key.filter((_, i) => !ks.has(i)); e.exam.qs = e.exam.qs.filter((_, i) => !ks.has(i)).map((q, i) => Object.assign(q, { n: i + 1 })); };
         if (bq.length) add('err', `보기가 2개보다 적은 문제: ${bq.map(i => i + 1).join(', ')}번`, { label: '그 문제 빼기', run: e => keep(e, bq) });
         const big = qs.map((q, i) => q.choices && q.choices.length > EX_C.length ? i : -1).filter(i => i >= 0);
@@ -2990,9 +3196,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         const K = it.exam.key;
         if (Array.isArray(K)) {
           if (K.length !== qs.length) add('err', `정답은 ${K.length}개인데 문제는 ${qs.length}개라 채점이 어긋나요.`, { label: '정답표를 문제 수에 맞추기', run: e => { const k = e.exam.key.slice(0, e.exam.qs.length); while (k.length < e.exam.qs.length) k.push({ a: 0, e: '' }); e.exam.key = k; } });
-          const br = K.map((k, i) => k && k.a && qs[i] && (k.a < 1 || k.a > qs[i].choices.length) ? i : -1).filter(i => i >= 0);
+          const br = K.map((k, i) => k && k.a && qs[i] && qs[i].choices && qs[i].choices.length && (k.a < 1 || k.a > qs[i].choices.length) ? i : -1).filter(i => i >= 0);
           if (br.length) add('err', `정답 번호가 보기 범위를 벗어난 문제: ${br.map(i => i + 1).join(', ')}번`, { label: '그 문제는 채점에서 빼기', run: e => br.forEach(i => { e.exam.key[i].a = 0; }) });
-          const nk = qs.filter((_, i) => !K[i] || !K[i].a).length; if (nk && nk < qs.length) add('warn', `정답이 없는 문제 ${nk}개는 채점에서 빠져요.`);
+          const nk = qs.filter((_, i) => !exKd(K[i])).length; if (nk && nk < qs.length) add('warn', `정답이 없는 문제 ${nk}개는 채점에서 빠져요.`);
         }
       } else if (it.exam) add('err', '시험 문제가 비어 있어서 학생 화면에 시험이 안 나와요.', { label: '빈 시험 지우기', run: e => { delete e.exam; } });
       if (it.sents) {
