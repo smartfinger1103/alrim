@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-18-wchap">
+<meta name="build" content="2026-11-18-kofix">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="2026-11-18-wchap">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="2026-11-18-wchap">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="2026-11-18-kofix">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="2026-11-18-kofix">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -1567,14 +1567,18 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     if (!date) { fMsg('수업 날짜를 골라 주세요.'); $('fDate').focus(); return; }
     let e = null, label = '';
     if (kind === 'w') {
+      const fixed = autoFixWordsBox(true);
       const words = $('fWords').value.trim(), chap = ($('fWChap') ? $('fWChap').value : '').trim();
       if (!words) { const h = wordHit(date, who);   /* 단어 없이 챕터만 고치기 */
         if (h && chap !== (h.chap || '')) { if (chap) h.chap = chap; else delete h.chap; fixWordTask(h); fMsg(`${kShort(date)} 외울 단어 챕터를 "${chap || '없음'}"으로 고쳤어요.`); state.date = date; changed(); loadWChap(); return; }
         fMsg('외울 단어 칸이 비어 있어요.'); return; }
       const r = mergeWords('w', date, who, words);
-      if (chap) r.e.chap = chap; else if (r.e.chap && !r.merged) delete r.e.chap; fixWordTask(r.e); loadWChap();
+      if (chap) r.e.chap = chap; else if (r.e.chap && !r.merged) delete r.e.chap;
+      { const all = fixWordList(r.e.words); if (all.fixes.length) { r.e.words = all.text; fixed.push(...all.fixes); } }
+      fixWordTask(r.e); loadWChap();
       $('fWords').value = ''; fwCount();
-      fMsg(r.merged ? `${kShort(date)} 암기해야 할 단어에 ${r.added}개를 더했어요. (모두 ${wordCount(r.e)}개)` : `${kShort(date)} 암기해야 할 단어 ${wordCount(r.e)}개를 저장했어요.`);
+      fMsg((r.merged ? `${kShort(date)} 암기해야 할 단어에 ${r.added}개를 더했어요. (모두 ${wordCount(r.e)}개)` : `${kShort(date)} 암기해야 할 단어 ${wordCount(r.e)}개를 저장했어요.`)
+        + (fixed.length ? ` ✏️ 뜻 오타 ${fixed.length}개 고침: ` + fixed.slice(0, 6).join(' · ') + (fixed.length > 6 ? ' …' : '') : ''));
       if (state.isSample) state.isSample = false; $('sampleBadge').hidden = true;
       state.date = date; state.auto = date === autoDate(); if (who) state.cls = who; changed(); return;
     } else if (kind === 'p') {
@@ -4153,6 +4157,8 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     $('fwCount').textContent = msg || (n ? `단어 ${n}개` : '');
   }
   $('fWords').addEventListener('input', () => fwCount());
+  $('fWords').addEventListener('blur', () => autoFixWordsBox());
+  $('fWords').addEventListener('paste', () => setTimeout(() => autoFixWordsBox(), 0));
   function fpCount() { const c = $('fpCount'); if (!c || !$('fPron')) return; const n = $('fPron').value.split('\n').filter(x => x.trim()).length; c.textContent = n ? n + '개' : ''; }
   if ($('fPron')) $('fPron').addEventListener('input', fpCount);
   if ($('fSentsAuto')) $('fSentsAuto').onclick = () => { if (!$('fSents').value.trim()) { fMsg('문장을 먼저 적어 주세요.'); return; } saPvOpen = true; saPreview(); if ($('fSentsPv').firstChild) $('fSentsPv').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
@@ -4224,6 +4230,68 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     try { await addWordFiles(files, $('fWords'), (t) => fwCount(t)); } finally { $('fFileZone').classList.remove('busy'); }
   };
 
+
+  /* ---------- 단어 뜻(한글) 오타 자동 수정 ---------- */
+  const KO_TYPO = [[/몇일/g,'며칠'],[/몇 일/g,'며칠'],[/어떻해/g,'어떻게'],[/왠만/g,'웬만'],[/금새/g,'금세'],[/설겆이/g,'설거지'],[/희안/g,'희한'],[/희얀/g,'희한'],[/역활/g,'역할'],
+    [/됬/g,'됐'],[/(할|갈|볼|줄|올|될|먹을|있을|드릴)께/g,'$1게'],[/어의없/g,'어이없'],[/오랫만/g,'오랜만'],[/내노라/g,'내로라'],[/일일히/g,'일일이'],[/깨끗히/g,'깨끗이'],
+    [/곰곰히/g,'곰곰이'],[/틈틈히/g,'틈틈이'],[/꼼꼼이/g,'꼼꼼히'],[/솔직이/g,'솔직히'],[/익숙치/g,'익숙지'],[/뵈요/g,'봬요'],[/되요/g,'돼요'],[/잠궈/g,'잠가'],
+    [/웬지/g,'왠지'],[/왠일/g,'웬일'],[/설레임/g,'설렘'],[/단언컨데/g,'단언컨대'],[/뒤쳐지/g,'뒤처지'],[/아니예요/g,'아니에요'],[/않하/g,'안 하'],
+    [/구지/g,'굳이'],[/어쨋든/g,'어쨌든'],[/일부로/g,'일부러'],[/넓직/g,'널찍'],[/짜집기/g,'짜깁기'],[/곱배기/g,'곱빼기'],[/눈쌀/g,'눈살'],[/거에요/g,'거예요'],
+    [/할려고/g,'하려고'],[/숫가락/g,'숟가락'],[/젖가락/g,'젓가락'],[/돌맹이/g,'돌멩이'],[/찌게/g,'찌개'],[/배게/g,'베개'],[/육계장/g,'육개장'],[/깍다/g,'깎다'],
+    [/닥달/g,'닦달'],[/트름/g,'트림'],[/제작년/g,'재작년'],[/움추리/g,'움츠리'],[/희노애락/g,'희로애락'],[/낭떨어지/g,'낭떠러지'],[/귀뜸/g,'귀띔'],[/폭팔/g,'폭발'],
+    [/어줍잖/g,'어쭙잖'],[/치루다/g,'치르다'],[/부시시/g,'부스스'],[/어떻케/g,'어떻게'],[/괜찬/g,'괜찮'],[/않좋/g,'안 좋'],[/낳아지/g,'나아지'],[/낳다\(병/g,'낫다(병']];
+  const QW = { q:'ㅂ',w:'ㅈ',e:'ㄷ',r:'ㄱ',t:'ㅅ',y:'ㅛ',u:'ㅕ',i:'ㅑ',o:'ㅐ',p:'ㅔ',a:'ㅁ',s:'ㄴ',d:'ㅇ',f:'ㄹ',g:'ㅎ',h:'ㅗ',j:'ㅓ',k:'ㅏ',l:'ㅣ',z:'ㅋ',x:'ㅌ',c:'ㅊ',v:'ㅍ',b:'ㅠ',n:'ㅜ',m:'ㅡ',Q:'ㅃ',W:'ㅉ',E:'ㄸ',R:'ㄲ',T:'ㅆ',O:'ㅒ',P:'ㅖ' };
+  function engToHangul(str) {   /* 한/영 전환을 깜빡해 영문으로 친 한글(tkrhk → 사과)을 되돌림. 완성 글자로만 바뀌어야 성공 */
+    const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG = ' ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ';
+    const VC = { 'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ','ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ','ㅡㅣ':'ㅢ' }, CC = { 'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ','ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ','ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ','ㅂㅅ':'ㅄ' };
+    const isV = j => !!j && JUNG.includes(j);
+    let out = '';
+    for (const word of str.split(/(\s+|[,;/()~])/)) {
+      if (!/^[A-Za-z]+$/.test(word)) { out += word; continue; }
+      const js = [...word].map(c => QW[c] || QW[c.toLowerCase()]); if (js.some(x => !x)) return null;
+      let i = 0, w = '';
+      while (i < js.length) {
+        const c = js[i]; if (isV(c) || !CHO.includes(c) || !isV(js[i + 1])) return null;
+        let v = js[i + 1]; i += 2; if (VC[v + js[i]]) { v = VC[v + js[i]]; i++; }
+        let t = '';
+        if (js[i] && !isV(js[i]) && !isV(js[i + 1])) { t = js[i]; i++; if (js[i] && !isV(js[i]) && CC[t + js[i]] && !isV(js[i + 1])) { t = CC[t + js[i]]; i++; } }
+        if (t && !JONG.includes(t)) return null;
+        w += String.fromCharCode(0xAC00 + (CHO.indexOf(c) * 21 + JUNG.indexOf(v)) * 28 + (t ? JONG.indexOf(t) : 0));
+      }
+      out += w;
+    }
+    return out;
+  }
+  const EN_COMMON = /^(a|an|the|to|of|and|or|be|do|go|it|is|in|on|at|for|with|up|out|off|by|as|one|sb|sth|n|v|adj|adv)$/i;
+  function fixKo(ko) {
+    let k = String(ko || ''); const o = k;
+    if (/^[A-Za-z][A-Za-z\s,;/~()]*$/.test(k) && !k.split(/[\s,;/~()]+/).some(x => EN_COMMON.test(x))) { const h = engToHangul(k); if (h && /[가-힣]/.test(h)) k = h; }
+    k = k.replace(/(^|[\s,;/(])[ㄱ-ㅎㅏ-ㅣ]+(?=[가-힣])/g, '$1')
+         .replace(/([가-힣])[ㄱ-ㅎㅏ-ㅣ]+(?=$|[\s,;/)])/g, '$1')
+         .replace(/([가-힣])\1\1+/g, '$1$1')
+         .replace(/\s*[,，、]\s*/g, ', ').replace(/,(\s*,)+/g, ',').replace(/\s*;\s*/g, ', ').replace(/\s{2,}/g, ' ')
+         .replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').replace(/^[\s,.;]+|[\s,.;]+$/g, '');
+    KO_TYPO.forEach(([re, to]) => { k = k.replace(re, to); });
+    return { ko: k, changed: k !== o, from: o };
+  }
+  function fixWordList(text) {
+    const fixes = [];
+    const lines = String(text || '').split(/\r?\n/).map(line => {
+      if (!line.trim() || /^#/.test(line.trim())) return line;
+      if (line.includes('\t')) { const p = line.split('\t'); if (p.length < 2 || !/[A-Za-z]/.test(p[0])) return line; const r = fixKo(p[1]); if (r.changed) { fixes.push(`${p[0].trim()}: ${r.from} → ${r.ko}`); p[1] = r.ko; } return p.join('\t'); }
+      const m = line.match(/^(\s*[A-Za-z][^\t]*?\s+[-–:=]\s+)(.*)$/);
+      if (m) { const r = fixKo(m[2]); if (r.changed) { fixes.push(`${m[1].replace(/\s+[-–:=]\s+$/, '').trim()}: ${r.from} → ${r.ko}`); return m[1] + r.ko; } }
+      return line;
+    });
+    return { text: lines.join('\n'), fixes };
+  }
+  function autoFixWordsBox(silent) {
+    const ta = $('fWords'); if (!ta || !ta.value.trim()) return [];
+    const r = fixWordList(ta.value); if (!r.fixes.length) return [];
+    ta.value = r.text; fwCount();
+    if (!silent) fMsg(`✏️ 뜻 오타 ${r.fixes.length}개를 고쳤어요: ` + r.fixes.slice(0, 6).join(' · ') + (r.fixes.length > 6 ? ' …' : ''));
+    return r.fixes;
+  }
 
   /* ---------- 단어 암기 도우미 ---------- */
   /* 발음 과제: 뜻 없이 단어만 적어도(한 줄에 하나) 연습 단어로 인식 */
