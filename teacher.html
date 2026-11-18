@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="20261117212215">
+<meta name="build" content="20261118160701">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
 fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="(\d+)">/);
@@ -334,6 +334,16 @@ section.sfolded { padding-bottom: 14px; }
 .ex-ro.right .ex-t { border: 2.5px solid #D32F2F; border-radius: 999px; padding: 0 10px; color: #C62828; font-weight: 700; }
 .ex-pen, .ex-pen-note { font-family: "Nanum Pen Script", "Gaegu", "Segoe Print", "Bradley Hand", "Noto Sans KR", cursive; color: #D32F2F; }
 .ex-pen { font-size: 1.02rem; }
+.po-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(20,24,40,.55); display: flex; align-items: center; justify-content: center; padding: 12px; }
+.po-box { width: min(900px, 100%); height: min(96vh, 1200px); background: var(--card, #fff); color: var(--ink); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+.po-top { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); } .po-top b { flex: 1; font-size: .98rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.po-x { width: 34px; height: 34px; border-radius: 50%; padding: 0; font-size: 1.3rem; line-height: 1; }
+.po-info { padding: 6px 14px; font-size: .88rem; font-weight: 600; color: #3F4FB8; background: #EEF1FD; }
+.po-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.po-b { padding: 7px 12px; border-radius: 10px; font-weight: 700; font-size: .9rem; } .po-b.main { background: #3F4FB8; color: #fff; border-color: #3F4FB8; }
+.po-link { background: none; border: 0; color: #3F4FB8; text-decoration: underline; font-size: .82rem; padding: 2px 4px; cursor: pointer; }
+.po-hint { flex-basis: 100%; color: var(--muted); font-size: .76rem; }
+.po-fr { flex: 1; width: 100%; border: 0; background: #E6E9EF; }
 .hc { margin: 6px 0 2px; border: 1.5px solid #E7A3A3; background: #FFF3F3; border-radius: 10px; padding: 5px 8px; font: 500 .8rem/1.45 "IBM Plex Sans KR", sans-serif; color: #8E1F1F; }
 .hc.warn { border-color: #E5C463; background: #FFF8E3; color: #6B4E00; }
 .hc.wait { border-color: #C9D2EA; background: #F3F6FD; color: #3B4A73; }
@@ -2071,31 +2081,139 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   const exSims = (k) => (k && Array.isArray(k.s)) ? k.s.filter(q => q && Array.isArray(q.choices) && q.choices.length > 1 && q.ans >= 1) : [];
   const exEsc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const exPf = (t) => exEsc(t).replace(/\{\{([\s\S]*?)\}\}/g, '<u>$1</u>').replace(/_{3,}/g, '<span class="bl"></span>').replace(/^\[보기\]\s*/, '<b class="bg">보기</b> ').replace(/\n/g, '<br>');
-  const exQHtml = (q, label) => '<div class="q"><div class="n">' + exEsc(label) + '</div><div class="c">' + (q.inst ? '<div class="inst">' + exEsc(q.inst) + '</div>' : '') + (q.body ? '<div class="body">' + exPf(q.body) + '</div>' : '') + '<div class="ch">' + q.choices.map((t, j) => '<div>' + EX_C[j] + ' ' + exPf(t) + '</div>').join('') + '</div></div></div>';
-  function exPrintHtml(head, who, sub, body) {   /* 숨은 틀에 넣고 바로 인쇄 */
-    const html = '<!doctype html><html lang="ko"><meta charset="utf-8"><title>' + exEsc(who + ' ' + head) + '</title><style>@page{size:A4;margin:16mm 15mm}body{font-family:"Noto Sans KR","Malgun Gothic",sans-serif;font-size:11pt;line-height:1.55;color:#111}h1{font-size:16pt;margin:0 0 4px}h2{font-size:12.5pt;margin:16px 0 8px;border-left:5px solid #111;padding-left:8px}.meta{display:flex;gap:22px;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:12px;font-size:10.5pt}.q{display:flex;gap:8px;margin:0 0 14px;break-inside:avoid}.n{font-weight:700;min-width:44px;font-size:11.5pt}.c{flex:1}.inst{font-weight:600;font-size:10.5pt;margin-bottom:3px}.body{border:1px solid #666;padding:6px 9px;margin:3px 0 5px;font-size:11.5pt}.bg{background:#ddd;padding:0 5px;border-radius:3px;font-size:9.5pt}.ch div{margin:1px 0}.bl{display:inline-block;min-width:70px;border-bottom:1.5px solid #111;margin:0 3px}.ak{margin:0 0 8px;break-inside:avoid}.ak b{font-size:11.5pt}.ak div{font-size:10pt;color:#333}</style><h1>' + exEsc(head) + '</h1><div class="meta"><span>이름: ' + exEsc(who) + '</span><span>날짜: ____________</span><span>' + exEsc(sub) + '</span></div>' + body + '</html>';
-    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden'; document.body.append(fr);
-    const d = fr.contentWindow.document; d.open(); d.write(html); d.close();
-    setTimeout(() => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { fMsg('인쇄 창을 열지 못했어요. 브라우저의 팝업·인쇄 설정을 확인해 주세요.'); } }, 300);
-    setTimeout(() => fr.remove(), 120000);
+  /* ---------- 출력 파일: 문서 모델(blocks) → 쪽 나누기 미리보기 · 인쇄 · PDF · Word(.docx) · 내 드라이브(폴더) 저장 ---------- */
+  const PO_CSS = '@page{size:A4;margin:0}html,body{margin:0}body{font-family:"Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif;color:#111;background:#E6E9EF;padding:10px 0}body.cap{background:#fff;padding:0}'
+    + '.flow{width:180mm;line-height:1.55;font-size:var(--fs)}.page{width:210mm;height:297mm;box-sizing:border-box;padding:16mm 15mm;background:#fff;margin:0 auto 10px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;position:relative;line-height:1.55;font-size:var(--fs)}body.cap .page{margin:0;box-shadow:none}'
+    + '.pn{position:absolute;bottom:7mm;left:0;right:0;text-align:center;font-size:9pt;color:#888}@media print{body{background:#fff;padding:0}.page{margin:0;box-shadow:none;break-after:page}.page:last-child{break-after:auto}}'
+    + 'h1{font-size:1.45em;margin:0;padding:0 0 .25em}.meta{display:flex;gap:2em;border-bottom:2px solid #111;padding:0 0 .45em;margin:0 0 1em;font-size:.95em}.h2{font-size:1.12em;font-weight:700;border-left:5px solid #111;padding-left:8px;margin:.9em 0 .6em}'
+    + '.q{display:flex;gap:8px;padding:0 0 1.15em}.n{font-weight:700;min-width:3.4em;font-size:1.04em}.c{flex:1;min-width:0}.inst{font-weight:600;font-size:.95em;margin-bottom:3px}.body{border:1px solid #666;padding:.45em .8em;margin:3px 0 5px;font-size:1.04em}.bg{background:#ddd;padding:0 5px;border-radius:3px;font-size:.86em}.ch div{margin:1px 0}.bl{display:inline-block;min-width:70px;border-bottom:1.5px solid #111;margin:0 3px}'
+    + '.ak{padding:0 0 .7em}.ak b{font-size:1.04em}.ak div{font-size:.92em;color:#333}';
+  function poBlk(b) {
+    if (b.t === 'h1') return '<h1>' + exEsc(b.x) + '</h1>';
+    if (b.t === 'meta') return '<div class="meta"><span>이름: ' + exEsc(b.who) + '</span><span>날짜: ____________</span><span>' + exEsc(b.sub) + '</span></div>';
+    if (b.t === 'h2') return '<div class="h2">' + exEsc(b.x) + '</div>';
+    if (b.t === 'ak') return '<div class="ak"><b>' + exEsc(b.label) + ' 정답 ' + exPf(b.head) + '</b><div>' + exPf(b.expl || '') + '</div></div>';
+    const q = b.q; return '<div class="q"><div class="n">' + exEsc(b.label) + '</div><div class="c">' + (q.inst ? '<div class="inst">' + exEsc(q.inst) + '</div>' : '') + (q.body ? '<div class="body">' + exPf(q.body) + '</div>' : '') + '<div class="ch">' + q.choices.map((t, j) => '<div>' + EX_C[j] + ' ' + exPf(t) + '</div>').join('') + '</div></div></div>';
+  }
+  function poPaginate(doc, blocks, fs) {   /* 문제가 쪽 사이에서 잘리지 않게 쪽을 나눠요 */
+    doc.body.className = ''; doc.body.innerHTML = '<div class="flow" style="--fs:' + fs + 'pt">' + blocks.map(poBlk).join('') + '</div><div id="ph" style="height:265mm"></div>';
+    const PH = doc.getElementById('ph').getBoundingClientRect().height - 2, els = [...doc.body.firstChild.children];
+    const tops = els.map(e => e.getBoundingClientRect().top), end = doc.body.firstChild.getBoundingClientRect().bottom;
+    const hs = els.map((e, i) => (i + 1 < els.length ? tops[i + 1] : end) - tops[i]);
+    const pages = [[]]; let cur = 0;
+    blocks.forEach((b, i) => { const glue = (b.t === 'h1' || b.t === 'meta' || b.t === 'h2') && i + 1 < blocks.length ? hs[i + 1] : 0; if (cur > 0 && cur + hs[i] + glue > PH) { pages.push([]); cur = 0; } pages[pages.length - 1].push(i); cur += hs[i]; });
+    return pages;
+  }
+  /* --- Word(.docx): 압축 없는 zip으로 직접 만들어요 --- */
+  const PO_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function poZip(files) {
+    const enc = new TextEncoder(), parts = [], cd = []; let off = 0;
+    files.forEach(f => {
+      const nm = enc.encode(f.name), d = typeof f.data === 'string' ? enc.encode(f.data) : f.data; let c = 0xFFFFFFFF; for (let i = 0; i < d.length; i++) c = PO_CRC[(c ^ d[i]) & 0xFF] ^ (c >>> 8); c = (c ^ 0xFFFFFFFF) >>> 0;
+      const lh = new Uint8Array(30 + nm.length), v = new DataView(lh.buffer); v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x0800, true); v.setUint16(12, 0x21, true); v.setUint32(14, c, true); v.setUint32(18, d.length, true); v.setUint32(22, d.length, true); v.setUint16(26, nm.length, true); lh.set(nm, 30);
+      const ch = new Uint8Array(46 + nm.length), w = new DataView(ch.buffer); w.setUint32(0, 0x02014b50, true); w.setUint16(4, 20, true); w.setUint16(6, 20, true); w.setUint16(8, 0x0800, true); w.setUint16(14, 0x21, true); w.setUint32(16, c, true); w.setUint32(20, d.length, true); w.setUint32(24, d.length, true); w.setUint16(28, nm.length, true); w.setUint32(42, off, true); ch.set(nm, 46);
+      parts.push(lh, d); cd.push(ch); off += lh.length + d.length;
+    });
+    const cl = cd.reduce((a, b) => a + b.length, 0), e = new Uint8Array(22), ev = new DataView(e.buffer); ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true); ev.setUint32(12, cl, true); ev.setUint32(16, off, true);
+    return new Blob([...parts, ...cd, e], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  }
+  function poDocx(blocks, fs) {
+    const xe = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), B = Math.max(12, Math.round(fs * 2 * 0.96)), S = (k) => Math.round(B * k);
+    const r = (t, sz, b, u, shd) => '<w:r><w:rPr><w:rFonts w:ascii="Malgun Gothic" w:hAnsi="Malgun Gothic" w:eastAsia="맑은 고딕" w:cs="Malgun Gothic"/>' + (b ? '<w:b/>' : '') + (u ? '<w:u w:val="single"/>' : '') + (shd ? '<w:shd w:val="clear" w:color="auto" w:fill="' + shd + '"/>' : '') + '<w:sz w:val="' + sz + '"/><w:szCs w:val="' + sz + '"/></w:rPr><w:t xml:space="preserve">' + xe(t) + '</w:t></w:r>';
+    const runs = (text, sz, b) => { let t = String(text || ''), o = ''; if (/^\[보기\]\s*/.test(t)) { o += r(' 보기 ', S(.86), true, false, 'D9D9D9') + r(' ', sz); t = t.replace(/^\[보기\]\s*/, ''); }
+      t.split(/(\{\{[\s\S]*?\}\}|_{3,}|\n)/).forEach(sg => { if (!sg) return; if (sg === '\n') o += '<w:r><w:br/></w:r>'; else if (/^_{3,}$/.test(sg)) o += r(' '.repeat(12), sz, b, true); else if (/^\{\{/.test(sg)) o += r(sg.slice(2, -2), sz, b, true); else o += r(sg, sz, b); }); return o; };
+    const BD = (s, sz, sp, col) => '<w:' + s + ' w:val="single" w:sz="' + sz + '" w:space="' + sp + '" w:color="' + col + '"/>';
+    const p = (inner, o = {}) => '<w:p><w:pPr>' + (o.keep ? '<w:keepNext/>' : '') + '<w:keepLines/>' + (o.box ? '<w:pBdr>' + BD('top', 6, 4, '666666') + BD('left', 6, 6, '666666') + BD('bottom', 6, 4, '666666') + BD('right', 6, 6, '666666') + '</w:pBdr>' : o.under ? '<w:pBdr>' + BD('bottom', 12, 4, '111111') + '</w:pBdr>' : o.bar ? '<w:pBdr>' + BD('left', 24, 6, '111111') + '</w:pBdr>' : '') + '<w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after || 0) + '" w:line="252" w:lineRule="auto"/>' + (o.ind ? '<w:ind w:left="' + o.ind + '" w:right="' + (o.box ? 140 : 0) + '"/>' : '') + '</w:pPr>' + inner + '</w:p>';
+    let body = '';
+    blocks.forEach(b => {
+      if (b.t === 'h1') body += p(r(b.x, S(1.45), true), { keep: 1, after: 60 });
+      else if (b.t === 'meta') body += p(r('이름: ' + b.who + '        날짜: ____________        ' + b.sub, S(.95)), { under: 1, after: 240, keep: 1 });
+      else if (b.t === 'h2') body += p(r(b.x, S(1.12), true), { bar: 1, before: 200, after: 120, keep: 1 });
+      else if (b.t === 'ak') body += p(r(b.label + ' 정답 ', S(1.04), true) + runs(b.head, S(1.04), true), { keep: 1 }) + p(runs(b.expl || '', S(.92)), { after: 160 });
+      else { const q = b.q, IND = 560;
+        body += p(r(b.label + '  ', S(1.04), true) + (q.inst ? r(q.inst, S(.95), true) : ''), { keep: 1, after: 40 });
+        if (q.body) body += p(runs(q.body, S(1.04)), { keep: 1, box: 1, ind: IND + 120, before: 30, after: 60 });
+        q.choices.forEach((c, j) => { body += p(r(EX_C[j] + ' ', B) + runs(c, B), { keep: j < q.choices.length - 1, ind: IND, after: j === q.choices.length - 1 ? 170 : 0 }); }); }
+    });
+    const doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="907" w:right="850" w:bottom="907" w:left="850" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    return poZip([
+      { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>' },
+      { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+      { name: 'word/_rels/document.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>' },
+      { name: 'word/document.xml', data: doc }]);
+  }
+  /* --- PDF: 미리보기 쪽을 그림으로 찍어 A4 PDF로 (CDN 도구는 처음 한 번만 불러와요) --- */
+  function poScript(w, src) { return new Promise((ok, no) => { const s = w.document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('PDF 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.')); w.document.head.append(s); }); }
+  async function poPdf(fr) {
+    const w = fr.contentWindow, d = w.document;
+    if (!w.html2canvas) await poScript(w, 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    if (!w.jspdf) await poScript(w, 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    d.body.classList.add('cap');
+    try { const pdf = new w.jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true }), pgs = [...d.querySelectorAll('.page')];
+      for (let i = 0; i < pgs.length; i++) { const cv = await w.html2canvas(pgs[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true }); if (i) pdf.addPage(); pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297); }
+      return pdf.output('blob'); } finally { d.body.classList.remove('cap'); }
+  }
+  const poDown = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.setAttribute('download', name); a.style.display = 'none'; document.body.append(a); a.click(); setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 60000); };
+  /* --- 내 드라이브 저장: PC의 Google 드라이브 폴더(내 드라이브)를 한 번 고르면 기억해 두고 바로 저장해요 --- */
+  const poIdb = (mode, val) => new Promise((ok) => { try { const q = indexedDB.open('alrim-files', 1); q.onupgradeneeded = () => q.result.createObjectStore('h'); q.onsuccess = () => { try { const tx = q.result.transaction('h', mode ? 'readwrite' : 'readonly'), st = tx.objectStore('h'); if (mode) { st.put(val, 'dir'); tx.oncomplete = () => ok(true); } else { const g = st.get('dir'); g.onsuccess = () => ok(g.result || null); g.onerror = () => ok(null); } } catch (e) { ok(null); } }; q.onerror = () => ok(null); } catch (e) { ok(null); } });
+  async function poDir(pickNew) {   /* 버튼을 누른 순간에 불러야 해요(브라우저 규칙) */
+    let dir = pickNew ? null : await poIdb(0);
+    if (dir) { try { let pm = await dir.queryPermission({ mode: 'readwrite' }); if (pm !== 'granted') pm = await dir.requestPermission({ mode: 'readwrite' }); if (pm !== 'granted') dir = null; } catch (e) { dir = null; } }
+    if (!dir) { dir = await window.showDirectoryPicker({ id: 'alrim-drive', mode: 'readwrite' }); await poIdb(1, dir); }
+    return dir;
+  }
+  function exOutput(blocks, base) {   /* 출력 미리보기 창 */
+    const fname = String(base).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+    const ov = el('div', 'po-ov'), bx = el('div', 'po-box'); ov.append(bx); document.body.append(ov); document.body.style.overflow = 'hidden';
+    const close = () => { ov.remove(); document.body.style.overflow = ''; };
+    ov.addEventListener('click', e => { if (e.target === ov) close(); });
+    const top = el('div', 'po-top'); top.append(el('b', null, '🖨 출력 미리보기 · ' + fname)); const xb = el('button', 'po-x', '×'); xb.type = 'button'; xb.title = '닫기'; xb.onclick = close; top.append(xb);
+    const info = el('div', 'po-info', '쪽을 나누는 중…'), bar = el('div', 'po-bar');
+    const fr = el('iframe', 'po-fr'); fr.title = '출력 미리보기';
+    bx.append(top, info, bar, fr);
+    const mk = (t, cls, f) => { const b = el('button', cls, t); b.type = 'button'; b.onclick = f; bar.append(b); return b; };
+    let fs = 11;
+    const busy = async (b, t, f) => { const o = b.textContent; b.disabled = true; b.textContent = t; try { await f(); } catch (e) { if (e && e.name === 'AbortError') return; fMsg('⚠ ' + (e && e.message || e)); info.textContent = '⚠ ' + (e && e.message || e); } finally { b.disabled = false; b.textContent = o; } };
+    mk('🖨 인쇄', 'po-b', () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { fMsg('인쇄 창을 열지 못했어요.'); } });
+    const bP = mk('📄 PDF 받기', 'po-b', () => busy(bP, 'PDF 만드는 중…', async () => poDown(await poPdf(fr), fname + '.pdf')));
+    const bW = mk('📝 Word 받기', 'po-b', () => busy(bW, '만드는 중…', async () => poDown(poDocx(blocks, fs), fname + '.docx')));
+    const canDir = typeof window.showDirectoryPicker === 'function';
+    const save = (pickNew) => busy(bD, '저장하는 중…', async () => {
+      if (!canDir) { poDown(poDocx(blocks, fs), fname + '.docx'); poDown(await poPdf(fr), fname + '.pdf'); info.textContent = '이 브라우저는 폴더에 바로 저장할 수 없어서 다운로드했어요. Chrome이나 Edge에서는 내 드라이브 폴더에 바로 저장돼요.'; return; }
+      const dir = await poDir(pickNew);
+      const files = [[fname + '.pdf', await poPdf(fr)], [fname + '.docx', poDocx(blocks, fs)]];
+      for (const [n, bl] of files) { const fh = await dir.getFileHandle(n, { create: true }), w = await fh.createWritable(); await w.write(bl); await w.close(); }
+      info.textContent = '💾 「' + dir.name + '」 폴더에 PDF와 Word 파일을 저장했어요.'; fMsg('💾 「' + dir.name + '」에 저장했어요: ' + fname + ' (PDF·Word)');
+    });
+    const bD = mk('💾 내 드라이브에 저장 (PDF+Word)', 'po-b main', () => save(false));
+    if (canDir) { const ch = el('button', 'po-link', '저장 폴더 바꾸기'); ch.type = 'button'; ch.onclick = () => save(true); bar.append(ch); }
+    bar.append(el('small', 'po-hint', canDir ? '처음 한 번 Google 드라이브의 「내 드라이브」 안 폴더를 고르면 다음부터는 바로 저장돼요 (PC에 Google Drive 앱이 설치돼 있어야 해요).' : ''));
+    setTimeout(() => {   /* 쪽 나누기: 홀수 쪽이 되면 글자를 줄여 한 쪽 줄여요 (최소 70%) */
+      const d = fr.contentWindow.document; d.open(); d.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + exEsc(fname) + '</title><style>' + PO_CSS + '</style></head><body></body></html>'); d.close();
+      let P = poPaginate(d, blocks, 11); const n0 = P.length; let note = '';
+      if (n0 > 1 && n0 % 2) { for (let f = 10.7; f >= 7.7; f -= 0.2) { const q = poPaginate(d, blocks, +f.toFixed(1)); if (q.length <= n0 - 1) { fs = +f.toFixed(1); P = q; note = ` · ${n0}쪽이 돼서 글자를 ${Math.round(fs / 11 * 100)}%로 줄여 ${P.length}쪽에 맞췄어요`; break; } } if (!note) { P = poPaginate(d, blocks, 11); note = ` · 줄여도 ${n0 - 1}쪽에 다 안 들어가서 원래 크기로 뒀어요`; } }
+      d.body.innerHTML = P.map((pg, k) => '<section class="page" style="--fs:' + fs + 'pt">' + pg.map(i => poBlk(blocks[i])).join('') + '<div class="pn">' + (k + 1) + ' / ' + P.length + '</div></section>').join('');
+      info.textContent = `A4 ${P.length}쪽${note}`;
+    }, 30);
   }
   function exPrintWrong(ent, x, g) {   /* 틀린 문제만, 정답·해설 표시 없이 (다시 풀기용) */
-    exPrintHtml(ent.exam.title + ' · 틀린 문제 다시 풀기', x.who, g.wrong.length + '문항 (원래 번호 그대로)', g.wrong.map(i => exQHtml(ent.exam.qs[i], (i + 1) + '.')).join(''));
+    const bl = [{ t: 'h1', x: ent.exam.title + ' · 틀린 문제 다시 풀기' }, { t: 'meta', who: x.who, sub: g.wrong.length + '문항 (원래 번호 그대로)' }].concat(g.wrong.map(i => ({ t: 'q', label: (i + 1) + '.', q: ent.exam.qs[i] })));
+    exOutput(bl, x.who + '_' + ent.exam.title + '_틀린문제_' + todayStr());
   }
   function exPrintSim(ent, x, g, withKey) {   /* 유사문제: 학생용(정답 없이) / 선생님용(정답·해설) */
-    const key = exKeyOf(ent); let n = 0;
+    const key = exKeyOf(ent), bl = []; let n = 0;
     if (!withKey) {
-      const body = g.wrong.map(i => '<h2>' + (i + 1) + '번 유형 · 유사문제</h2>' + exSims(key[i]).map((q, j) => { n++; return exQHtml(q, (i + 1) + '-' + (j + 1) + '.'); }).join('')).join('');
-      exPrintHtml(ent.exam.title + ' · 유사문제 연습', x.who, '유사문제 ' + n + '문항', body); return;
+      g.wrong.forEach(i => { const ss = exSims(key[i]); if (!ss.length) return; bl.push({ t: 'h2', x: (i + 1) + '번 유형 · 유사문제' }); ss.forEach((q, j) => { n++; bl.push({ t: 'q', label: (i + 1) + '-' + (j + 1) + '.', q }); }); });
+      exOutput([{ t: 'h1', x: ent.exam.title + ' · 유사문제 연습' }, { t: 'meta', who: x.who, sub: '유사문제 ' + n + '문항' }].concat(bl), x.who + '_' + ent.exam.title + '_유사문제_' + todayStr()); return;
     }
-    const ak = (q, label) => '<div class="ak"><b>' + exEsc(label) + ' 정답 ' + EX_C[q.ans - 1] + ' ' + exPf(q.choices[q.ans - 1]) + '</b><div>' + exPf(q.expl || '') + '</div></div>';
-    const body = g.wrong.map(i => '<h2>' + (i + 1) + '번 유형</h2>' + ak(Object.assign({}, ent.exam.qs[i], { ans: key[i].a, expl: key[i].e }), (i + 1) + '번 (원래 문제)') + exSims(key[i]).map((q, j) => { n++; return ak(q, (i + 1) + '-' + (j + 1)); }).join('')).join('');
-    exPrintHtml(ent.exam.title + ' · 정답·해설 (선생님용)', x.who, '틀린 문제 ' + g.wrong.length + '개 + 유사문제 ' + n + '개', body);
+    const ak = (q, a, e, label) => ({ t: 'ak', label, head: EX_C[a - 1] + ' ' + (q.choices[a - 1] || ''), expl: e || '' });
+    g.wrong.forEach(i => { bl.push({ t: 'h2', x: (i + 1) + '번 유형' }); bl.push(ak(ent.exam.qs[i], key[i].a, key[i].e, (i + 1) + '번 (원래 문제)')); exSims(key[i]).forEach((q, j) => { n++; bl.push(ak(q, q.ans, q.expl, (i + 1) + '-' + (j + 1))); }); });
+    exOutput([{ t: 'h1', x: ent.exam.title + ' · 정답·해설 (선생님용)' }, { t: 'meta', who: x.who, sub: '틀린 문제 ' + g.wrong.length + '개 + 유사문제 ' + n + '개' }].concat(bl), x.who + '_' + ent.exam.title + '_정답해설_' + todayStr());
   }
   function exWrongPanel(ent, x, g) {   /* 틀린 문제만, 문제 번호와 함께 빨간 펜으로: 고른 답 ✗ · 정답 ✓ · 이유 + 유사문제 */
     const key = exKeyOf(ent), wrap = el('div', 'ex-red');
     wrap.append(el('div', 'ex-red-h', x.who + ' · ' + ent.exam.title + ' · 틀린 문제 ' + g.wrong.length + '개 (' + g.ok + ' / ' + g.tot + ')'));
-    const bar = el('div', 'ex-simbar'), sb = el('button', 'small ex-wbtn', '🔁 유사문제 만들기 (틀린 문제당 3개)'), p1 = el('button', 'small ex-wbtn', '🖨 유사문제 출력 (학생용 · 정답 없이)'), p2 = el('button', 'small ex-wbtn', '🖨 정답·해설지 (선생님용)'), sh = el('small', 'hint', '');
+    const bar = el('div', 'ex-simbar'), sb = el('button', 'small ex-wbtn', '🔁 유사문제 만들기 (틀린 문제당 3개)'), p1 = el('button', 'small ex-wbtn', '🖨 유사문제 출력 (학생용 · PDF·Word)'), p2 = el('button', 'small ex-wbtn', '🖨 정답·해설지 (선생님용 · PDF·Word)'), sh = el('small', 'hint', '');
     [sb, p1, p2].forEach(b => b.type = 'button'); p1.hidden = p2.hidden = true;
     bar.append(sb, ' ', p1, ' ', p2, sh); wrap.append(bar);
     let on = false;
@@ -2504,7 +2622,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             const bt = el('button', 'small ex-wbtn', (EX_OPEN.has(pk) ? '▲ 틀린 문제 닫기' : '❌ 틀린 문제 보기 (' + g.wrong.length + '개)')); bt.type = 'button';
             const pn = exWrongPanel(ent, x, g); pn.hidden = !EX_OPEN.has(pk);
             bt.onclick = () => { if (EX_OPEN.has(pk)) EX_OPEN.delete(pk); else EX_OPEN.add(pk); pn.hidden = !EX_OPEN.has(pk); bt.textContent = EX_OPEN.has(pk) ? '▲ 틀린 문제 닫기' : '❌ 틀린 문제 보기 (' + g.wrong.length + '개)'; };
-            const pb = el('button', 'small ex-wbtn', '🖨 틀린 문제 출력 (정답 없이)'); pb.type = 'button'; pb.title = '틀린 문제만, 정답·해설 표시 없이 인쇄해요'; pb.onclick = () => exPrintWrong(ent, x, g);
+            const pb = el('button', 'small ex-wbtn', '🖨 틀린 문제 출력 (PDF·Word)'); pb.type = 'button'; pb.title = '틀린 문제만, 정답·해설 표시 없이 인쇄해요'; pb.onclick = () => exPrintWrong(ent, x, g);
             xb.append(bt, ' ', pb, pn);
           }
         }
