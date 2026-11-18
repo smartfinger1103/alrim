@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-18-wcolon">
+<meta name="build" content="2026-11-18-etc">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -762,6 +762,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" class="tsub" data-box="fbWords" data-s="외울 단어" title="과제 적기 · 외울 단어로 바로 가기">외울 단어</button>
     <button type="button" class="tsub" data-box="fbPron" data-s="발음 단어" title="과제 적기 · 발음 단어로 바로 가기">발음 단어</button>
     <button type="button" class="tsub" data-box="fbL" data-s="듣기" title="과제 적기 · 듣기로 바로 가기">듣기</button>
+    <button type="button" class="tsub" data-box="fbEtc" data-s="기타" title="과제 적기 · 기타로 바로 가기">기타</button>
     <button type="button" class="tsub" data-box="fSentsBox" data-s="문장 연습" title="과제 적기 · 문장 연습로 바로 가기">문장 연습</button>
     <button type="button" class="tsub" data-box="fbTask" data-s="기타 과목" title="과제 적기 · 기타 과목로 바로 가기">기타 과목</button>
     <button type="button" class="tsub" data-box="fbExam" data-s="시험 내기" title="과제 적기 · 시험 내기로 바로 가기">시험 내기</button>
@@ -894,6 +895,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             <div class="fbody"><div class="sgrid">
               <label class="sgrow">과제 내용<textarea class="stask" id="fLTask" rows="2" placeholder="예: 듣기 22-23회"></textarea></label>
               <label>범위 (선택)<input type="text" class="srange" id="fLRange" placeholder="p.62–63"></label>
+            </div></div>
+          </div>
+          <div class="fbox sbox" id="fbEtc" data-subj="기타">
+            <div class="fhead"><b>📌 기타</b><span class="fsum" id="fsEtc"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">과제 내용<textarea class="stask" id="fEtcTask" rows="2" placeholder="예: 오답노트 정리, 준비물 챙기기"></textarea></label>
+              <label>범위 (선택)<input type="text" class="srange" id="fEtcRange" placeholder="p.62–63"></label>
             </div></div>
           </div>
           <div class="sa-in fbox" id="fSentsBox">
