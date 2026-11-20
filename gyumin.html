@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-20-imgs">
+<meta name="build" content="2026-11-20-imgfix">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -3604,9 +3604,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
  document.getElementById('pdfTitle').textContent='📄 '+(title||'학습자료');document.getElementById('pdfNew').href=u;document.getElementById('pdfFrame').src=u;ov.hidden=false;ov.style.display='flex';};
 document.getElementById('pdfClose').onclick=function(){var ov=document.getElementById('pdfOv');ov.hidden=true;ov.style.display='none';document.getElementById('pdfFrame').src='about:blank';};
 document.getElementById('pdfOv').style.display='none';</script>
-<div id="imgOv" style="position:fixed;inset:0;z-index:10050;background:rgba(15,23,42,.92);display:none;flex-direction:column">
-  <div style="display:flex;gap:6px;align-items:center;padding:8px 10px calc(8px);flex-wrap:wrap">
-    <b id="imgTitle" style="color:#fff;flex:1 1 140px;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b>
+<div id="imgOv" style="position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;box-sizing:border-box;z-index:10050;background:rgba(15,23,42,.92);display:none;flex-direction:column">
+  <div style="display:flex;gap:6px;align-items:center;justify-content:center;padding:8px 10px;flex-wrap:wrap;max-width:100vw;box-sizing:border-box">
+    <b id="imgTitle" style="color:#fff;flex:1 1 100%;text-align:center;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b>
     <button type="button" id="imgPrev" style="background:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700">◀</button>
     <span style="color:#fff;font-weight:700"><input id="imgNo" type="number" min="1" inputmode="numeric" style="width:3.4em;text-align:center;font-size:16px;border-radius:8px;border:none;padding:6px"> / <span id="imgCnt"></span>쪽</span>
     <button type="button" id="imgNext" style="background:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700">▶</button>
@@ -3615,7 +3615,9 @@ document.getElementById('pdfOv').style.display='none';</script>
   <div id="imgWrap" style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch;text-align:center;padding:0 6px 16px"><img id="imgPic" alt="학습자료" style="max-width:100%;background:#fff;border-radius:6px"></div>
 </div>
 <script>(function(){var L=[],i=0,ov=document.getElementById('imgOv'),pic=document.getElementById('imgPic'),no=document.getElementById('imgNo');
-function show(k){if(!L.length)return;i=Math.max(0,Math.min(L.length-1,k));pic.src=new URL(L[i],location.href).href;no.value=i+1;document.getElementById('imgWrap').scrollTop=0;}
+/* 사이트 게시가 늦으면(올린 직후 몇 분) GitHub 원본 주소에서 바로 불러와요 */
+pic.onerror=function(){var p=L[i];if(!p||/^data:|^https?:/.test(p)||pic.dataset.raw===p)return;pic.dataset.raw=p;pic.src='https://raw.githubusercontent.com/smartfinger1103/alrim/main/'+p+'?t='+Date.now();};
+function show(k){if(!L.length)return;i=Math.max(0,Math.min(L.length-1,k));pic.dataset.raw='';pic.src=new URL(L[i],location.href).href;no.value=i+1;document.getElementById('imgWrap').scrollTop=0;}
 window.alrimOpenImgs=function(list,title){L=list||[];document.getElementById('imgTitle').textContent='📄 '+(title||'학습자료');document.getElementById('imgCnt').textContent=L.length;no.max=L.length;ov.style.display='flex';show(0);};
 document.getElementById('imgPrev').onclick=function(){show(i-1)};document.getElementById('imgNext').onclick=function(){show(i+1)};
 no.onchange=function(){show((parseInt(no.value)||1)-1)};document.getElementById('imgClose').onclick=function(){ov.style.display='none';pic.src='';};
