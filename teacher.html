@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-18-mbar">
+<meta name="build" content="2026-11-20-imgs">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -762,6 +762,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" class="tsub" data-box="fbWords" data-s="외울 단어" title="과제 적기 · 외울 단어로 바로 가기">외울 단어</button>
     <button type="button" class="tsub" data-box="fbPron" data-s="발음 단어" title="과제 적기 · 발음 단어로 바로 가기">발음 단어</button>
     <button type="button" class="tsub" data-box="fbL" data-s="듣기" title="과제 적기 · 듣기로 바로 가기">듣기</button>
+    <button type="button" class="tsub" data-box="fbPdf" data-s="학습자료" title="과제 적기 · 학습자료(PDF)로 바로 가기">학습자료</button>
     <button type="button" class="tsub" data-box="fbEtc" data-s="기타" title="과제 적기 · 기타로 바로 가기">기타</button>
     <button type="button" class="tsub" data-box="fSentsBox" data-s="문장 연습" title="과제 적기 · 문장 연습로 바로 가기">문장 연습</button>
     <button type="button" class="tsub" data-box="fbTask" data-s="기타 과목" title="과제 적기 · 기타 과목로 바로 가기">기타 과목</button>
@@ -896,6 +897,21 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
               <label class="sgrow">과제 내용<textarea class="stask" id="fLTask" rows="2" placeholder="예: 듣기 22-23회"></textarea></label>
               <label>범위 (선택)<input type="text" class="srange" id="fLRange" placeholder="p.62–63"></label>
             </div></div>
+          </div>
+          <div class="fbox" id="fbPdf">
+            <div class="fhead"><b>📄 학습자료</b><span class="fsp"></span><button type="button" class="small primary" id="pdfSave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody"><div class="sgrid">
+              <label class="sgrow">학습자료 제목<input type="text" id="pdfTitleIn" placeholder="예: 관계대명사 정리 프린트"></label>
+            </div>
+            <div class="inmodes">
+              <div class="capzone" id="pdfCap" tabindex="0" role="button" aria-label="캡처 붙여넣기"><b>① 캡처 붙여넣기 (기본)</b><span>화면 캡처(Win+Shift+S) 후 이 칸을 누르고 <b>Ctrl+V</b>. 여러 장 붙이면 붙인 순서대로 1쪽, 2쪽…이 돼요. 이미지를 끌어다 놓아도 돼요.</span></div>
+              <div class="capzone file"><b>② 파일 올리기</b><span>사진(JPG·PNG) 여러 장 또는 PDF. PDF는 아래 페이지 범위만 이미지로 바꿔 올려요.</span>
+                <label class="btn primary">파일 고르기<input type="file" id="pdfFile" accept="application/pdf,.pdf,image/*" multiple></label></div>
+            </div>
+            <label class="lab" style="max-width:320px">PDF 페이지 범위 (PDF일 때만 · 예: 80-85, 90)<input type="text" id="pdfRange" placeholder="비우면 처음 30쪽까지"></label>
+            <div id="pdfPics" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+            <p class="hint">저장하면 이미지로 GitHub에 올라가고, 학생 화면 그날 과제에 "📄 학습자료 보기" 버튼이 생겨요. 학생은 PDF 앱 없이 쪽 번호로 넘겨 봐요. 저장소가 공개라 링크를 아는 사람은 볼 수 있으니 시판 교재·답지 전체는 올리지 마세요.</p>
+            <p class="hint" id="pdfMsg" role="status"></p></div>
           </div>
           <div class="fbox sbox" id="fbEtc" data-subj="기타">
             <div class="fhead"><b>📌 기타</b><span class="fsum" id="fsEtc"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
@@ -3401,6 +3417,8 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
         if (mt) tx.append(el('small', null, mt));
         const ws = it.words ? (isPron(it) ? pronWords(it.words) : parseWords(it.words, '')) : [];
         const act = el('div', 'nb-act');
+        if (it.imgs && it.imgs.length) { tx.append(el('small', 'nb-prog', '📄 학습자료 ' + it.imgs.length + '쪽')); const pb = el('button', 'nb-btn', '📄 학습자료 보기'); pb.type = 'button'; pb.onclick = () => window.alrimOpenImgs(it.imgs, it.task); act.style.flexDirection = 'column'; act.append(pb); }
+        else if (it.pdf) { tx.append(el('small', 'nb-prog', '📄 ' + (it.pdfName || 'PDF 학습자료'))); const pb = el('button', 'nb-btn', '📄 학습자료 보기'); pb.type = 'button'; pb.onclick = () => window.alrimOpenPdf(it.pdf, it.task); act.append(pb); }
         if (it.sents && saParse(it.sents).length) { const sn = saParse(it.sents), sd = saDoneN(it, sn); if (!d) tx.append(el('small', 'nb-prog', `문장 ${sd}/${sn.length}개 완성`)); const sb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '문장 다시 보기' : '✍️ 문장 분석'); sb.type = 'button'; sb.onclick = () => openSA(it); act.append(sb); }
         if (exOk(it)) {
           const XS = exGet(it), XN = it.exam.qs.length;
@@ -4250,6 +4268,102 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     try { await addWordFiles(files, $('fWords'), (t) => fwCount(t)); } finally { $('fFileZone').classList.remove('busy'); }
   };
 
+
+  /* 학습자료: 캡처·사진은 모아서 브라우저에서 PDF로 만들어 올려요 */
+  const PDFQ = { pdf: null, imgs: [] };
+  function pdfPicsRender() {
+    const box = $('pdfPics'); if (!box) return; box.textContent = '';
+    if (PDFQ.pdf) box.append(el('span', 'badge', '📄 ' + PDFQ.pdf.name));
+    PDFQ.imgs.forEach((u, i) => { const w = el('div'); w.style.cssText = 'position:relative'; const im = document.createElement('img'); im.src = u; im.style.cssText = 'width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line)';
+      const x = el('button', 'small', '✕'); x.type = 'button'; x.style.cssText = 'position:absolute;top:2px;right:2px;padding:0 6px'; x.onclick = () => { PDFQ.imgs.splice(i, 1); pdfPicsRender(); };
+      w.append(im, x, el('small', null, (i + 1) + '쪽')); box.append(w); });
+    if (PDFQ.imgs.length) $('pdfMsg').textContent = `학습자료 ${PDFQ.imgs.length}쪽 준비됨 · 저장을 누르면 이 순서대로 1쪽부터 올라가요.`;
+  }
+  const toJpeg = (blob) => new Promise((ok, no) => { const im = new Image(); im.onload = () => { const sc = Math.min(1, 2000 / Math.max(im.width, im.height)); const c = document.createElement('canvas'); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', 0.88)); URL.revokeObjectURL(im.src); }; im.onerror = no; im.src = URL.createObjectURL(blob); });
+  async function pdfAdd(files) {
+    for (const f of files) {
+      if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '')) await pdfToImgs(f);
+      else if (/^image\//.test(f.type)) PDFQ.imgs.push(await toJpeg(f));
+    }
+    pdfPicsRender();
+  }
+  /* PDF → 쪽마다 JPEG (pdf.js, 필요할 때만 불러옴) */
+  function pdfjs() { if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib); return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; ok(window.pdfjsLib); }; sc.onerror = () => no(new Error('PDF 읽기 도구를 불러오지 못했어요.')); document.head.append(sc); }); }
+  function parseRange(t, max) { const out = []; String(t || '').split(/[,\s]+/).forEach(x => { const m = x.match(/^(\d+)(?:[-~–](\d+))?$/); if (!m) return; const a = +m[1], b = +(m[2] || m[1]); for (let i = Math.min(a, b); i <= Math.max(a, b); i++) if (i >= 1 && i <= max && !out.includes(i)) out.push(i); }); return out; }
+  async function pdfToImgs(file) {
+    const msg = $('pdfMsg');
+    try {
+      msg.textContent = 'PDF를 여는 중…'; const lib = await pdfjs();
+      const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+      let pages = parseRange($('pdfRange').value, doc.numPages); if (!pages.length) pages = Array.from({ length: Math.min(30, doc.numPages) }, (_, i) => i + 1);
+      if (pages.length > 60) { pages = pages.slice(0, 60); }
+      for (let k = 0; k < pages.length; k++) {
+        msg.textContent = `PDF ${pages[k]}쪽을 이미지로 바꾸는 중… (${k + 1}/${pages.length})`;
+        const pg = await doc.getPage(pages[k]), v1 = pg.getViewport({ scale: 1 }), sc = Math.min(2.5, 1400 / v1.width), vp = pg.getViewport({ scale: sc });
+        const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        await pg.render({ canvasContext: g, viewport: vp }).promise; PDFQ.imgs.push(c.toDataURL('image/jpeg', 0.85));
+      }
+    } catch (e) { msg.textContent = e.message || 'PDF를 읽지 못했어요.'; }
+  }
+  /* JPEG 여러 장 → PDF (A4 폭에 맞춘 한 장씩) */
+  async function imgsToPdf(urls, name) {
+    const enc = new TextEncoder(), parts = [], offs = []; let len = 0;
+    const push = (x) => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
+    const objs = []; const n = urls.length; const kids = [];
+    push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    const obj = (id, body) => { offs[id] = len; push(id + ' 0 obj\n'); body.forEach(push); push('\nendobj\n'); };
+    const dims = await Promise.all(urls.map(u => new Promise(ok => { const im = new Image(); im.onload = () => ok([im.width, im.height]); im.src = u; })));
+    for (let i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
+    obj(1, ['<< /Type /Catalog /Pages 2 0 R >>']);
+    obj(2, ['<< /Type /Pages /Count ' + n + ' /Kids [' + kids.join(' ') + '] >>']);
+    for (let i = 0; i < n; i++) {
+      const [w, h] = dims[i], W = 595, H = Math.round(595 * h / w), p = 3 + i * 3;
+      const bin = Uint8Array.from(atob(urls[i].split(',')[1]), c => c.charCodeAt(0));
+      const cs = 'q ' + W + ' 0 0 ' + H + ' 0 0 cm /Im0 Do Q';
+      obj(p, ['<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] /Resources << /XObject << /Im0 ' + (p + 1) + ' 0 R >> >> /Contents ' + (p + 2) + ' 0 R >>']);
+      obj(p + 1, ['<< /Type /XObject /Subtype /Image /Width ' + w + ' /Height ' + h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + bin.length + ' >>\nstream\n', bin, '\nendstream']);
+      obj(p + 2, ['<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream']);
+    }
+    const total = 3 + n * 3, xref = len;
+    let x = 'xref\n0 ' + total + '\n0000000000 65535 f \n'; for (let i = 1; i < total; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+    push(x + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+    return new File(parts, name.replace(/[\\/:*?"<>|]/g, '_'), { type: 'application/pdf' });
+  }
+  if ($('pdfCap')) {
+    const cz = $('pdfCap');
+    cz.addEventListener('paste', e => { const fs = [...(e.clipboardData || {}).items || []].filter(i => i.kind === 'file').map(i => i.getAsFile()).filter(Boolean); if (fs.length) { e.preventDefault(); pdfAdd(fs); } });
+    cz.addEventListener('click', () => cz.focus());
+    cz.addEventListener('dragover', e => { e.preventDefault(); cz.classList.add('over'); });
+    cz.addEventListener('dragleave', () => cz.classList.remove('over'));
+    cz.addEventListener('drop', e => { e.preventDefault(); cz.classList.remove('over'); pdfAdd([...e.dataTransfer.files]); });
+    $('pdfFile').addEventListener('change', () => pdfAdd([...$('pdfFile').files]));
+  }
+
+  /* ---------- 학습자료(PDF) 올리기 ---------- */
+  $('pdfSave') && ($('pdfSave').onclick = async () => {
+    const title = $('pdfTitleIn').value.trim(), msg = $('pdfMsg');
+    if (!PDFQ.imgs.length) { msg.textContent = '캡처를 붙여넣거나 파일을 골라 주세요.'; return; }
+    let token = ($('githubToken') && $('githubToken').value.trim()) || ''; try { token = token || localStorage.getItem('alrim:github-save-token') || ''; } catch (_) {}
+    if (!token) { msg.textContent = '먼저 저장 칸의 "GitHub 저장 연결"에 저장 권한을 넣어 주세요.'; return; }
+    const date = $('fDate').value, who = $('fWho').value;
+    const dir = 'materials/' + date + '-' + Date.now().toString(36) + '/', paths = [];
+    $('pdfSave').disabled = true;
+    try {
+      for (let i = 0; i < PDFQ.imgs.length; i++) {
+        msg.textContent = `학습자료 올리는 중… ${i + 1}/${PDFQ.imgs.length}쪽`;
+        const path = dir + (i + 1) + '.jpg';
+        const res = await fetch('https://api.github.com/repos/smartfinger1103/alrim/contents/' + path, { method: 'PUT', headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: '학습자료 올리기: ' + (title || '학습자료') + ' ' + (i + 1) + '쪽', content: PDFQ.imgs[i].split(',')[1], branch: 'main' }) });
+        if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? 'GitHub 권한을 확인해 주세요.' : (i + 1) + '쪽을 올리지 못했어요 (' + res.status + '). 다시 저장을 눌러 주세요.');
+        paths.push(path);
+      }
+      const e = { id: uid(), date, who, subject: '학습자료', task: title || '학습자료', imgs: paths };
+      D.entries.push(e); state.date = date; changed();
+      $('pdfFile').value = ''; $('pdfTitleIn').value = ''; PDFQ.pdf = null; PDFQ.imgs = []; pdfPicsRender();
+      msg.textContent = '✅ "' + e.task + '"를 올렸어요. 이제 맨 아래 "두 학생 과제 저장하기"를 눌러야 학생 화면에 보여요. (사진 반영까지 1~2분)';
+    } catch (err) { msg.textContent = err.message || 'PDF를 올리지 못했어요.'; }
+    finally { $('pdfSave').disabled = false; }
+  });
 
   /* ---------- 단어 뜻(한글) 오타 자동 수정 ---------- */
   const KO_TYPO = [[/몇일/g,'며칠'],[/몇 일/g,'며칠'],[/어떻해/g,'어떻게'],[/왠만/g,'웬만'],[/금새/g,'금세'],[/설겆이/g,'설거지'],[/희안/g,'희한'],[/희얀/g,'희한'],[/역활/g,'역할'],
@@ -5429,4 +5543,34 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}#mTop{bottom:calc(9
 <style>#mTop{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:9999;width:48px;height:48px;border-radius:50%;border:none;background:#4f46e5;color:#fff;font-size:22px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;cursor:pointer}
 #mTop.on{opacity:.92;pointer-events:auto}@media (min-width:821px){#mTop{display:none}}</style>
 <script>(function(){var b=document.getElementById('mTop');function u(){b.classList.toggle('on',(window.scrollY||document.documentElement.scrollTop)>300)}window.addEventListener('scroll',u,{passive:true});u();b.onclick=function(){window.scrollTo({top:0,behavior:'smooth'})}})();</script>
+<div id="pdfOv" hidden style="position:fixed;inset:0;z-index:10050;background:rgba(15,23,42,.75);display:flex;flex-direction:column;padding:10px">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><b id="pdfTitle" style="color:#fff;flex:1;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b>
+  <a id="pdfNew" target="_blank" rel="noopener" style="background:#fff;color:#3730a3;border-radius:10px;padding:8px 12px;font-weight:700;text-decoration:none">새 창으로</a>
+  <button type="button" id="pdfClose" style="background:#4f46e5;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:700">닫기 ✕</button></div>
+  <iframe id="pdfFrame" title="학습자료" style="flex:1;width:100%;border:none;border-radius:10px;background:#fff"></iframe>
+</div>
+<script>window.alrimOpenPdf=function(url,title){var ov=document.getElementById('pdfOv');var u=new URL(url,location.href).href;
+ /* 휴대폰 브라우저는 화면 안에서 PDF를 잘 못 보여줘서 새 창(기본 PDF 보기)으로 열어요 */
+ if(matchMedia('(pointer:coarse)').matches&&innerWidth<820){window.open(u,'_blank','noopener');return;}
+ document.getElementById('pdfTitle').textContent='📄 '+(title||'학습자료');document.getElementById('pdfNew').href=u;document.getElementById('pdfFrame').src=u;ov.hidden=false;ov.style.display='flex';};
+document.getElementById('pdfClose').onclick=function(){var ov=document.getElementById('pdfOv');ov.hidden=true;ov.style.display='none';document.getElementById('pdfFrame').src='about:blank';};
+document.getElementById('pdfOv').style.display='none';</script>
+<div id="imgOv" style="position:fixed;inset:0;z-index:10050;background:rgba(15,23,42,.92);display:none;flex-direction:column">
+  <div style="display:flex;gap:6px;align-items:center;padding:8px 10px calc(8px);flex-wrap:wrap">
+    <b id="imgTitle" style="color:#fff;flex:1 1 140px;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b>
+    <button type="button" id="imgPrev" style="background:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700">◀</button>
+    <span style="color:#fff;font-weight:700"><input id="imgNo" type="number" min="1" inputmode="numeric" style="width:3.4em;text-align:center;font-size:16px;border-radius:8px;border:none;padding:6px"> / <span id="imgCnt"></span>쪽</span>
+    <button type="button" id="imgNext" style="background:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700">▶</button>
+    <button type="button" id="imgClose" style="background:#4f46e5;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:700">닫기 ✕</button>
+  </div>
+  <div id="imgWrap" style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch;text-align:center;padding:0 6px 16px"><img id="imgPic" alt="학습자료" style="max-width:100%;background:#fff;border-radius:6px"></div>
+</div>
+<script>(function(){var L=[],i=0,ov=document.getElementById('imgOv'),pic=document.getElementById('imgPic'),no=document.getElementById('imgNo');
+function show(k){if(!L.length)return;i=Math.max(0,Math.min(L.length-1,k));pic.src=new URL(L[i],location.href).href;no.value=i+1;document.getElementById('imgWrap').scrollTop=0;}
+window.alrimOpenImgs=function(list,title){L=list||[];document.getElementById('imgTitle').textContent='📄 '+(title||'학습자료');document.getElementById('imgCnt').textContent=L.length;no.max=L.length;ov.style.display='flex';show(0);};
+document.getElementById('imgPrev').onclick=function(){show(i-1)};document.getElementById('imgNext').onclick=function(){show(i+1)};
+no.onchange=function(){show((parseInt(no.value)||1)-1)};document.getElementById('imgClose').onclick=function(){ov.style.display='none';pic.src='';};
+var sx=null;pic.addEventListener('touchstart',function(e){if(e.touches.length===1)sx=e.touches[0].clientX},{passive:true});
+pic.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>60)show(i+(dx<0?1:-1))},{passive:true});
+document.addEventListener('keydown',function(e){if(ov.style.display!=='flex')return;if(e.key==='ArrowRight')show(i+1);if(e.key==='ArrowLeft')show(i-1);if(e.key==='Escape')ov.style.display='none';});})();</script>
 </body></html>
