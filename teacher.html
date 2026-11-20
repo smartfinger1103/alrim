@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-20-prange">
+<meta name="build" content="2026-11-20-pdfprev">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -908,7 +908,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
               <div class="capzone file"><b>② 파일 올리기</b><span>사진(JPG·PNG) 여러 장 또는 PDF. PDF는 아래 페이지 범위만 이미지로 바꿔 올려요.</span>
                 <label class="btn primary">파일 고르기<input type="file" id="pdfFile" accept="application/pdf,.pdf,image/*" multiple></label></div>
             </div>
-            <label class="lab" style="max-width:320px">PDF 페이지 범위 (PDF일 때만 · 예: 80-85, 90)<input type="text" id="pdfRange" placeholder="예: p.31, p.32 / 31-35 · 비우면 처음 30쪽"></label>
+            <label class="lab" style="max-width:320px">PDF 페이지 범위 (PDF일 때만 · 고치면 미리보기가 바로 바뀌어요)<input type="text" id="pdfRange" placeholder="예: p.31, p.32 / 31-35 · 비우면 처음 30쪽"></label>
             <div id="pdfPics" style="display:flex;flex-wrap:wrap;gap:6px"></div>
             <p class="hint">저장하면 이미지로 GitHub에 올라가고, 학생 화면 그날 과제에 "📄 학습자료 보기" 버튼이 생겨요. 학생은 PDF 앱 없이 쪽 번호로 넘겨 봐요. 저장소가 공개라 링크를 아는 사람은 볼 수 있으니 시판 교재·답지 전체는 올리지 마세요.</p>
             <p class="hint" id="pdfMsg" role="status"></p></div>
@@ -4270,20 +4270,23 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
 
 
   /* 학습자료: 캡처·사진은 모아서 브라우저에서 PDF로 만들어 올려요 */
-  const PDFQ = { pdf: null, imgs: [] };
+  const PDFQ = { pdf: null, imgs: [], labs: [], pdfFile: null, gen: 0 };
   function pdfPicsRender() {
     const box = $('pdfPics'); if (!box) return; box.textContent = '';
-    if (PDFQ.pdf) box.append(el('span', 'badge', '📄 ' + PDFQ.pdf.name));
-    PDFQ.imgs.forEach((u, i) => { const w = el('div'); w.style.cssText = 'position:relative'; const im = document.createElement('img'); im.src = u; im.style.cssText = 'width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line)';
-      const x = el('button', 'small', '✕'); x.type = 'button'; x.style.cssText = 'position:absolute;top:2px;right:2px;padding:0 6px'; x.onclick = () => { PDFQ.imgs.splice(i, 1); pdfPicsRender(); };
-      w.append(im, x, el('small', null, (i + 1) + '쪽')); box.append(w); });
-    if (PDFQ.imgs.length) $('pdfMsg').textContent = `학습자료 ${PDFQ.imgs.length}쪽 준비됨 · 저장을 누르면 이 순서대로 1쪽부터 올라가요.`;
+    PDFQ.imgs.forEach((u, i) => { const w = el('div'); w.style.cssText = 'position:relative;width:118px;display:flex;flex-direction:column;gap:2px;align-items:center';
+      const im = document.createElement('img'); im.src = u; im.title = '눌러서 크게 보기'; im.style.cssText = 'width:118px;height:160px;object-fit:contain;background:#fff;border-radius:8px;border:2px solid var(--line);cursor:zoom-in';
+      im.onclick = () => window.alrimOpenImgs && window.alrimOpenImgs(PDFQ.imgs, '올라갈 학습자료 미리보기');
+      const x = el('button', 'small', '✕'); x.type = 'button'; x.title = '이 쪽 빼기'; x.style.cssText = 'position:absolute;top:4px;right:4px;padding:0 6px'; x.onclick = () => { PDFQ.imgs.splice(i, 1); PDFQ.labs.splice(i, 1); pdfPicsRender(); };
+      const cap = el('small', null, ''); cap.style.cssText = 'text-align:center;line-height:1.25'; cap.append(el('b', null, (i + 1) + '쪽'));
+      if (PDFQ.labs[i] && PDFQ.labs[i] !== '캡처') cap.append(document.createElement('br'), PDFQ.labs[i]);
+      w.append(im, x, cap); box.append(w); });
+    if (PDFQ.imgs.length) $('pdfMsg').textContent = `학습자료 ${PDFQ.imgs.length}쪽 준비됨 · 학생에게 이 순서대로 1쪽부터 보여요. 그림을 누르면 크게 볼 수 있어요.`;
   }
   const toJpeg = (blob) => new Promise((ok, no) => { const im = new Image(); im.onload = () => { const sc = Math.min(1, 2000 / Math.max(im.width, im.height)); const c = document.createElement('canvas'); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', 0.88)); URL.revokeObjectURL(im.src); }; im.onerror = no; im.src = URL.createObjectURL(blob); });
   async function pdfAdd(files) {
     for (const f of files) {
       if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '')) await pdfToImgs(f);
-      else if (/^image\//.test(f.type)) PDFQ.imgs.push(await toJpeg(f));
+      else if (/^image\//.test(f.type)) { PDFQ.imgs.push(await toJpeg(f)); PDFQ.labs.push('캡처'); }
     }
     pdfPicsRender();
   }
@@ -4292,7 +4295,10 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; ok(window.pdfjsLib); }; sc.onerror = () => no(new Error('PDF 읽기 도구를 불러오지 못했어요.')); document.head.append(sc); }); }
   function parseRange(t, max) { const out = []; String(t || '').replace(/pp?\.?\s*|쪽|페이지|page/gi, '').replace(/\s*[-~–]\s*/g, '-').split(/[,\s/]+/).forEach(x => { const m = x.match(/^(\d+)(?:[-~–](\d+))?$/); if (!m) return; const a = +m[1], b = +(m[2] || m[1]); for (let i = Math.min(a, b); i <= Math.max(a, b); i++) if (i >= 1 && i <= max && !out.includes(i)) out.push(i); }); return out; }
   async function pdfToImgs(file) {
-    const msg = $('pdfMsg');
+    const msg = $('pdfMsg'), gen = ++PDFQ.gen; PDFQ.pdfFile = file;
+    /* 페이지 범위를 바꾸면 전에 PDF에서 가져온 쪽은 빼고 새로 만들어요 (캡처는 그대로) */
+    for (let k = PDFQ.labs.length - 1; k >= 0; k--) if (/^PDF /.test(PDFQ.labs[k])) { PDFQ.imgs.splice(k, 1); PDFQ.labs.splice(k, 1); }
+    pdfPicsRender();
     try {
       msg.textContent = 'PDF를 여는 중…'; const lib = await pdfjs();
       const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -4302,10 +4308,12 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       if (!pages.length) pages = Array.from({ length: Math.min(30, doc.numPages) }, (_, i) => i + 1);
       if (pages.length > 60) { pages = pages.slice(0, 60); }
       for (let k = 0; k < pages.length; k++) {
+        if (gen !== PDFQ.gen) return;
         msg.textContent = `PDF ${pages[k]}쪽을 이미지로 바꾸는 중… (${k + 1}/${pages.length})`;
         const pg = await doc.getPage(pages[k]), v1 = pg.getViewport({ scale: 1 }), sc = Math.min(2.5, 1400 / v1.width), vp = pg.getViewport({ scale: sc });
         const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-        await pg.render({ canvasContext: g, viewport: vp }).promise; PDFQ.imgs.push(c.toDataURL('image/jpeg', 0.85));
+        await pg.render({ canvasContext: g, viewport: vp }).promise; if (gen !== PDFQ.gen) return;
+        PDFQ.imgs.push(c.toDataURL('image/jpeg', 0.85)); PDFQ.labs.push('PDF p.' + pages[k]); pdfPicsRender();
       }
     } catch (e) { msg.textContent = e.message || 'PDF를 읽지 못했어요.'; }
   }
@@ -4341,6 +4349,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     cz.addEventListener('dragleave', () => cz.classList.remove('over'));
     cz.addEventListener('drop', e => { e.preventDefault(); cz.classList.remove('over'); pdfAdd([...e.dataTransfer.files]); });
     $('pdfFile').addEventListener('change', () => pdfAdd([...$('pdfFile').files]));
+    let rT = null; $('pdfRange').addEventListener('input', () => { clearTimeout(rT); rT = setTimeout(() => { if (PDFQ.pdfFile) pdfToImgs(PDFQ.pdfFile).then(pdfPicsRender); }, 800); });
   }
 
   /* ---------- 학습자료(PDF) 올리기 ---------- */
@@ -4362,7 +4371,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       }
       const e = { id: uid(), date, who, subject: '학습자료', task: title || '학습자료', imgs: paths };
       D.entries.push(e); state.date = date; changed();
-      $('pdfFile').value = ''; $('pdfTitleIn').value = ''; PDFQ.pdf = null; PDFQ.imgs = []; pdfPicsRender();
+      $('pdfFile').value = ''; $('pdfTitleIn').value = ''; PDFQ.pdf = null; PDFQ.imgs = []; PDFQ.labs = []; PDFQ.pdfFile = null; $('pdfRange').value = ''; pdfPicsRender();
       msg.textContent = '✅ "' + e.task + '"를 올렸어요. 이제 맨 아래 "두 학생 과제 저장하기"를 눌러야 학생 화면에 보여요. (사진 반영까지 1~2분)';
     } catch (err) { msg.textContent = err.message || 'PDF를 올리지 못했어요.'; }
     finally { $('pdfSave').disabled = false; }
