@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-20-imgs">
+<meta name="build" content="2026-11-20-prange">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -908,7 +908,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
               <div class="capzone file"><b>② 파일 올리기</b><span>사진(JPG·PNG) 여러 장 또는 PDF. PDF는 아래 페이지 범위만 이미지로 바꿔 올려요.</span>
                 <label class="btn primary">파일 고르기<input type="file" id="pdfFile" accept="application/pdf,.pdf,image/*" multiple></label></div>
             </div>
-            <label class="lab" style="max-width:320px">PDF 페이지 범위 (PDF일 때만 · 예: 80-85, 90)<input type="text" id="pdfRange" placeholder="비우면 처음 30쪽까지"></label>
+            <label class="lab" style="max-width:320px">PDF 페이지 범위 (PDF일 때만 · 예: 80-85, 90)<input type="text" id="pdfRange" placeholder="예: p.31, p.32 / 31-35 · 비우면 처음 30쪽"></label>
             <div id="pdfPics" style="display:flex;flex-wrap:wrap;gap:6px"></div>
             <p class="hint">저장하면 이미지로 GitHub에 올라가고, 학생 화면 그날 과제에 "📄 학습자료 보기" 버튼이 생겨요. 학생은 PDF 앱 없이 쪽 번호로 넘겨 봐요. 저장소가 공개라 링크를 아는 사람은 볼 수 있으니 시판 교재·답지 전체는 올리지 마세요.</p>
             <p class="hint" id="pdfMsg" role="status"></p></div>
@@ -4290,13 +4290,16 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
   /* PDF → 쪽마다 JPEG (pdf.js, 필요할 때만 불러옴) */
   function pdfjs() { if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib); return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
     sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; ok(window.pdfjsLib); }; sc.onerror = () => no(new Error('PDF 읽기 도구를 불러오지 못했어요.')); document.head.append(sc); }); }
-  function parseRange(t, max) { const out = []; String(t || '').split(/[,\s]+/).forEach(x => { const m = x.match(/^(\d+)(?:[-~–](\d+))?$/); if (!m) return; const a = +m[1], b = +(m[2] || m[1]); for (let i = Math.min(a, b); i <= Math.max(a, b); i++) if (i >= 1 && i <= max && !out.includes(i)) out.push(i); }); return out; }
+  function parseRange(t, max) { const out = []; String(t || '').replace(/pp?\.?\s*|쪽|페이지|page/gi, '').replace(/\s*[-~–]\s*/g, '-').split(/[,\s/]+/).forEach(x => { const m = x.match(/^(\d+)(?:[-~–](\d+))?$/); if (!m) return; const a = +m[1], b = +(m[2] || m[1]); for (let i = Math.min(a, b); i <= Math.max(a, b); i++) if (i >= 1 && i <= max && !out.includes(i)) out.push(i); }); return out; }
   async function pdfToImgs(file) {
     const msg = $('pdfMsg');
     try {
       msg.textContent = 'PDF를 여는 중…'; const lib = await pdfjs();
       const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
-      let pages = parseRange($('pdfRange').value, doc.numPages); if (!pages.length) pages = Array.from({ length: Math.min(30, doc.numPages) }, (_, i) => i + 1);
+      const rt = $('pdfRange').value.trim();
+      let pages = parseRange(rt, doc.numPages);
+      if (rt && !pages.length) { msg.textContent = `페이지 범위 "${rt}"를 읽지 못했어요. 예: 31, 32 또는 p.31-35 (이 PDF는 ${doc.numPages}쪽까지 있어요)`; return; }
+      if (!pages.length) pages = Array.from({ length: Math.min(30, doc.numPages) }, (_, i) => i + 1);
       if (pages.length > 60) { pages = pages.slice(0, 60); }
       for (let k = 0; k < pages.length; k++) {
         msg.textContent = `PDF ${pages[k]}쪽을 이미지로 바꾸는 중… (${k + 1}/${pages.length})`;
