@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-20-imgfix">
+<meta name="build" content="2026-11-22-verify">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -1030,6 +1030,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <p class="hint">적은 과제를 저장해요. 휴대폰 등 다른 기기에서 교사 앱을 열어도 같은 내용이 보여요.</p>
           <div class="row">
             <button class="primary" id="publish" type="button">저장하기</button>
+            <button id="verifyBtn" type="button" title="저장된 과제가 학생 화면에 제대로 들어갔는지 확인해요">🔎 검증하기</button>
             <button id="toStudent" type="button">학생 화면 미리보기</button>
           </div>
           <div class="status" id="pubStatus"></div>
@@ -4376,6 +4377,80 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     } catch (err) { msg.textContent = err.message || 'PDF를 올리지 못했어요.'; }
     finally { $('pdfSave').disabled = false; }
   });
+
+  /* ---------- 검증하기: 과제 내용 점검 + 저장본 대조 + 학생 화면·학습자료 확인 ---------- */
+  (function () {
+    const btn = $('verifyBtn'); if (!btn) return;
+    const box = el('div'); box.id = 'verifyBox'; box.hidden = true;
+    box.style.cssText = 'margin-top:10px;padding:12px;border:2px solid var(--accent);border-radius:12px;background:var(--bg);display:flex;flex-direction:column;gap:6px;font-size:0.92rem';
+    (btn.closest('.row') || btn.parentNode).after(box);
+    const ROSTER = { gyumin: '김규민', sua: '조수아' }, REPO = 'https://api.github.com/repos/smartfinger1103/alrim/contents/';
+    const FIELDS = ['date', 'subject', 'task', 'range', 'note', 'words', 'sents', 'exam', 'imgs', 'pdf', 'book', 'chap', 'carry', 'due'];
+    const sig = (e) => JSON.stringify(FIELDS.map(k => e[k] === undefined || e[k] === null || e[k] === false ? '' : e[k]));
+    const name1 = (e) => (e.date || '').slice(5).replace('-', '/') + ' ' + (e.subject ? e.subject + ' · ' : '') + String(e.task || '').split('\n')[0].slice(0, 24);
+    const few = (a) => a.slice(0, 3).map(name1).join(' / ') + (a.length > 3 ? ' 외 ' + (a.length - 3) + '개' : '');
+    const line = (lv, text, sub) => { const r = el('div'); r.style.cssText = 'display:flex;gap:8px;align-items:flex-start'; const t = el('div'); t.append(el('b', null, text)); if (sub) { const sm = el('small', null, sub); sm.style.cssText = 'display:block;color:var(--muted);white-space:pre-line'; t.append(sm); }
+      r.append(el('span', null, lv === 'ok' ? '✅' : lv === 'warn' ? '⚠️' : lv === 'err' ? '❌' : lv === 'info' ? '📤' : '⏳'), t); box.append(r); return r; };
+    const head = (t) => { const h = el('div', null, t); h.style.cssText = 'font-weight:700;color:var(--accent);margin-top:6px'; box.append(h); };
+    const imgOk = (url) => new Promise(ok => { const im = new Image(); const t = setTimeout(() => ok(false), 12000); im.onload = () => { clearTimeout(t); ok(im.naturalWidth > 0); }; im.onerror = () => { clearTimeout(t); ok(false); }; im.src = url; });
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    btn.onclick = async () => {
+      btn.disabled = true; box.hidden = false; box.textContent = '';
+      const tot = { err: 0, warn: 0 }; let pending = 0; const L = (lv, a, b) => { if (tot[lv] !== undefined) tot[lv]++; return line(lv, a, b); };
+      const top = el('div', null, '🔎 검증하는 중…'); top.style.cssText = 'font-family:var(--font-display);font-size:1.15rem'; box.append(top);
+      try {
+        const cut = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
+        const recent = D.entries.filter(e => (e.date || '') >= cut);
+        /* 1. 과제 내용 점검 */
+        head('① 과제 내용 (최근 2주 · ' + recent.length + '개)');
+        const inter = recent.filter(hcInteractive);
+        let R = inter.map(it => ({ it, P: hcCheck(it) }));
+        for (let k = 0; k < 10 && R.some(r => r.P.some(p => p.lv === 'wait')); k++) { await sleep(1500); R = inter.map(it => ({ it, P: hcCheck(it) })); }
+        let bad = 0;
+        R.forEach(r => r.P.filter(p => p.lv === 'err' || p.lv === 'warn').forEach(p => { bad++; L(p.lv, name1(r.it), (p.msg || p.text || '') + (p.fix ? '  → 미리보기 위 "🔧 해결하기"로 고칠 수 있어요' : '')); }));
+        recent.filter(e => e.words && !isPronE(e)).forEach(e => { const ws = parseWords(e.words, ''), no = ws.filter(w => !String(w.ko || '').trim() || /뜻 확인/.test(w.ko) || !/[가-힣]/.test(w.ko));
+          if (no.length) { bad++; L('warn', name1(e), '뜻이 비었거나 한글이 없는 단어 ' + no.length + '개: ' + no.slice(0, 5).map(w => w.en).join(', ') + (no.length > 5 ? ' …' : '') + '\n원본(캡처·파일)과 견줘서 외울 단어 칸에서 고쳐 주세요.'); } });
+        recent.filter(e => !String(e.task || '').trim()).forEach(e => { bad++; L('err', name1(e), '과제 내용이 비어 있어요.'); });
+        if (!bad) line('ok', '단어·발음·듣기·시험·문장 과제 ' + inter.length + '개를 돌려 봤어요. 문제 없어요.');
+        /* 2. 저장본 대조 */
+        head('② 저장본과 대조 (저장하면 무엇이 올라가는지)');
+        let remote = null;
+        try { const r = await fetch(REPO + 'data/homework.json?ref=main&t=' + Date.now(), { cache: 'no-store', headers: { Accept: 'application/vnd.github.raw' } }); if (!r.ok) throw 0; remote = await r.json(); }
+        catch (e) { L('err', '저장본을 불러오지 못했어요.', '인터넷 연결을 확인하고 다시 눌러 주세요.'); }
+        if (remote) for (const [id, nm] of Object.entries(ROSTER)) {
+          const st = (remote.students || {})[id]; if (!st) { L('err', nm + ': 저장본에 학생이 없어요.', '"두 학생 과제 저장하기"를 눌러 주세요.'); continue; }
+          let rd; try { rd = JSON.parse(st.data); } catch (e) { L('err', nm + ': 저장본을 읽지 못했어요.'); continue; }
+          const mine = D.entries.filter(e => !e.who || e.who === nm), rm = new Map((rd.entries || []).map(e => [e.id, e])), lm = new Map(mine.map(e => [e.id, e]));
+          const miss = mine.filter(e => !rm.has(e.id)), diff = mine.filter(e => rm.has(e.id) && sig(rm.get(e.id)) !== sig(e)), gone = (rd.entries || []).filter(e => !lm.has(e.id));
+          if (!miss.length && !diff.length && !gone.length) line('ok', nm + ': 과제 ' + mine.length + '개가 화면과 똑같이 저장돼 있어요.', '마지막 저장 ' + String(st.updated || '').slice(0, 16).replace('T', ' ') + ' (세계 표준시)');
+          else { pending += miss.length + diff.length + gone.length; line('info', nm + ': 저장하면 올라갈 변경이 있어요.', [miss.length ? '아직 저장 안 된 과제 ' + miss.length + '개: ' + few(miss) : '', diff.length ? '고쳤는데 저장 안 된 과제 ' + diff.length + '개: ' + few(diff) : '', gone.length ? '화면에는 없는데 저장본에 남은 과제 ' + gone.length + '개: ' + few(gone) : ''].filter(Boolean).join('\n')); }
+        }
+        /* 3. 학생 화면 */
+        head('③ 학생 화면 (학생 링크)');
+        const web = /^https?:/.test(location.protocol) ? new URL('.', location.href).href : 'https://smartfinger1103.github.io/alrim/';
+        for (const [id, nm] of Object.entries(ROSTER)) {
+          try { const r = await fetch(web + id + '.html?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw 0; const t = await r.text();
+            if (!/id="studentView"/.test(t)) L('err', nm + ' 화면 파일이 이상해요.', id + '.html'); else line('ok', nm + ' 화면이 열려요.', web + id + '.html'); }
+          catch (e) { L('err', nm + ' 화면을 열지 못했어요.', web + id + '.html'); }
+        }
+        if (remote) { try { const r = await fetch(web + 'data/homework.json?t=' + Date.now(), { cache: 'no-store' }); const live = await r.json();
+            const lag = Object.keys(ROSTER).filter(id => ((live.students || {})[id] || {}).updated !== ((remote.students || {})[id] || {}).updated);
+            if (lag.length) line('info', '학생 링크에 아직 반영 중이에요.', '저장은 됐고 사이트 게시를 기다리는 중이에요. 보통 1~3분 걸려요.'); else line('ok', '학생 링크에 최신 저장본이 반영돼 있어요.'); }
+          catch (e) { L('warn', '학생 링크의 반영 여부를 확인하지 못했어요.'); } }
+        /* 4. 학습자료 그림 */
+        const mats = recent.filter(e => e.imgs && e.imgs.length);
+        if (mats.length) { head('④ 학습자료 그림');
+          for (const e of mats) { let site = 0, raw = 0; const badp = [];
+            for (let k = 0; k < e.imgs.length; k++) { if (await imgOk(web + e.imgs[k] + '?t=' + Date.now())) site++; else if (await imgOk('https://raw.githubusercontent.com/smartfinger1103/alrim/main/' + e.imgs[k] + '?t=' + Date.now())) raw++; else badp.push(k + 1); }
+            if (badp.length) L('err', name1(e), e.imgs.length + '쪽 중 ' + badp.join(', ') + '쪽 그림이 안 열려요. 학습자료를 다시 올려 주세요.');
+            else line('ok', name1(e), e.imgs.length + '쪽 모두 열려요.' + (raw ? ' (' + raw + '쪽은 아직 게시 중이라 GitHub 원본에서 보여요)' : '')); } }
+        top.textContent = tot.err ? '❌ 검증 결과: 오류 ' + tot.err + '개' + (tot.warn ? ' · 확인 ' + tot.warn + '개' : '') : tot.warn ? '⚠️ 검증 결과: 오류 없음 · 확인할 것 ' + tot.warn + '개' : pending ? '✅ 검증 완료 · 이제 "두 학생 과제 저장하기"를 눌러 주세요 (올라갈 변경 ' + pending + '개)' : '✅ 검증 완료 · 화면과 저장본이 같아요 (새로 저장할 것 없음)';
+        if (tot.err || tot.warn) { const g = el('div', null, tot.err ? '오류를 고친 뒤 다시 검증하고 저장해 주세요.' : '확인할 것을 살펴본 뒤, 괜찮으면 그대로 저장해도 돼요.'); g.style.fontWeight = '600'; top.after(g); }
+        const note = el('small', null, '원본 캡처·파일 자체는 앱에 남지 않아서 글자를 하나하나 대조하지는 못해요. 뜻이 비었거나 이상한 단어를 대신 짚어 드려요.'); note.style.color = 'var(--muted)'; box.append(note);
+      } catch (er) { top.textContent = '❌ 검증 중 오류가 났어요: ' + (er && er.message || er); }
+      finally { btn.disabled = false; }
+    };
+  })();
 
   /* ---------- 단어 뜻(한글) 오타 자동 수정 ---------- */
   const KO_TYPO = [[/몇일/g,'며칠'],[/몇 일/g,'며칠'],[/어떻해/g,'어떻게'],[/왠만/g,'웬만'],[/금새/g,'금세'],[/설겆이/g,'설거지'],[/희안/g,'희한'],[/희얀/g,'희한'],[/역활/g,'역할'],
