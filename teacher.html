@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-22-perstu">
+<meta name="build" content="2026-11-22-pertab">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -1026,8 +1026,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           <label>암기 결과 받을 구글 설문지 링크 (선택)<input type="text" id="resultUrl" placeholder="NAME · SCORE · WRONG을 미리 채운 링크"></label>
         </div>
         <div class="wordbox">
-          <div class="row"><b>① 저장하기</b></div>
-          <p class="hint">적은 과제를 저장해요. 휴대폰 등 다른 기기에서 교사 앱을 열어도 같은 내용이 보여요.</p>
+          <div class="row"><b>① 검증하고 저장하기 (학생별)</b></div>
+          <p class="hint">지금 고른 학생의 과제만 검증하고 저장해요. 다른 학생은 위에서 학생을 바꾼 뒤 따로 해요. 휴대폰 등 다른 기기에서 교사 앱을 열어도 같은 내용이 보여요.</p>
           <div class="row">
             <button class="primary" id="publish" type="button">저장하기</button>
             <button id="toStudent" type="button">학생 화면 미리보기</button>
@@ -4373,7 +4373,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       const e = { id: uid(), date, who, subject: '학습자료', task: title || '학습자료', imgs: paths };
       D.entries.push(e); state.date = date; changed();
       $('pdfFile').value = ''; $('pdfTitleIn').value = ''; PDFQ.pdf = null; PDFQ.imgs = []; PDFQ.labs = []; PDFQ.pdfFile = null; $('pdfRange').value = ''; pdfPicsRender();
-      msg.textContent = '✅ "' + e.task + '"를 올렸어요. 이제 맨 아래 "두 학생 과제 저장하기"를 눌러야 학생 화면에 보여요. (사진 반영까지 1~2분)';
+      msg.textContent = '✅ "' + e.task + '"를 올렸어요. 이제 저장 칸에서 그 학생을 검증하고 저장해야 학생 화면에 보여요. (사진 반영까지 1~2분)';
     } catch (err) { msg.textContent = err.message || 'PDF를 올리지 못했어요.'; }
     finally { $('pdfSave').disabled = false; }
   });
@@ -4399,8 +4399,15 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       const nmB = el('b', null, nm); nmB.style.minWidth = '4.5em';
       const v = el('button', null, '🔎 ' + nm + ' 검증'); v.type = 'button'; v.onclick = () => run(id, v);
       const sv = el('button', 'primary', '💾 ' + nm + '만 저장'); sv.type = 'button'; sv.onclick = () => { if (window.alrimSaveOne) window.alrimSaveOne(id); else $('pubStatus').textContent = '저장 연결을 불러오지 못했어요. 새로고침해 주세요.'; };
-      r.append(nmB, v, sv); host.append(r);
+      r.dataset.who = nm; r.append(nmB, v, sv); host.append(r);
     });
+    /* 지금 고른 학생의 검증·저장만 보여요 (두 학생 동시 저장은 숨김) */
+    const pick = el('p', 'hint', '위에서 학생(김규민 / 조수아)을 고르면 그 학생의 검증·저장 버튼이 나와요.'); host.append(pick);
+    let shown = null;
+    const syncRows = () => { const pb = $('publish'); if (pb && pb.style.display !== 'none') pb.style.display = 'none';
+      if (shown === state.cls) return; shown = state.cls; let any = false;
+      host.querySelectorAll('[data-who]').forEach(r => { const on = r.dataset.who === state.cls; r.hidden = !on; any = any || on; }); pick.hidden = any; box.hidden = true; };
+    syncRows(); setInterval(syncRows, 400);
     const run = async (only, btn) => {
       const RO = { [only]: ROSTER[only] }, who = ROSTER[only], mineOf = (e) => !e.who || e.who === who;
       btn.disabled = true; box.hidden = false; box.textContent = '';
