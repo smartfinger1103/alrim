@@ -97,7 +97,7 @@ readRemote().then(body=>{
   if(!dirty && !(draft && draft.savedAt>seed.updated)) app.receive(seed);
   ready=true; status.textContent='과제 연결 완료. 수정 후 GitHub 저장 권한을 입력하고 저장하세요.';
 }).catch(e=>{status.textContent=e.message;});
-publish.onclick=async()=>{
+async function save(only){
   if(saving)return;
   if(!ready){status.textContent='아직 과제를 불러오지 못했어요. 새로고침해 주세요.';return;}
   const token=document.getElementById('githubToken').value.trim();
@@ -110,18 +110,28 @@ publish.onclick=async()=>{
       words:JSON.stringify(Object.fromEntries(Object.entries(words).filter(([key])=>!key||key===name))),
       notesData:(JSON.parse(document.getElementById('seed').textContent).notesData||{})};
   }
-  saving=true;publish.disabled=true;status.textContent='학생 과제를 저장하는 중…';
+  const label=only?roster[only]+' 과제':'두 학생 과제';
+  saving=true;publish.disabled=true;status.textContent=oldStatus.textContent=label+'를 저장하는 중…';
   try {
-    const response=await fetch(endpoint,{method:'PUT',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({message:'교사 앱에서 학생 과제 업데이트',content:encode({version:1,students}),sha,branch:'main'})});
+    let out=students;
+    if(only){ /* 한 학생만: 저장본을 새로 읽어 그 학생 것만 바꿔 넣어요 */
+      const r=await fetch(endpoint+'?ref=main&t='+Date.now(),{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+      if(!r.ok) throw new Error('저장본을 불러오지 못했어요. 잠시 후 다시 눌러 주세요.');
+      const file=await r.json(); sha=file.sha; const body=validate(decode(file.content));
+      out={...body.students,[only]:students[only]};
+    }
+    const response=await fetch(endpoint,{method:'PUT',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({message:'교사 앱에서 '+label+' 업데이트',content:encode({version:1,students:out}),sha,branch:'main'})});
     if(!response.ok) {
       if(response.status===409||response.status===422)throw new Error('다른 곳에서 과제가 바뀌었어요. 작성 내용을 복사해 둔 뒤 새로고침하고 다시 저장해 주세요.');
       if(response.status===401||response.status===403)throw new Error('GitHub 권한을 확인해 주세요. alrim 저장소의 Contents 읽기·쓰기 권한이 필요해요.');
       throw new Error('저장하지 못했어요. 연결을 확인하고 다시 눌러 주세요.');
     }
-    const result=await response.json();sha=result.content.sha;dirty=false;
-    status.textContent=oldStatus.textContent='GitHub에 저장했어요. 게시가 끝나면 학생 링크에 자동 반영돼요. 보통 몇 분 걸릴 수 있어요.';
+    const result=await response.json();sha=result.content.sha;if(!only)dirty=false;
+    status.textContent=oldStatus.textContent='✅ '+label+'를 GitHub에 저장했어요. 게시가 끝나면 학생 링크에 자동 반영돼요. 보통 몇 분 걸릴 수 있어요.';
   }catch(e){status.textContent=oldStatus.textContent=e.message;}
   finally{saving=false;publish.disabled=false;}
-};
+}
+publish.onclick=()=>save(null);
+window.alrimSaveOne=id=>save(id);
 })();
 
