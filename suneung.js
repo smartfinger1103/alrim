@@ -145,9 +145,11 @@ function weekTot() { let t = 0; for (let i = 0; i < 7; i++) { const d = ymd(new 
 
 /* ---- 매일 단어 · 매일 듣기 ---- */
 const kd = (s) => +s.slice(5, 7) + '/' + +s.slice(8, 10) + '(' + '일월화수목금토'[new Date(s + 'T00:00:00').getDay()] + ')';
+/* 시작하는 날은 아침 6시 전(새벽)에 열어도 첫날 과제가 보여요 */
+const startN = (start, today) => { const n = dayDiff(start, today); return n === -1 && ymd() >= start ? 0 : n; };
 const dayDiff = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
 const wk = w => w[0].toLowerCase() + '|' + w[1];
-function wPlan(today) { const B = me.wbook; if (!B || !(B.days || []).length || !B.start) return null; const n = dayDiff(B.start, today); if (n < 0) return null;
+function wPlan(today) { const B = me.wbook; if (!B || !(B.days || []).length || !B.start) return null; const n = startN(B.start, today); if (n < 0) return null;
   const from = Math.max(1, B.from || 1), to = Math.min(B.days.length, B.to || B.days.length), k = from + n, over = k > to, day = over ? { n: '', w: [] } : B.days[k - 1];
   const have = new Set(day.w.map(wk)), rev = Object.values(LS.wwrong).filter(x => x.last < today && !have.has(wk([x.en, x.ko]))).map(x => [x.en, x.ko]);
   return { day, rev, all: day.w.concat(rev), over, pool: [].concat(...B.days.map(x => x.w)) }; }
@@ -220,12 +222,12 @@ function wTest(P, today) { const st = wSt(today, P), M = wByKey(P);
 let RB = null, RBid = '';
 let RBX = {};
 function rbLoad(id) { if (RBid === id) return; RBid = id; RB = null; fetch(new URL('data/reading/' + id + '.json', location.href).href + '?_=' + Date.now()).then(r => r.json()).then(j => { RB = j; fetch(new URL('data/reading/' + id + '-ex.json', location.href).href + '?_=' + Date.now()).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(x => { RBX = x || {}; render(); }); }).catch(() => { RB = { err: 1 }; render(); }); }
-function rPlan(today) { const B = me.rbook; if (!B || !B.id || !B.start) return null; rbLoad(B.id); const n = dayDiff(B.start, today); if (n < 0) return null;
+function rPlan(today) { const B = me.rbook; if (!B || !B.id || !B.start) return null; rbLoad(B.id); const n = startN(B.start, today); if (n < 0) return null;
   if (!RB) return { wait: 1 }; if (RB.err || !RB.ps) return { err: 1 };
   const per = Math.max(1, B.per || 7), s = Math.max(1, B.from || 1) - 1 + n * per, ps = RB.ps.slice(s, s + per);
   const rd = [].concat(...ps.map(p => p.qs.map(q => ({ q: p.img, a: q.a, ...(RBX[p.r + '/' + q.n] || {}), lab: p.r + '회 ' + q.n + '번', sub: p.qs.length > 1 ? q.n + '번 문제' : '' }))));
   return { ps, rd, over: !ps.length, first: s + 1, last: s + ps.length, total: RB.ps.length }; }
-function lPlan(today) { const B = me.lbook; if (!B || !B.id || !B.start) return null; const n = dayDiff(B.start, today); if (n < 0) return null; const unit = (B.from || 1) + n; return { unit, over: unit > (B.to || 24) }; }
+function lPlan(today) { const B = me.lbook; if (!B || !B.id || !B.start) return null; const n = startN(B.start, today); if (n < 0) return null; const unit = (B.from || 1) + n; return { unit, over: unit > (B.to || 24) }; }
 /* 교사앱: 매일 자동 과제를 과제 목록(entries)에 풀어 줌 */
 let RDX = null;
 window.alrimAutoEntries = async (st, date) => { const out = [];
@@ -271,7 +273,7 @@ function render0() {
   if (TEACH) card.append(el('small', 'color:var(--muted,#666);font-weight:600', '👀 ' + me.name + ' 학생 화면에 보이는 수능 도우미 (미리보기 · 여기서 누른 기록은 학생에게 안 넘어가요)'));
   card.append(top);
   /* 매일 단어 */
-  { const P = wPlan(today); if (!P && me.wbook && me.wbook.start && today < me.wbook.start) { const [d, b] = sec('📘 단어 공부'); b.append(el('b', 'font-size:1.05rem', (me.wbook.title || '단어') + ' · Day ' + Math.max(1, me.wbook.from || 1)), el('div', 'color:var(--muted,#666)', kd(me.wbook.start) + ' 아침 6시부터 시작해요.')); card.append(d); }
+  { const P = wPlan(today); if (!P && me.wbook && me.wbook.start && startN(me.wbook.start, today) < 0) { const [d, b] = sec('📘 단어 공부'); b.append(el('b', 'font-size:1.05rem', (me.wbook.title || '단어') + ' · Day ' + Math.max(1, me.wbook.from || 1)), el('div', 'color:var(--muted,#666)', kd(me.wbook.start) + ' 아침 6시부터 시작해요.')); card.append(d); }
     if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
       b.append(el('b', 'font-size:1.05rem', (me.wbook.title ? me.wbook.title + ' · ' : '') + (P.over ? '범위를 모두 끝냈어요 🎉' : P.day.n + ' · ' + P.day.w.length + '개')));
       if (P.all.length) { const ws = (LS.wsec || {})[today] || 0, okT = ws >= 1800, ln = el('div', 'font-size:.95rem;font-weight:700;display:flex;flex-wrap:wrap;gap:4px 12px');
@@ -285,7 +287,7 @@ function render0() {
           const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); row.append(btn(st.round ? '📖 틀린 단어 다시 공부' : '📖 단어 공부', () => wStudy(P, today), ready ? '' : 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'), btn(st.round ? '✏️ 틀린 단어 다시 테스트' : '✏️ 테스트 보기', () => wTest(P, today), ready ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : 'opacity:.6')); b.append(row); } }
       b.append(el('small', 'color:var(--muted,#666)', '매일 아침 6시에 새 Day가 자동으로 나와요. 단어를 끝까지 넘겨 본 뒤 테스트를 봐요. 점수는 테스트가 끝나야 보여요. 첫 테스트에서 틀린 단어는 다음 날 파란색으로 다시 나와요.')); card.append(d); } }
   /* 매일 듣기 */
-  { const P = lPlan(today), [d, b] = sec('🎧 듣기 연습'); if (!P) b.append(el('div', 'color:var(--muted,#666)', me.lbook && me.lbook.start && today < me.lbook.start ? (me.lbook.from || 1) + '회 · ' + kd(me.lbook.start) + ' 아침 6시부터 시작해요.' : '듣기 책이 정해지면 날마다 1회씩 여기에 떠요.')); if (P) { const done = LS.ldone[today];
+  { const P = lPlan(today), [d, b] = sec('🎧 듣기 연습'); if (!P) b.append(el('div', 'color:var(--muted,#666)', me.lbook && me.lbook.start && startN(me.lbook.start, today) < 0 ? (me.lbook.from || 1) + '회 · ' + kd(me.lbook.start) + ' 아침 6시부터 시작해요.' : '듣기 책이 정해지면 날마다 1회씩 여기에 떠요.')); if (P) { const done = LS.ldone[today];
       b.append(el('b', 'font-size:1.05rem', P.over ? '범위를 모두 끝냈어요 🎉' : '오늘은 ' + P.unit + '회 (매일 아침 6시에 다음 회로)'));
       if (!P.over) { if (!done || done.unit !== P.unit) b.append(btn('▶ ' + P.unit + '회 풀기 (다 풀면 바로 채점)', () => lOpen(P.unit, null, today), 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'));
         else { b.append(el('div', 'font-weight:700', '채점: ' + (done.total - done.wrong.length) + ' / ' + done.total));
@@ -307,7 +309,7 @@ function render0() {
       hr.append(tx, btn(rr ? '다시 풀기' : '▶ 독해 시작', () => window.alrimOpenRd({ id, rd: RP.rd }), 'flex:none;padding:6px 12px;font-size:.95rem;background:var(--accent,#4f46e5);color:#fff;font-weight:700')); b.append(hr);
       if (rr) b.append(el('div', 'font-weight:700;color:' + (rr.ok === rr.n ? '#15803d' : '#dc2626'), (rr.ok === rr.n ? '✅ ' : '') + '오늘 결과 ' + rr.ok + ' / ' + rr.n));
       b.append(el('small', 'color:var(--muted,#666)', '문제를 풀고 답을 고르면 맞으면 다음으로, 틀리면 정답과 지문을 다시 보여 줘요. (' + RP.last + ' / ' + RP.total + '지문)')); }
-    if (RP) {} else if (me.rbook && me.rbook.id) { b.append(el('b', 'font-size:1.05rem', '독해 지문 ' + Math.max(1, me.rbook.per || 7) + '개'), el('div', 'color:var(--muted,#666)', me.rbook.start && today < me.rbook.start ? kd(me.rbook.start) + ' 아침 6시부터 시작해요.' : '오늘 독해를 준비하는 중…')); }
+    if (RP) {} else if (me.rbook && me.rbook.id) { b.append(el('b', 'font-size:1.05rem', '독해 지문 ' + Math.max(1, me.rbook.per || 7) + '개'), el('div', 'color:var(--muted,#666)', me.rbook.start && startN(me.rbook.start, today) < 0 ? kd(me.rbook.start) + ' 아침 6시부터 시작해요.' : '오늘 독해를 준비하는 중…')); }
     else if (!R) { b.append(btn('▶ 독해 시작', () => { LS.rd = { n: 1, t: Date.now(), log: [] }; save(); render(); }, 'background:var(--accent,#4f46e5);color:#fff;font-weight:700')); }
     else if (R.ask) { b.append(el('b', null, R.n + '번 지문 · 왜 틀렸나요?')); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); WHY.forEach(w => row.append(btn(w, () => { R.log.push({ s: R.ask, ok: false, why: w }); R.ask = 0; R.n++; R.t = Date.now(); save(); render(); }))); b.append(row); }
     else { const t = el('div', 'font-family:var(--font-display,inherit);font-size:2rem'); t.id = 'snRead'; b.append(el('b', null, R.n + '번 지문'), t);
