@@ -35,7 +35,8 @@
 })();
 (() => {
 'use strict';
-const app = window.alrimSync; if (!app || location.pathname.endsWith('/teacher.html')) return;
+const app = window.alrimSync; if (!app) return;
+const TEACH = location.pathname.endsWith('/teacher.html');   /* 선생님 앱: 미리보기 위에 학생 화면과 같은 카드를 보여 줘요 */
 const SUBJ = ['영어', '국어', '수학', '탐구', '한국사'], WHY = ['단어를 몰라서', '해석이 안 돼서', '선지가 헷갈려서', '시간이 부족해서'];
 const pad = n => String(n).padStart(2, '0');
 const ymd = (d = new Date()) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -44,10 +45,10 @@ const mmss = s => Math.floor(s / 60) + ':' + pad(Math.floor(s % 60));
 const el = (t, css, txt) => { const e = document.createElement(t); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
 const btn = (txt, on, css) => { const b = el('button', 'font:inherit;padding:8px 12px;border-radius:10px;border:1.5px solid var(--accent,#4f46e5);background:transparent;color:var(--ink,#111);cursor:pointer;' + (css || ''), txt); b.type = 'button'; b.onclick = on; return b; };
 let me = null, LS = {}, card = null, sig = '';
-const key = () => 'alrim:sn:' + (me ? me.name : '');
+const key = () => 'alrim:sn:' + (me ? me.name : '') + (TEACH ? ':teacher' : '');
 const load = () => { try { LS = JSON.parse(localStorage.getItem(key()) || '{}'); } catch (e) { LS = {}; } LS.daily = LS.daily || {}; LS.time = LS.time || {}; LS.read = LS.read || []; LS.wwrong = LS.wwrong || {}; LS.wdone = LS.wdone || {}; LS.ldone = LS.ldone || {}; };
 const save = () => { try { localStorage.setItem(key(), JSON.stringify(LS)); } catch (e) {} };
-function student() { try { const s = app.snapshot(), d = JSON.parse(s.data); return d.students.find(x => x.name === s.fixed) || d.students[0]; } catch (e) { return null; } }
+function student() { try { const s = app.snapshot(), d = JSON.parse(s.data); if (TEACH) { const c = document.getElementById('cls'); return d.students.find(x => x.name === (c && c.value)) || null; } return d.students.find(x => x.name === s.fixed) || d.students[0]; } catch (e) { return null; } }
 
 /* ---- 공부 시간 ---- */
 const runSec = () => LS.run ? Math.min(4 * 3600, (Date.now() - LS.run.t) / 1000) : 0;
@@ -118,6 +119,7 @@ function render() {
   const dd = me.dday || '2027-11-18', left = Math.ceil((new Date(dd + 'T00:00:00') - new Date(today + 'T00:00:00')) / 864e5);
   const top = el('div', 'display:flex;align-items:baseline;gap:10px;flex-wrap:wrap');
   top.append(el('b', 'font-family:var(--font-display,inherit);font-size:1.7rem;color:var(--accent,#4f46e5)', '🎯 수능 ' + (left > 0 ? 'D-' + left : left === 0 ? 'D-DAY' : 'D+' + (-left))), el('span', 'color:var(--muted,#666);font-size:.9rem', dd.replace(/-/g, '.') + ' · 이번 주 공부 ' + fmt(weekTot())));
+  if (TEACH) card.append(el('small', 'color:var(--muted,#666);font-weight:600', '👀 ' + me.name + ' 학생 화면에 보이는 수능 도우미 (미리보기 · 여기서 누른 기록은 학생에게 안 넘어가요)'));
   card.append(top);
   /* 매일 과제 */
   const daily = (me.daily || []).filter(Boolean);
@@ -190,11 +192,12 @@ function tick() {
   if (LS.run && runSec() >= 4 * 3600) { stopRun(); render(); }
 }
 function sync() {
-  const st = student(), view = document.getElementById('studentView'); if (!view) return;
+  const st = student(), view = TEACH ? (document.querySelector('#teacherView aside.preview .canvas-box') || document.getElementById('hcPanel')) : document.getElementById('studentView'); if (!view) return;
+  if (card && st && me && st.name !== me.name) { card.remove(); card = null; }
   if (!st || st.track !== 'suneung') { if (card) { card.remove(); card = null; } return; }
   const s2 = JSON.stringify([st.name, st.dday, st.daily, st.mocks, st.lbook, st.wbook && [st.wbook.title, st.wbook.from, st.wbook.to, st.wbook.start, (st.wbook.days || []).length]]);
   if (!card) { me = st; load(); card = el('section', 'background:var(--panel,#fff);border:2px solid var(--accent,#4f46e5);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px'); card.id = 'snCard';
-    const anchor = document.getElementById('sWTime') || view.querySelector('header'); if (anchor && anchor.parentNode === view) anchor.after(card); else view.prepend(card); sig = s2; render(); }
+    if (TEACH) { card.style.marginBottom = '10px'; view.before(card); } else { const anchor = document.getElementById('sWTime') || view.querySelector('header'); if (anchor && anchor.parentNode === view) anchor.after(card); else view.prepend(card); } sig = s2; render(); }
   else if (s2 !== sig) { me = st; sig = s2; render(); }
 }
 setTimeout(sync, 300); setInterval(sync, 3000); setInterval(tick, 1000);
