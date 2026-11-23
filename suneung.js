@@ -271,41 +271,43 @@ function render() {
     card.append(d); }
   /* 공부 시간 (아이폰 '스크린 타임' 느낌) */
   { const [d, b] = sec('⏱ 과목별 공부 시간');
-    const COL = { '영어': '#0A84FF', '국어': '#FF9F0A', '수학': '#30D158', '통합과학': '#BF5AF2', '통합사회': '#FF375F' }, F = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo",system-ui,sans-serif';
+    if (!document.getElementById('snSketchCss')) { const lk = document.createElement('link'); lk.rel = 'stylesheet'; lk.href = 'https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap'; document.head.append(lk);
+      const st = document.createElement('style'); st.id = 'snSketchCss'; st.textContent = '.sk-b{border:1.6px solid #4a4a4a;border-radius:255px 18px 225px 18px/18px 225px 18px 255px}.sk-b2{border:1.4px solid #6b6b6b;border-radius:18px 225px 18px 255px/255px 18px 225px 18px}.sk-h{background:repeating-linear-gradient(-45deg,#5a5a5a 0 1.4px,transparent 1.4px 5px)}.sk-h2{background:repeating-linear-gradient(-45deg,#9a9a9a 0 1.2px,transparent 1.2px 5px)}'; document.head.append(st); }
+    const COL = { '영어': 'sk-h', '국어': 'sk-h2', '수학': 'sk-h', '통합과학': 'sk-h2', '통합사회': 'sk-h' }, F = '"Gaegu","Nanum Pen Script",cursive';
     const hm = s => { s = Math.round(s / 60); const h = Math.floor(s / 60), m = s % 60; return h ? h + '시간 ' + (m ? m + '분' : '') : m + '분'; };
-    const ios = el('div', 'font-family:' + F + ';background:#fff;color:#1c1c1e;border-radius:18px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:14px');
+    const ios = el('div', 'font-family:' + F + ';color:#2b2b2b;padding:18px 18px 18px 30px;border:1.6px solid #555;border-radius:4px 14px 6px 12px/12px 5px 14px 6px;background:linear-gradient(90deg,transparent 21px,#e3b4b4 21px,#e3b4b4 22px,transparent 22px),repeating-linear-gradient(transparent 0 31px,#e4e4e4 31px 32px),#fffefb;display:flex;flex-direction:column;gap:14px');
     /* 과목 시작 칩 */
     const chips = el('div', 'display:flex;flex-wrap:wrap;gap:8px');
     SUBJ.forEach(s => { const on = LS.run && !LS.run.ready && LS.run.s === s, c = COL[s] || '#8E8E93';
-      const x = el('button', 'font:600 15px ' + F + ';display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;cursor:pointer;border:none;' + (on ? 'background:' + c + ';color:#fff;box-shadow:0 4px 12px ' + c + '55' : 'background:#f2f2f7;color:#1c1c1e'));
-      x.type = 'button'; x.append(el('span', 'width:9px;height:9px;border-radius:50%;background:' + (on ? '#fff' : c) + (on ? ';animation:snPulse 1.4s infinite' : '')), document.createTextNode(on ? s + ' · 끝내기' : s));
+      const x = el('button', 'font:700 19px ' + F + ';display:flex;align-items:center;gap:6px;padding:4px 14px 5px;cursor:pointer;color:#2b2b2b;background:' + (on ? '#ececec' : 'transparent'));
+      x.className = on ? 'sk-b' : 'sk-b2'; x.type = 'button'; x.append(el('span', 'font-size:15px' + (on ? ';animation:snPulse 1.4s infinite' : ''), on ? '✎' : '○'), document.createTextNode(on ? s + ' · 끝내기' : s));
       x.onclick = () => { if (on) { stopRun(); render(); toast(s + ' 공부 시간을 기록했어요'); return; } const prev = LS.run && !LS.run.ready && LS.run.s; if (LS.run) { if (LS.run.ready) LS.run = null; else stopRun(); } LS.run = { s, t0: Date.now(), t: Date.now(), acc: 0 }; save(); render(); if (prev) toast(prev + ' 기록하고 ' + s + ' 시작했어요'); };
       chips.append(x); });
     if (!document.getElementById('snPulseCss')) { const st = document.createElement('style'); st.id = 'snPulseCss'; st.textContent = '@keyframes snPulse{0%,100%{opacity:1}50%{opacity:.35}}'; document.head.append(st); }
-    const live = el('div', 'font:500 13px ' + F + ';color:#8e8e93;margin-top:-6px'); live.id = 'snLive';
+    const live = el('div', 'font:400 16px ' + F + ';color:#6b6b6b;margin-top:-6px'); live.id = 'snLive';
     /* 오늘 / 이번 주 */
-    const cal = ymd(), view = LS.tview || 'day', seg = el('div', 'display:grid;grid-template-columns:1fr 1fr;background:#eeeef0;border-radius:9px;padding:2px');
-    [['day', '오늘'], ['week', '이번 주']].forEach(([k, t]) => { const s = el('button', 'font:600 13px ' + F + ';border:none;border-radius:7px;padding:6px 0;cursor:pointer;' + (view === k ? 'background:#fff;color:#1c1c1e;box-shadow:0 1px 3px rgba(0,0,0,.12)' : 'background:transparent;color:#3c3c43'), t); s.type = 'button'; s.onclick = () => { LS.tview = k; save(); render(); }; seg.append(s); });
+    const cal = ymd(), view = LS.tview || 'day', seg = el('div', 'display:flex;gap:18px');
+    [['day', '오늘'], ['week', '이번 주']].forEach(([k, t]) => { const s = el('button', 'font:700 19px ' + F + ';border:none;background:transparent;padding:0 2px 2px;cursor:pointer;color:' + (view === k ? '#2b2b2b' : '#9a9a9a') + ';' + (view === k ? 'text-decoration:underline wavy #555 1.5px;text-underline-offset:6px' : ''), t); s.type = 'button'; s.onclick = () => { LS.tview = k; save(); render(); }; seg.append(s); });
     const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), wk = Array.from({ length: 7 }, (_, k) => ymd(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + k)));
     const days = view === 'day' ? [cal] : wk, vals = SUBJ.map(s => days.reduce((a, dd) => a + dayTot(dd, s), 0)), tot = vals.reduce((a, x) => a + x, 0), mx = Math.max(60, ...vals), mn = Math.min(...vals);
-    const head = el('div'); head.append(el('div', 'font:600 13px ' + F + ';color:#8e8e93', view === 'day' ? '오늘 순공 시간' : '이번 주 순공 시간 · 하루 평균 ' + hm(tot / Math.max(1, ((now.getDay() + 6) % 7) + 1))), el('div', 'font:700 30px ' + F + ';letter-spacing:-.5px;margin-top:2px', tot ? hm(tot) : '0분'));
+    const head = el('div'); head.append(el('div', 'font:400 17px ' + F + ';color:#6b6b6b', view === 'day' ? '오늘 순공 시간' : '이번 주 순공 시간 · 하루 평균 ' + hm(tot / Math.max(1, ((now.getDay() + 6) % 7) + 1))), el('div', 'font:700 40px ' + F + ';line-height:1.05;margin-top:2px', tot ? hm(tot) : '0분'));
     /* 비율 막대 */
-    const stack = el('div', 'display:flex;height:10px;border-radius:5px;overflow:hidden;background:#eeeef0;gap:2px');
-    SUBJ.forEach((s, k) => { if (vals[k] > 0) stack.append(el('i', 'display:block;height:100%;flex:' + vals[k] + ';background:' + COL[s])); });
+    const stack = el('div', 'display:flex;height:14px;overflow:hidden;gap:0'); stack.className = 'sk-b2';
+    SUBJ.forEach((s, k) => { if (vals[k] > 0) { const i = el('i', 'display:block;height:100%;flex:' + vals[k] + ';border-right:1.4px solid #6b6b6b'); i.className = COL[s]; stack.append(i); } });
     /* 요일별 막대 (이번 주) */
     let weekEl = null;
     if (view === 'week') { const dn = ['월', '화', '수', '목', '금', '토', '일'], dt = wk.map(dd => SUBJ.map(s => dayTot(dd, s))), dsum = dt.map(a => a.reduce((x, y) => x + y, 0)), dm = Math.max(3600, ...dsum), H = 120, avg = tot / Math.max(1, ((now.getDay() + 6) % 7) + 1);
       weekEl = el('div', 'position:relative;height:' + (H + 22) + 'px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end');
-      if (avg > 0) { const ln = el('div', 'position:absolute;left:0;right:0;border-top:1.5px dashed #34c759;bottom:' + (22 + avg / dm * H) + 'px'); ln.append(el('span', 'position:absolute;right:0;top:-17px;font:600 10px ' + F + ';color:#34c759', '평균')); weekEl.append(ln); }
-      wk.forEach((dd, k) => { const c = el('div', 'display:flex;flex-direction:column;align-items:center;gap:5px'), col = el('div', 'width:100%;max-width:26px;height:' + Math.max(3, dsum[k] / dm * H) + 'px;display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;background:#eeeef0');
-        SUBJ.forEach((s, j) => { if (dt[k][j] > 0) col.append(el('i', 'display:block;width:100%;flex:' + dt[k][j] + ';background:' + COL[s])); });
-        c.append(col, el('span', 'font:' + (dd === cal ? '700' : '500') + ' 11px ' + F + ';color:' + (dd === cal ? '#1c1c1e' : '#8e8e93'), dn[k])); weekEl.append(c); }); }
+      if (avg > 0) { const ln = el('div', 'position:absolute;left:0;right:0;border-top:1.4px dashed #8a8a8a;bottom:' + (22 + avg / dm * H) + 'px'); ln.append(el('span', 'position:absolute;right:0;top:-17px;font:400 14px ' + F + ';color:#6b6b6b', '평균')); weekEl.append(ln); }
+      wk.forEach((dd, k) => { const c = el('div', 'display:flex;flex-direction:column;align-items:center;gap:5px'), col = el('div', 'width:100%;max-width:26px;height:' + Math.max(3, dsum[k] / dm * H) + 'px;overflow:hidden;' + (dsum[k] ? '' : 'border:none;border-bottom:1.4px solid #9a9a9a;border-radius:0')); if (dsum[k]) col.className = 'sk-b sk-h';
+        
+        c.append(col, el('span', 'font:' + (dd === cal ? '700' : '400') + ' 16px ' + F + ';color:' + (dd === cal ? '#2b2b2b' : '#8a8a8a') + (dd === cal ? ';text-decoration:underline;text-underline-offset:3px' : ''), dn[k])); weekEl.append(c); }); }
     /* 과목별 줄 */
     const list = el('div', 'display:flex;flex-direction:column');
-    SUBJ.map((s, k) => [s, vals[k]]).sort((a, c) => c[1] - a[1]).forEach(([s, v], k, arr) => { const low = tot > 0 && v === mn, r = el('div', 'display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;padding:10px 0;' + (k < arr.length - 1 ? 'border-bottom:.5px solid #e5e5ea' : ''));
-      const mid = el('div', 'display:flex;flex-direction:column;gap:6px'), nm = el('div', 'font:600 15px ' + F + ';display:flex;align-items:center;gap:6px', s); if (low) nm.append(el('span', 'font:700 10px ' + F + ';color:#ff3b30;background:#ff3b3014;padding:2px 7px;border-radius:999px', '부족'));
-      const tr = el('div', 'height:6px;border-radius:3px;background:#eeeef0;overflow:hidden'); tr.append(el('i', 'display:block;height:100%;border-radius:3px;width:' + (v / mx * 100) + '%;background:' + COL[s])); mid.append(nm, tr);
-      r.append(el('span', 'width:10px;height:10px;border-radius:50%;background:' + COL[s]), mid, el('span', 'font:600 15px ' + F + ';color:' + (low ? '#ff3b30' : '#3c3c43') + ';font-variant-numeric:tabular-nums', v ? hm(v) : '—')); list.append(r); });
+    SUBJ.map((s, k) => [s, vals[k]]).sort((a, c) => c[1] - a[1]).forEach(([s, v], k, arr) => { const low = tot > 0 && v === mn, r = el('div', 'display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:6px 0');
+      const mid = el('div', 'display:flex;flex-direction:column;gap:6px'), nm = el('div', 'font:700 20px ' + F + ';display:flex;align-items:center;gap:6px', s); if (low) { const t = el('span', 'font:700 15px ' + F + ';color:#3a3a3a;padding:0 8px', '부족!'); t.className = 'sk-b2'; nm.append(t); }
+      const tr = el('div', 'height:12px;position:relative'); if (v > 0) { const fi = el('i', 'display:block;height:100%;width:' + Math.max(4, v / mx * 100) + '%'); fi.className = 'sk-b ' + COL[s]; tr.append(fi); } else tr.append(el('i', 'display:block;height:0;border-top:1.4px dashed #b5b5b5;margin-top:6px')); mid.append(nm, tr);
+      r.append(mid, el('span', 'font:700 20px ' + F + ';color:#3a3a3a', v ? hm(v) : '-')); list.append(r); });
     ios.append(chips, live, seg, head, stack); if (weekEl) ios.append(weekEl); ios.append(list);
     b.append(ios, el('small', 'color:var(--muted,#666)', '과목을 누르면 바로 시작, 한 번 더 누르면 끝나요. 끝내기를 안 눌러도 지금까지 시간이 자동으로 더해져요.')); card.append(d); }
   tick();
