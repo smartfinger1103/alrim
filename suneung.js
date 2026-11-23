@@ -53,9 +53,30 @@ const save = () => { try { localStorage.setItem(key(), JSON.stringify(LS)); } ca
 function student() { try { const s = app.snapshot(), d = JSON.parse(s.data); if (TEACH) { const c = document.getElementById('cls'); return d.students.find(x => x.name === (c && c.value)) || null; } return d.students.find(x => x.name === s.fixed) || d.students[0]; } catch (e) { return null; } }
 
 /* ---- 공부 시간 ---- */
-const runSec = () => LS.run ? Math.min(4 * 3600, (Date.now() - LS.run.t) / 1000) : 0;
-function stopRun() { if (!LS.run) return; const d = ymd(new Date(LS.run.t)); LS.time[d] = LS.time[d] || {}; LS.time[d][LS.run.s] = (LS.time[d][LS.run.s] || 0) + runSec(); LS.run = null; save(); }
-const dayTot = (d, s) => ((LS.time[d] || {})[s] || 0) + (LS.run && LS.run.s === s && ymd(new Date(LS.run.t)) === d ? runSec() : 0);
+/* 과목 공부 시간: 누르면 시작 → 오른쪽 아래 버튼 한 번 = 멈춤/계속, 꾹 = 끝(그때 기록) */
+const runSec = () => { const R = LS.run; if (!R) return 0; return Math.min(4 * 3600, (R.acc || 0) + (R.t ? (Date.now() - R.t) / 1000 : 0)); };
+function stopRun() { const R = LS.run; if (!R) return; const d = ymd(new Date(R.t0 || R.t || Date.now())); LS.time[d] = LS.time[d] || {}; LS.time[d][R.s] = (LS.time[d][R.s] || 0) + runSec(); LS.run = null; save(); }
+function pauseRun() { const R = LS.run; if (!R) return; if (R.ready) { R.ready = false; R.t0 = R.t = Date.now(); R.acc = 0; save(); return; } if (R.t) { R.acc = (R.acc || 0) + (Date.now() - R.t) / 1000; R.t = null; } else R.t = Date.now(); save(); }
+const dayTot = (d, s) => ((LS.time[d] || {})[s] || 0);
+let fb = null;
+function runFloat() {
+  if (TEACH) return; const R = LS.run;
+  if (!R) { if (fb) { fb.remove(); fb = null; } return; }
+  if (!fb) { fb = el('div', 'position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:10030;display:flex;flex-direction:column;align-items:center;gap:4px;user-select:none;-webkit-user-select:none;touch-action:none');
+    const b = el('button', 'width:72px;height:72px;border-radius:50%;border:none;font-size:30px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.3);cursor:pointer;-webkit-touch-callout:none'); b.type = 'button'; b.id = 'snRunBtn';
+    const cap = el('small', 'background:rgba(255,255,255,.95);border-radius:8px;padding:2px 8px;font-weight:700;font-size:.78rem;color:#333;box-shadow:0 2px 6px rgba(0,0,0,.15);text-align:center;line-height:1.3'); cap.id = 'snRunCap';
+    let timer = null, long = false;
+    const down = (e) => { e.preventDefault(); long = false; b.style.transform = 'scale(.92)'; timer = setTimeout(() => { long = true; b.style.transform = ''; const R0 = LS.run, s = R0 && R0.s, rec = R0 && !R0.ready && runSec() > 0; if (R0 && R0.ready) LS.run = null; else stopRun(); save(); runFloat(); render(); if (s) toast(rec ? s + ' 공부 시간을 기록했어요' : s + ' 취소했어요'); }, 800); };
+    const up = (e) => { e.preventDefault(); b.style.transform = ''; if (timer) { clearTimeout(timer); timer = null; } if (!long && LS.run) { pauseRun(); runFloat(); render(); } };
+    const cancel = () => { b.style.transform = ''; if (timer) { clearTimeout(timer); timer = null; } };
+    b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointerleave', cancel); b.addEventListener('pointercancel', cancel); b.addEventListener('contextmenu', e => e.preventDefault());
+    fb.append(b, cap); document.body.append(fb); }
+  const b = document.getElementById('snRunBtn'), cap = document.getElementById('snRunCap'), on = !!R.t;
+  if (R.ready) { b.textContent = '▶'; b.style.background = '#15803d'; b.setAttribute('aria-label', R.s + ' 시작'); cap.textContent = R.s + ' · 눌러서 시작'; return; }
+  b.textContent = on ? '⏸' : '▶'; b.style.background = on ? '#4f46e5' : '#f59e0b'; b.setAttribute('aria-label', R.s + (on ? ' 멈춤' : ' 계속') + ' (꾹 누르면 끝)');
+  cap.textContent = R.s + (on ? ' 공부 중' : ' 멈춤') + ' · 꾹 누르면 끝';
+}
+function toast(t) { const d = el('div', 'position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10031;background:#15803d;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.25)', '✅ ' + t); document.body.append(d); setTimeout(() => d.remove(), 2200); }
 function weekTot() { let t = 0; for (let i = 0; i < 7; i++) { const d = ymd(new Date(Date.now() - i * 864e5)); SUBJ.forEach(s => t += dayTot(d, s)); } return t; }
 
 /* ---- 매일 단어 · 매일 듣기 ---- */
@@ -225,18 +246,18 @@ function render() {
     card.append(d); }
   /* 공부 시간 */
   { const [d, b] = sec('⏱ 과목별 공부 시간'); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px');
-    SUBJ.forEach(s => { const on = LS.run && LS.run.s === s; const x = btn((on ? '⏸ ' : '▶ ') + s, () => { const was = on; stopRun(); if (!was) { LS.run = { s, t: Date.now() }; save(); } render(); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
+    SUBJ.forEach(s => { const on = LS.run && LS.run.s === s; const x = btn((on ? '⏺ ' : '▶ ') + s, () => { if (on) return; if (LS.run && !LS.run.ready) stopRun(); LS.run = { s, ready: true, t: null, acc: 0 }; LS['open:⏱ 과목별 공부 시간'] = false; save(); render(); runFloat(); window.scrollTo({ top: 0, behavior: 'smooth' }); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
     b.append(row); const live = el('div', 'font-weight:700'); live.id = 'snLive'; b.append(live);
     const tb = el('div', 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px'); let tot = 0;
     SUBJ.forEach(s => { const v = dayTot(today, s); tot += v; const c = el('div', 'padding:6px 8px;border-radius:8px;background:var(--soft,#eef);font-size:.88rem'); c.append(el('b', 'display:block', s), el('span', null, fmt(v))); c.dataset.s = s; tb.append(c); });
-    b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 시간이 흘러요. 다시 누르면 멈춰요. 오늘 합계 ' + fmt(tot))); card.append(d); }
+    b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 오른쪽 아래에 ▶ 버튼이 생겨요. ▶ 시작 → 한 번 누르면 멈춤·계속 → 꾹 누르면 끝나고 그때 기록돼요. 오늘 합계 ' + fmt(tot))); card.append(d); }
   tick();
 }
 /* 하루는 아침 6시에 바뀌어요: 6시 전에는 어제 과제가 그대로 보여요 */
 const sday = () => ymd(new Date(Date.now() - 6 * 36e5)); let lastDay = '';
 function tick() {
   if (card && lastDay && sday() !== lastDay) { render(); return; }
-  if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run ? '⏱ ' + LS.run.s + ' 공부 중 · ' + fmt(runSec()) : '';
+  if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run ? '⏺ ' + LS.run.s + (LS.run.ready ? ' · 오른쪽 아래 ▶를 누르면 시작' : LS.run.t ? ' 공부 중' : ' 멈춤') + ' · 오른쪽 아래 버튼: 누르면 멈춤/계속, 꾹 누르면 끝' : ''; runFloat();
   const rd = document.getElementById('snRead'); if (rd && LS.rd && !LS.rd.ask) { const s = (Date.now() - LS.rd.t) / 1000; rd.textContent = mmss(s); rd.style.color = s > 100 ? '#dc2626' : 'inherit'; }
   if (LS.run && runSec() >= 4 * 3600) { stopRun(); render(); }
 }
