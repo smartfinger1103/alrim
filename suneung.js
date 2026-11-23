@@ -336,6 +336,7 @@ function render0() {
   /* 입시 브리핑 (매일 아침 갱신되는 data/briefing.json) */
   if (BRF === null) { BRF = 0; fetch(new URL('data/briefing.json', location.href).href + '?_=' + Date.now()).then(r => r.ok ? r.json() : null).then(j => { BRF = j || 0; if (j) render(); }).catch(() => {}); }
   if (BRF && (BRF.items || []).length) { const [d, b] = sec('🏠 홈 · 새 소식'); const dn = BRF.date ? kd(BRF.date) : '';
+    if (BRF.hello) b.append(el('div', 'font-size:1.25rem;font-weight:700;line-height:1.4;padding:10px 14px;border:1.6px solid #555;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:rgba(255,214,102,.35);transform:rotate(-.4deg)', '👋 ' + BRF.hello));
     b.append(el('small', 'color:var(--muted,#666)', dn + ' 아침 소식' + (BRF.for ? ' · ' + BRF.for : '')));
     BRF.items.slice(0, 6).forEach(it => { const bx = el('div', 'display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1.4px dashed #999;border-radius:10px'); bx.className = 'sn-sum';
       const h = el('div', 'font-weight:700'); if (it.tag) h.append(el('span', 'display:inline-block;margin-right:6px;padding:0 8px;border-radius:8px;background:rgba(140,200,240,.6);font-size:.85em', it.tag)); h.append(document.createTextNode(it.t || '')); bx.append(h);
