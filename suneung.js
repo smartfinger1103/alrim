@@ -60,6 +60,7 @@ function pauseRun() { const R = LS.run; if (!R) return; if (R.ready) { R.ready =
 const dayTot = (d, s) => ((LS.time[d] || {})[s] || 0);
 let fb = null;
 function runFloat() {
+  if (fb) { fb.remove(); fb = null; } return;   /* 떠 있는 버튼은 쓰지 않아요: 과목 이름을 누르면 시작, 한 번 더 누르면 끝 */
   if (TEACH) return; const R = LS.run;
   pipSync();
   if (!R) { if (fb) { fb.remove(); fb = null; } return; }
@@ -269,18 +270,18 @@ function render() {
     card.append(d); }
   /* 공부 시간 */
   { const [d, b] = sec('⏱ 과목별 공부 시간'); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px');
-    SUBJ.forEach(s => { const on = LS.run && LS.run.s === s; const x = btn((on ? '⏺ ' : '▶ ') + s, () => { if (on) return; if (LS.run && !LS.run.ready) stopRun(); LS.run = { s, ready: true, t: null, acc: 0 }; LS['open:⏱ 과목별 공부 시간'] = false; save(); render(); runFloat(); window.scrollTo({ top: 0, behavior: 'smooth' }); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
+    SUBJ.forEach(s => { const on = LS.run && !LS.run.ready && LS.run.s === s; const x = btn((on ? '⏹ ' + s + ' 끝내기' : '▶ ' + s), () => { if (on) { stopRun(); render(); toast(s + ' 공부 시간을 기록했어요'); return; } const prev = LS.run && !LS.run.ready && LS.run.s; if (LS.run) { if (LS.run.ready) LS.run = null; else stopRun(); } LS.run = { s, t0: Date.now(), t: Date.now(), acc: 0 }; save(); render(); if (prev) toast(prev + ' 기록하고 ' + s + ' 시작했어요'); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
     b.append(row); const live = el('div', 'font-weight:700'); live.id = 'snLive'; b.append(live);
     const tb = el('div', 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px'); let tot = 0;
     SUBJ.forEach(s => { const v = dayTot(today, s); tot += v; const c = el('div', 'padding:6px 8px;border-radius:8px;background:var(--soft,#eef);font-size:.88rem'); c.append(el('b', 'display:block', s), el('span', null, fmt(v))); c.dataset.s = s; tb.append(c); });
-    b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 오른쪽 아래에 ▶ 버튼이 생겨요. ▶ 시작 → 한 번 누르면 멈춤·계속 → 꾹 누르면 끝나고 그때 기록돼요. 오늘 합계 ' + fmt(tot))); card.append(d); }
+    b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 바로 시작하고, 한 번 더 누르면 끝나고 기록돼요. 앱을 닫아도 시간은 계속 세요. 오늘 합계 ' + fmt(tot))); card.append(d); }
   tick();
 }
 /* 하루는 아침 6시에 바뀌어요: 6시 전에는 어제 과제가 그대로 보여요 */
 const sday = () => ymd(new Date(Date.now() - 6 * 36e5)); let lastDay = '';
 function tick() {
   if (card && lastDay && sday() !== lastDay) { render(); return; }
-  if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run ? '⏺ ' + LS.run.s + (LS.run.ready ? ' · 오른쪽 아래 ▶를 누르면 시작' : LS.run.t ? ' 공부 중' : ' 멈춤') + ' · 오른쪽 아래 버튼: 누르면 멈춤/계속, 꾹 누르면 끝' : ''; runFloat();
+  if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run && !LS.run.ready ? '⏺ ' + LS.run.s + ' 공부 중 · 한 번 더 누르면 끝나고 기록돼요' : ''; runFloat();
   const rd = document.getElementById('snRead'); if (rd && LS.rd && !LS.rd.ask) { const s = (Date.now() - LS.rd.t) / 1000; rd.textContent = mmss(s); rd.style.color = s > 100 ? '#dc2626' : 'inherit'; }
   if (LS.run && runSec() >= 4 * 3600) { stopRun(); render(); }
 }
