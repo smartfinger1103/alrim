@@ -4,7 +4,40 @@
   const C = ['①', '②', '③', '④', '⑤'], WHY = ['단어를 몰라서', '해석이 안 돼서', '선지가 헷갈려서', '시간이 부족해서'];
   const el = (t, css, txt) => { const e = document.createElement(t); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
   const img = (p) => { const im = el('img', 'max-width:100%;border-radius:8px;background:#fff;border:1px solid #ddd'); im.alt = '지문'; im.onerror = () => { if (im.dataset.raw) return; im.dataset.raw = 1; im.src = 'https://raw.githubusercontent.com/smartfinger1103/alrim/main/' + p + '?t=' + Date.now(); }; im.src = /^data:|^https?:/.test(p) ? p : new URL(p, location.href).href; return im; };
-  const imgs = (q) => { const w = el('div', 'display:flex;flex-direction:column;gap:6px'); (Array.isArray(q) ? q : [q]).forEach(p => w.append(img(p))); return w; };
+  /* ---- 펜 필기 (아이패드/갤탭) ---- */
+  const INK = { on: false, tool: 'pen', c: '#1a1a1a', last: null }, INKS = new Set(), BARS = new Set();
+  const inkSync = () => { INKS.forEach(f => f.apply()); BARS.forEach(f => f()); };
+  const inkBar = () => { const bar = el('div', 'position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#fffefb;border:1.4px solid #555;border-radius:10px;padding:6px 8px'); let clr = 0, tm = 0;
+    const mk = (t, fn, st) => { const b = el('button', B + 'padding:5px 10px;font-size:1rem;' + (st || ''), t); b.type = 'button'; b.onclick = fn; return b; };
+    const draw = () => { bar.textContent = ''; bar.append(mk(INK.on ? '✏️ 필기 켜짐' : '✏️ 필기 끄기', () => { INK.on = !INK.on; inkSync(); }, INK.on ? 'background:#ffe08a;font-weight:700' : ''));
+      if (!INK.on) { bar.append(el('small', 'color:#777', '펜으로 지문에 바로 쓸 수 있어요')); return; }
+      [['#1a1a1a', '검정'], ['#d32f2f', '빨강'], ['#1d5fd1', '파랑']].forEach(([c, n]) => bar.append(mk('', () => { INK.tool = 'pen'; INK.c = c; inkSync(); }, 'width:30px;height:30px;padding:0;border-radius:50%;background:' + c + ' !important;' + (INK.tool === 'pen' && INK.c === c ? 'outline:2.5px solid #555' : ''))));
+      bar.append(mk('🖍', () => { INK.tool = 'hl'; inkSync(); }, INK.tool === 'hl' ? 'outline:2.5px solid #555' : ''), mk('🧽', () => { INK.tool = 'er'; inkSync(); }, INK.tool === 'er' ? 'outline:2.5px solid #555' : ''), mk('↶', () => { INK.last && INK.last.undo(); }),
+        mk(clr ? '한 번 더 누르면 지워요' : '🗑', () => { if (!clr) { clr = 1; draw(); clearTimeout(tm); tm = setTimeout(() => { clr = 0; draw(); }, 3000); return; } clr = 0; INKS.forEach(f => f.clear && f.clear()); draw(); }, clr ? 'background:#fecaca' : '')); };
+    BARS.add(draw); draw(); return bar; };
+  const attachInk = (box, im, p) => { const cv = el('canvas', 'position:absolute;left:0;top:0;width:100%;height:100%'), key = 'alrim:ink:' + p, ctx = cv.getContext('2d');
+    let S = []; try { S = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+    const save = () => { try { S.length ? localStorage.setItem(key, JSON.stringify(S)) : localStorage.removeItem(key); } catch (e) {} };
+    const paint = () => { const w = box.clientWidth, h = box.clientHeight, d = window.devicePixelRatio || 1; if (!w || !h) return; if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); } ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, w, h); ctx.lineCap = ctx.lineJoin = 'round';
+      S.forEach(s => { if (s.t === 'hl') { ctx.strokeStyle = 'rgba(255,214,0,.4)'; ctx.lineWidth = 16; ctx.beginPath(); s.p.forEach((q, k) => k ? ctx.lineTo(q[0] * w, q[1] * h) : ctx.moveTo(q[0] * w, q[1] * h)); ctx.stroke(); }
+        else { ctx.strokeStyle = s.c; for (let k = 1; k < s.p.length; k++) { ctx.lineWidth = 1 + 2.2 * (s.p[k][2] || .5); ctx.beginPath(); ctx.moveTo(s.p[k - 1][0] * w, s.p[k - 1][1] * h); ctx.lineTo(s.p[k][0] * w, s.p[k][1] * h); ctx.stroke(); } if (s.p.length === 1) { ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(s.p[0][0] * w, s.p[0][1] * h, 1.5, 0, 7); ctx.fill(); } } }); };
+    const api = { apply() { cv.style.pointerEvents = INK.on ? 'auto' : 'none'; cv.style.touchAction = INK.on ? 'none' : 'auto'; cv.style.cursor = INK.on ? 'crosshair' : 'default'; }, clear() { S = []; save(); paint(); }, undo() { S.pop(); save(); paint(); } };
+    INKS.add(api); api.apply(); box.append(cv); if (window.ResizeObserver) new ResizeObserver(paint).observe(box); im.addEventListener('load', paint); paint();
+    const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, e.pressure || .5]; };
+    let cur = null, scr = null, scrollEl = null;
+    const scroller = () => { let n = box.parentNode; while (n && n !== document.body) { const o = getComputedStyle(n).overflowY; if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight) return n; n = n.parentNode; } return document.scrollingElement; };
+    box.addEventListener('pointerdown', e => { if (e.pointerType === 'pen' && !INK.on) { INK.on = true; inkSync(); } }, true);
+    cv.addEventListener('pointerdown', e => { if (!INK.on) return; cv.setPointerCapture(e.pointerId);
+      if (e.pointerType === 'touch') { scr = e.clientY; scrollEl = scroller(); return; }
+      INK.last = api; const q = pos(e);
+      if (INK.tool === 'er') { cur = { er: 1 }; erase(q); return; }
+      cur = { t: INK.tool, c: INK.c, p: [q] }; S.push(cur); paint(); e.preventDefault(); });
+    const erase = q => { const w = cv.clientWidth, h = cv.clientHeight, n = S.length; S = S.filter(s => !s.p.some(a => Math.hypot((a[0] - q[0]) * w, (a[1] - q[1]) * h) < 14)); if (S.length !== n) paint(); };
+    cv.addEventListener('pointermove', e => { if (scr != null) { scrollEl.scrollTop -= e.clientY - scr; scr = e.clientY; return; } if (!cur) return; (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]).forEach(ev => { const q = pos(ev); if (cur.er) erase(q); else cur.p.push(q); }); if (!cur.er) paint(); e.preventDefault(); });
+    const end = () => { if (scr != null) { scr = null; return; } if (cur) { save(); cur = null; } };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); };
+  const imgs = (q, noInk) => { const w = el('div', 'display:flex;flex-direction:column;gap:6px'); const list = Array.isArray(q) ? q : [q]; if (!noInk) w.append(inkBar());
+    list.forEach(p => { const im = img(p), box = el('div', 'position:relative;line-height:0'); box.append(im); w.append(box); if (!noInk) attachInk(box, im, p); }); return w; };
   const B = 'font:inherit;border-radius:12px;border:1.5px solid #4f46e5;background:#fff;color:#111;cursor:pointer;';
   window.alrimOpenRd = (it) => { const Q = (it.rd || []).filter(x => x && x.q); if (!Q.length) return;
     const ov = el('div', 'position:fixed;inset:0;z-index:10045;background:rgba(15,23,42,.92);overflow:auto;padding:10px'), bx = el('div', 'max-width:760px;margin:0 auto;background:#fff;color:#111;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px'); ov.append(bx); document.body.append(ov);
