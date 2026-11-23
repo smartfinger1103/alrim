@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-twopane">
+<meta name="build" content="2026-11-23-dicfloat">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -5678,10 +5678,15 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     $('dicGo').onclick = () => dicSearch($('dicQ').value);
     /* 왼쪽 메뉴의 단어 검색: 결과를 메뉴 옆 작은 창에 보여 줘요 */
     if ($('navDicQ')) { const nq = $('navDicQ'); let pop = null;
+      /* 오른쪽 아래에 떠 있는 단어 검색 */
+      const fw = el('div'); fw.id = 'dicFloat'; fw.style.cssText = 'position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:69;width:210px;max-width:calc(100vw - 32px);background:var(--panel);border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.22)';
+      nq.style.cssText = 'width:100%;min-width:0;padding:11px 16px;font-size:.95rem;border-radius:999px;border:2px solid var(--nv-ac,#3F4FB8);background:var(--panel);color:var(--ink)'; nq.placeholder = '🔍 단어 검색 (Enter)';
+      fw.append(nq); document.body.append(fw);
+      const place = () => { fw.style.bottom = (innerWidth <= 560 ? 'calc(96px + env(safe-area-inset-bottom))' : 'calc(16px + env(safe-area-inset-bottom))'); fw.style.display = state.mode === 'teacher' ? '' : 'none'; }; place(); addEventListener('resize', place); setInterval(place, 1500);
       const closePop = () => { if (pop) { pop.remove(); pop = null; } };
       const run = async () => { const q = nq.value.trim(); if (!q) { closePop(); return; } $('dicQ').value = q;
         closePop(); pop = el('div'); const r = nq.getBoundingClientRect();
-        pop.style.cssText = 'position:fixed;z-index:70;left:' + Math.round(r.right + 10) + 'px;top:' + Math.max(8, Math.round(r.top - 6)) + 'px;width:min(360px,calc(100vw - ' + Math.round(r.right + 24) + 'px));max-height:70vh;overflow:auto;background:var(--panel);color:var(--ink);border:2px solid var(--nv-ac,#3F4FB8);border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)';
+        pop.style.cssText = 'position:fixed;z-index:70;right:16px;bottom:' + Math.round(innerHeight - r.top + 10) + 'px;width:min(360px,calc(100vw - 32px));max-height:65vh;overflow:auto;background:var(--panel);color:var(--ink);border:2px solid var(--nv-ac,#3F4FB8);border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)';
         const x = el('button', 'small', '닫기 ✕'); x.type = 'button'; x.style.cssText = 'float:right'; x.onclick = closePop; const body = el('div', null, '찾는 중…'); pop.append(x, body); document.body.append(pop);
         try { await dicSearch(q); } catch (e) {}
         if (!pop) return; body.textContent = ''; const c = $('dicRes').cloneNode(true); c.removeAttribute('id'); body.append(c);
