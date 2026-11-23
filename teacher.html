@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-verchk">
+<meta name="build" content="2026-11-23-stumenu">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -3136,12 +3136,22 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     });
     g.addEventListener('dblclick', () => { root.style.removeProperty('--rw'); try { localStorage.removeItem('alrim.' + key); } catch (e) {} });
   })();
+  /* 오른쪽 위 학생 버튼: 누르면 학생 목록이 떠서 바로 골라요 */
+  function stuMenu(anchor) {
+    let m = $('stuMenu'); if (m) { m.remove(); return; }
+    m = el('div'); m.id = 'stuMenu'; const r = anchor.getBoundingClientRect();
+    m.style.cssText = 'position:fixed;z-index:100001;right:' + Math.max(8, Math.round(innerWidth - r.right)) + 'px;top:' + Math.round(r.bottom + 6) + 'px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:6px;display:flex;flex-direction:column;gap:4px;box-shadow:0 10px 28px rgba(0,0,0,.2);min-width:150px';
+    names().forEach(n => { const b = el('button', n === state.tab ? 'primary' : null, (n === state.tab ? '✓ ' : '') + shortName(n) + ' 화면'); b.type = 'button'; b.style.cssText = 'text-align:left;font-size:1rem;padding:10px 14px'; b.onclick = () => { m.remove(); setTab(n); }; m.append(b); });
+    document.body.append(m); setTimeout(() => document.addEventListener('click', function off(ev) { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('click', off); } }), 0);
+  }
+  /* 학생 버튼 글자가 지금 탭과 어긋나지 않게 늘 맞춰요 */
+  setInterval(() => { const p = $('stuNow'); if (p && state.tab && !p.hidden) { const t = shortName(state.tab) + ' 화면 ⇄'; if (p.textContent !== t) p.textContent = t; } }, 700);
   function renderTabs() {
     const box = $('stuTabs'); box.textContent = ''; document.body.dataset.stu = state.tab ? slugOf(state.tab) : ''; if (typeof renderHwCheck === 'function') setTimeout(() => { renderHwCheck(); if (state.mode === 'teacher' && LSROWS.length && LSTAB !== state.tab) { LSTAB = state.tab; lsLoad(); } }, 0);
     { const nm = state.tab ? shortName(state.tab) : '', hv = state.tab ? slugOf(state.tab) : '';
       let pill = $('stuNow'); if (!pill) { pill = el('div', 'stu-now'); pill.id = 'stuNow'; document.body.append(pill); }
       const ns = names(), nxt = ns.length > 1 ? shortName(ns[(ns.indexOf(state.tab) + 1) % ns.length]) : '', swap = () => { const l = names(); if (l.length < 2) return; setTab(l[(Math.max(0, l.indexOf(state.tab)) + 1) % l.length]); };   /* 누르면 다음 학생으로 (2명이면 규민 ↔ 수아) */
-      pill.textContent = nm ? nm + ' 화면' + (nxt ? ' ⇄' : '') : ''; pill.hidden = !nm || state.mode !== 'teacher'; pill.title = nxt ? '눌러서 ' + nxt + ' 화면으로 바꾸기' : ''; pill.onclick = swap;
+      pill.textContent = nm ? nm + ' 화면' + (nxt ? ' ⇄' : '') : ''; pill.hidden = !nm || state.mode !== 'teacher'; pill.title = nxt ? '눌러서 ' + nxt + ' 화면으로 바꾸기' : ''; pill.onclick = (e) => { e.stopPropagation(); stuMenu(pill); };
       document.querySelectorAll('.tnav-float').forEach(f => { let bd = f.querySelector('.stu-badge'); if (!bd) { bd = el('div', 'stu-badge'); f.prepend(bd); } bd.textContent = nm + (nxt ? ' ⇄' : ''); bd.hidden = !nm; bd.title = nxt ? '눌러서 ' + nxt + '(으)로 바꾸기' : ''; bd.onclick = swap; }); }
     names().forEach(n => {
       const b = el('button', 'stab'); b.type = 'button'; b.setAttribute('role', 'tab');
