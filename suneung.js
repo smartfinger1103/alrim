@@ -224,6 +224,14 @@ function rPlan(today) { const B = me.rbook; if (!B || !B.id || !B.start) return 
   const rd = [].concat(...ps.map(p => p.qs.map(q => ({ q: p.img, a: q.a, ...(RBX[p.r + '/' + q.n] || {}), lab: p.r + '회 ' + q.n + '번', sub: p.qs.length > 1 ? q.n + '번 문제' : '' }))));
   return { ps, rd, over: !ps.length, first: s + 1, last: s + ps.length, total: RB.ps.length }; }
 function lPlan(today) { const B = me.lbook; if (!B || !B.id || !B.start) return null; const n = dayDiff(B.start, today); if (n < 0) return null; const unit = (B.from || 1) + n; return { unit, over: unit > (B.to || 24) }; }
+/* 교사앱: 매일 자동 과제를 과제 목록(entries)에 풀어 줌 */
+let RDX = null;
+window.alrimAutoEntries = async (st, date) => { const out = [];
+  const W = st.wbook; if (W && (W.days || []).length && W.start) { const n = dayDiff(W.start, date); if (n >= 0) { const from = Math.max(1, W.from || 1), to = Math.min(W.days.length, W.to || W.days.length), k = from + n; if (k <= to) { const d = W.days[k - 1]; out.push({ key: 'w', subject: '단어', task: '📘 매일 단어 · ' + (d.n || 'Day ' + k) + ' (' + d.w.length + '개)', range: W.title || '' }); } } }
+  const L = st.lbook; if (L && L.id && L.start) { const n = dayDiff(L.start, date); if (n >= 0) { const unit = (L.from || 1) + n; if (unit <= (L.to || 24)) out.push({ key: 'l', subject: '듣기', task: '🎧 매일 듣기 · ' + unit + '회', range: '1~17번' }); } }
+  const R = st.rbook; if (R && R.id && R.start) { const n = dayDiff(R.start, date); if (n >= 0) { if (!RDX || RDX.id !== R.id) { try { RDX = await (await fetch(new URL('data/reading/' + R.id + '.json', location.href).href + '?_=' + Date.now())).json(); } catch (e) { RDX = null; } }
+      if (RDX && RDX.ps) { const per = Math.max(1, R.per || 7), s = Math.max(1, R.from || 1) - 1 + n * per, ps = RDX.ps.slice(s, s + per); if (ps.length) { const f = ps[0], l = ps[ps.length - 1]; out.push({ key: 'r', subject: '독해', task: '📖 매일 독해 · ' + ps.length + '지문', range: f.r + '회 ' + f.qs[0].n + '번 ~ ' + l.r + '회 ' + l.qs[l.qs.length - 1].n + '번' }); } } } }
+  return out; };
 let lCtx = null;
 function lOpen(unit, only, today) { if (!window.alrimListen) return; lCtx = { unit, only, today };
   window.alrimListen(only ? { id: 'sn-lr-' + today, subject: '듣기', task: '틀린 문제 다시 듣기', listen: { sets: [{ test: unit, only }] } } : { id: 'sn-l-' + today, subject: '듣기', task: '듣기 ' + unit + '회', listen: { test: unit } }); }

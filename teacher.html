@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261123-35">
+<meta name="build" content="20261123-36">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261123-35">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261123-35">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261123-36">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261123-36">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -5807,6 +5807,20 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     if (!location.pathname.endsWith('/teacher.html') || !D || !Array.isArray(D.students)) return;
     if (!D.students.some(x => x.name === '유혜나')) { D.students.push({ name: '유혜나', start: '2026-11-23', startN: 1, slug: 'hyena', track: 'suneung' }); try { changed(); } catch (e) {} }
   }
+  /* 수능 학생의 매일 자동 과제(단어·듣기·독해)를 과제 목록에 풀어서 지난 과제·오늘 과제에서 보고 고칠 수 있게 */
+  async function autoEntries() {
+    if (location.pathname.endsWith('/teacher.html') === false || !window.alrimAutoEntries) return;
+    const today = new Date(Date.now() - 6 * 36e5), ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), t = ymd(today); let n = 0;
+    for (const st of D.students.filter(x => x.track === 'suneung')) {
+      const starts = [st.wbook, st.lbook, st.rbook].filter(b => b && b.start).map(b => b.start); if (!starts.length) continue;
+      let d = new Date(Math.min(...starts.map(x => +new Date(x + 'T00:00:00'))));
+      for (let k = 0; k < 400 && ymd(d) <= t; k++, d.setDate(d.getDate() + 1)) { const ds = ymd(d); if (st.autoDone && ds <= st.autoDone) continue;
+        for (const it of await window.alrimAutoEntries(st, ds)) { const id = 'auto-' + (st.slug || st.name) + '-' + ds + '-' + it.key;
+          if (!D.entries.some(e => e.id === id)) { D.entries.push({ id, date: ds, who: st.name, subject: it.subject, task: it.task, range: it.range, due: '', note: '', words: '', auto: it.key }); n++; } } }
+      if (st.autoDone !== t) { st.autoDone = t; n++; } }
+    if (n) { try { changed(); } catch (e) {} try { refresh(); } catch (e) {} }
+  }
+  setTimeout(autoEntries, 2500); setTimeout(autoEntries, 8000);
   setTimeout(ensureRoster, 1500); setTimeout(ensureRoster, 6000);
   window.alrimListen = (it) => openListening(it);
   window.alrimSync = {
@@ -5816,14 +5830,14 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       const parsed = JSON.parse(seed.data);
       if (!Array.isArray(parsed.students) || !Array.isArray(parsed.entries)) throw new Error('잘못된 과제 데이터');
       SEED = seed; applyValues(seed); markTheme();
-      if (location.pathname.endsWith('/teacher.html')) { ensureRoster(); state.cls = state.tab = names()[0] || ''; showMode('teacher'); }
+      if (location.pathname.endsWith('/teacher.html')) { ensureRoster(); state.cls = state.tab = names()[0] || ''; showMode('teacher'); setTimeout(autoEntries, 800); }
       else { state.cls = seed.fixed; showMode('student'); }
     }
   };
 
 })();
 </script>
-<script src="github-sync.js?v=20261123-1"></script><script src="suneung.js?v=20261123-33"></script><nav id="mBar" aria-label="빠른 메뉴">
+<script src="github-sync.js?v=20261123-1"></script><script src="suneung.js?v=20261123-34"></script><nav id="mBar" aria-label="빠른 메뉴">
   <button type="button" data-mgo="hWt">📝<span>단어테스트</span></button>
   <button type="button" data-mgo="h2s" class="main">✏️<span>과제적기</span></button>
   <button type="button" data-mbottom>📒<span>알림장보기</span></button>
