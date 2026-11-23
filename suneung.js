@@ -20,9 +20,9 @@
     const wrong = (q, pick, s) => { bx.textContent = ''; bx.append(head('❌ ' + (q.lab || (i + 1) + '번') + ' 오답 풀이'));
       bx.append(el('div', 'font-size:1.15rem;font-weight:700', '내 답 ' + C[pick - 1] + '  →  정답 ' + C[q.a - 1]));
       const step = (n, t) => el('div', 'font-weight:700;color:#4f46e5;margin-top:4px', n + ' ' + t);
-      if (q.key) { bx.append(step('①', '🔑 정답으로 가는 핵심 문장')); bx.append(el('div', 'padding:12px 14px;border-left:5px solid #f59e0b;background:#fffbeb;border-radius:8px;font-size:1.05rem;line-height:1.6;white-space:pre-line', q.key)); }
+      if (q.key) { bx.append(step('①', '🔑 정답으로 가는 핵심 문장')); bx.append(el('div', 'padding:12px 14px;border-left:5px solid #f59e0b;background:#fffbeb;border-radius:8px;font-size:1.1rem;line-height:1.45;white-space:pre-line;font-family:"Times New Roman",Times,"Noto Serif","Nanum Myeongjo",serif', q.key)); }
       if (q.why) { bx.append(step(q.key ? '②' : '①', '👩‍🏫 선생님 풀이'));
-        const wb = el('div', 'padding:12px 14px;background:#eef2ff;border-radius:8px;line-height:1.8;white-space:pre-line'); wb.className = 'rd-why'; let n = 0, hasM = false;
+        const wb = el('div', 'padding:12px 14px;background:#eef2ff;border-radius:8px;line-height:1.5;white-space:pre-line'); wb.className = 'rd-why'; let n = 0, hasM = false;
         String(q.why).split(/(\{\{[\s\S]*?\}\})/).forEach(s => { const m = /^\{\{([\s\S]*)\}\}$/.exec(s); if (m) { hasM = true; n++; const sp = el('span', null, m[1]); sp.className = 'rd-m'; sp.style.cssText = 'background:linear-gradient(transparent 55%,rgba(255,214,102,.85) 55%);border-bottom:2.5px solid #e28c34;font-weight:700'; sp.dataset.n = n; wb.append(sp); } else if (s) { const sp = el('span', null, s); sp.className = 'rd-o'; wb.append(sp); } });
         if (hasM) { const tg = el('button', B + 'padding:6px 12px;align-self:flex-start', '🖍 핵심 이유만 보기'); tg.type = 'button'; let on = false;
           tg.onclick = () => { on = !on; tg.textContent = on ? '📖 전체 해설 보기' : '🖍 핵심 이유만 보기'; wb.querySelectorAll('.rd-o').forEach(s => { s.style.opacity = on ? '.12' : '1'; s.style.transition = 'opacity .25s'; }); };
@@ -133,7 +133,7 @@ function wStudy(P, today) { const st = wSt(today, P), M = wByKey(P), list = st.l
     S.body.append(el('div', 'display:flex;justify-content:space-between;color:var(--muted,#666);font-size:.9rem', ''), el('small', 'color:var(--muted,#666)', (i + 1) + ' / ' + list.length + ' · 본 단어 ' + seenN + ' / ' + list.length));
     const bar = el('div', 'height:6px;border-radius:3px;background:var(--soft,#e5e7eb);overflow:hidden'); bar.append(el('i', 'display:block;height:100%;background:var(--accent,#4f46e5);width:' + (seenN / list.length * 100) + '%')); S.body.append(bar);
     const cd = el('div', 'border:2px solid var(--line,#ddd);border-radius:18px;padding:22px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center');
-    cd.append(el('div', 'font-family:var(--font-display,inherit);font-size:2.2rem;color:' + LVC[lv], w[0]), btn('🔊 발음 듣기', () => say(w[0])));
+    cd.append(Object.assign(el('div', 'font-family:"Times New Roman",Times,"Noto Serif","Nanum Myeongjo",serif;font-size:2.2rem;color:' + LVC[lv], w[0]), { className: 'sn-en' }), btn('🔊 발음 듣기', () => say(w[0])));
     const ko = el('div', 'font-size:1.25rem;line-height:1.6;' + (show ? '' : 'color:transparent;background:var(--soft,#e5e7eb);border-radius:10px;padding:4px 14px;cursor:pointer'), show ? parts(w[1]).map((m, k) => (parts(w[1]).length > 1 ? (k + 1) + '. ' : '') + m).join('\n') : '눌러서 뜻 보기');
     ko.style.whiteSpace = 'pre-line'; if (!show) { ko.style.color = 'var(--muted,#666)'; ko.onclick = () => { show = true; draw(); }; } cd.append(ko);
     if (lv) cd.append(el('small', 'font-weight:700;color:' + LVC[lv], LVT[lv])); S.body.append(cd);
@@ -152,7 +152,7 @@ function wTest(P, today) { const st = wSt(today, P), M = wByKey(P);
   const ask = () => { S.body.textContent = ''; if (i >= qs.length) return end(); const w = qs[i], mine = parts(w[1]), mode = mine.length === 1 ? 'one' : mine.length <= 3 ? 'all' : 'not';
     const fake = sh(allParts.filter(x => !mine.includes(x) && !mine.some(m => m.includes(x) || x.includes(m))));
     const opts = sh(mode === 'one' ? [mine[0]].concat(fake.slice(0, 3)) : mode === 'all' ? mine.concat(fake.slice(0, 6 - mine.length)) : mine.concat([fake[0]]));
-    S.body.append(el('small', 'color:var(--muted,#666)', (i + 1) + ' / ' + qs.length), el('div', 'font-family:var(--font-display,inherit);font-size:2.1rem;text-align:center;padding:10px 0', w[0]), btn('🔊 발음 듣기', () => say(w[0])),
+    S.body.append(el('small', 'color:var(--muted,#666)', (i + 1) + ' / ' + qs.length), Object.assign(el('div', 'font-family:"Times New Roman",Times,"Noto Serif","Nanum Myeongjo",serif;font-size:2.1rem;text-align:center;padding:10px 0', w[0]), { className: 'sn-en' }), btn('🔊 발음 듣기', () => say(w[0])),
       el('b', 'text-align:center;font-size:1.05rem;color:' + (mode === 'not' ? '#dc2626' : 'var(--accent,#4f46e5)'), mode === 'one' ? '맞는 뜻을 고르세요' : mode === 'all' ? '뜻이 ' + mine.length + '개예요. 모두 고르세요' : '뜻이 ' + mine.length + '개예요. 뜻이 아닌 것 하나를 고르세요'));
     const sel = new Set();
     const done = () => { rec.push({ w, mode, mine, opts, fake: mode === 'not' ? fake[0] : null, sel: [...sel] }); i++; ask(); };   /* 채점은 끝나고 보여 줘요 */
@@ -278,9 +278,9 @@ function render() {
     card.append(d); }
   /* 공부 시간 (아이폰 '스크린 타임' 느낌) */
   { const [d, b] = sec('⏱ 과목별 공부 시간');
-    if (!document.getElementById('snSketchCss')) { const lk = document.createElement('link'); lk.rel = 'stylesheet'; lk.href = 'https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap'; document.head.append(lk);
+    if (!document.getElementById('snSketchCss')) { const lk = document.createElement('link'); lk.rel = 'stylesheet'; lk.href = 'https://fonts.googleapis.com/css2?family=Poor+Story&display=swap'; document.head.append(lk);
       const st = document.createElement('style'); st.id = 'snSketchCss'; st.textContent = '.sk-c1{background:repeating-linear-gradient(-50deg,rgba(74,118,196,.85) 0 1.8px,transparent 1.8px 4.5px)}.sk-c2{background:repeating-linear-gradient(-50deg,rgba(226,140,52,.85) 0 1.8px,transparent 1.8px 4.5px)}.sk-c3{background:repeating-linear-gradient(-50deg,rgba(88,160,96,.85) 0 1.8px,transparent 1.8px 4.5px)}.sk-c4{background:repeating-linear-gradient(-50deg,rgba(146,110,196,.85) 0 1.8px,transparent 1.8px 4.5px)}.sk-c5{background:repeating-linear-gradient(-50deg,rgba(214,92,96,.85) 0 1.8px,transparent 1.8px 4.5px)}.sk-b{border:1.6px solid #4a4a4a;border-radius:255px 18px 225px 18px/18px 225px 18px 255px}.sk-b2{border:1.4px solid #6b6b6b;border-radius:18px 225px 18px 255px/255px 18px 225px 18px}.sk-h{background:repeating-linear-gradient(-45deg,#5a5a5a 0 1.4px,transparent 1.4px 5px)}.sk-h2{background:repeating-linear-gradient(-45deg,#9a9a9a 0 1.2px,transparent 1.2px 5px)}'; document.head.append(st); }
-    const COL = { '영어': 'sk-c1', '국어': 'sk-c2', '수학': 'sk-c3', '통합과학': 'sk-c4', '통합사회': 'sk-c5' }, F = '"Gaegu","Nanum Pen Script",cursive';
+    const COL = { '영어': 'sk-c1', '국어': 'sk-c2', '수학': 'sk-c3', '통합과학': 'sk-c4', '통합사회': 'sk-c5' }, F = '"Poor Story","Poor Story","Gaegu",cursive';
     const hm = s => { s = Math.round(s / 60); const h = Math.floor(s / 60), m = s % 60; return h ? h + '시간 ' + (m ? m + '분' : '') : m + '분'; };
     const ios = el('div', 'font-family:' + F + ';color:#2b2b2b;padding:18px 18px 18px 30px;border:1.6px solid #555;border-radius:4px 14px 6px 12px/12px 5px 14px 6px;background:linear-gradient(90deg,transparent 21px,#e3b4b4 21px,#e3b4b4 22px,transparent 22px),repeating-linear-gradient(transparent 0 31px,#e4e4e4 31px 32px),#fffefb;display:flex;flex-direction:column;gap:14px');
     /* 과목 시작 칩 */
@@ -332,15 +332,15 @@ function tick() {
 /* 혜나 화면 전체: 흰색·회색 노트 필기 스타일 */
 function sketchSkin() {
   if (TEACH || document.getElementById('skSkin')) return;
-  const lk = document.createElement('link'); lk.rel = 'stylesheet'; lk.href = 'https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap'; document.head.append(lk);
+  const lk = document.createElement('link'); lk.rel = 'stylesheet'; lk.href = 'https://fonts.googleapis.com/css2?family=Poor+Story&display=swap'; document.head.append(lk);
   const st = document.createElement('style'); st.id = 'skSkin';
   const PEN = 'border:1.5px solid #555 !important;border-radius:255px 16px 225px 16px/16px 225px 16px 255px !important;box-shadow:none !important;';
   st.textContent = `
-html.sk,html.sk body,html.sk body *{--bg:#fbfbf9 !important;--panel:#fffefb !important;--ink:#2b2b2b !important;--muted:#777 !important;--line:#d6d6d3 !important;--accent:#3a3a3a !important;--accent-ink:#fff !important;--soft:#efefec !important;--warn:#555 !important;--font-display:"Gaegu","Nanum Pen Script",cursive !important}html.sk{color-scheme:light}
-html.sk .sk-ui b,html.sk .sk-ui button,html.sk .sk-ui small{font-family:"Gaegu","Nanum Pen Script",cursive !important}html.sk .ls-box button,html.sk .ls-box b,html.sk .ls-box h2,html.sk .ls-box h3{font-family:"Gaegu","Nanum Pen Script",cursive !important}
+html.sk,html.sk body,html.sk body *{--bg:#fbfbf9 !important;--panel:#fffefb !important;--ink:#2b2b2b !important;--muted:#777 !important;--line:#d6d6d3 !important;--accent:#3a3a3a !important;--accent-ink:#fff !important;--soft:#efefec !important;--warn:#555 !important;--font-display:"Poor Story","Poor Story","Gaegu",cursive !important}html.sk{color-scheme:light}
+html.sk .sk-ui b,html.sk .sk-ui button,html.sk .sk-ui small{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}html.sk .ls-box button,html.sk .ls-box b,html.sk .ls-box h2,html.sk .ls-box h3{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
 html.sk body{background:repeating-linear-gradient(transparent 0 31px,#ededea 31px 32px),#fbfbf9 !important;color:#2b2b2b}
 html.sk #snCard{border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;padding-left:34px !important;background:linear-gradient(90deg,transparent 22px,#e3b4b4 22px,#e3b4b4 23px,transparent 23px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;box-shadow:2px 3px 0 #e2e2df !important}
-html.sk #snCard,html.sk #snCard summary,html.sk #snCard b,html.sk #snCard small,html.sk #snCard div,html.sk #snCard span,html.sk #snCard button{font-family:"Gaegu","Nanum Pen Script",cursive !important}
+html.sk #snCard,html.sk #snCard summary,html.sk #snCard b,html.sk #snCard small,html.sk #snCard div,html.sk #snCard span,html.sk #snCard button{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
 html.sk #snCard summary{font-size:1.3rem !important;font-weight:700;list-style:none}
 html.sk #snCard summary::-webkit-details-marker{display:none}
 html.sk #snCard summary::before{content:"✎ ";color:#777}
@@ -350,6 +350,8 @@ html.sk #snCard details:nth-of-type(3) summary{background:linear-gradient(176deg
 html.sk #snCard details:nth-of-type(4) summary,html.sk #snCard details:nth-of-type(5) summary,html.sk #snCard details:nth-of-type(6) summary{background:linear-gradient(176deg,transparent 58%,rgba(244,170,170,.55) 58%,rgba(244,170,170,.55) 90%,transparent 90%) no-repeat}
 html.sk #snCard > div:first-child b{color:#c0504d !important;text-decoration:underline wavy rgba(192,80,77,.5) 1.5px;text-underline-offset:6px}
 html.sk .ls-box button{border:1.4px solid #555 !important;border-radius:255px 14px 225px 14px/14px 225px 14px 255px !important;box-shadow:none !important}
+html.sk .sk-ui,html.sk .sk-ui *:not(.sn-en){font-family:"Poor Story","Gaegu",cursive}
+html.sk .sk-ui .sn-en,html.sk .sk-ui .sn-en *{font-family:"Times New Roman",Times,"Noto Serif","Nanum Myeongjo",serif !important}
 html.sk .sk-ui>div{border:1.7px solid #555 !important;border-radius:6px 16px 8px 14px/14px 7px 16px 8px !important;background:linear-gradient(90deg,transparent 30px,#e3b4b4 30px,#e3b4b4 31px,transparent 31px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;padding-left:42px !important;box-shadow:3px 4px 0 #e2e2df !important}
 html.sk .sk-ui>div>div:first-child>b:first-child{background:linear-gradient(176deg,transparent 56%,rgba(255,214,102,.65) 56%,rgba(255,214,102,.65) 90%,transparent 90%) no-repeat;padding:0 6px;font-size:1.45rem !important}
 html.sk .sk-ui i{background:repeating-linear-gradient(-50deg,rgba(74,118,196,.9) 0 1.8px,transparent 1.8px 4.5px) !important;border-right:1.5px solid #4a76c4}
@@ -364,12 +366,12 @@ html.sk .sk-ui b[style*="font-size: 1.15rem"],html.sk .sk-ui p{color:#2b2b2b !im
 html.sk .sk-ui details>summary{color:#4a76c4 !important}
 html.sk .ls-box{background:linear-gradient(90deg,transparent 30px,#e3b4b4 30px,#e3b4b4 31px,transparent 31px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;border:1.7px solid #555 !important;border-radius:6px 16px 8px 14px/14px 7px 16px 8px !important;padding-left:42px !important;box-shadow:3px 4px 0 #e2e2df !important}
 html.sk .ls-box h2{background:linear-gradient(176deg,transparent 56%,rgba(140,200,240,.65) 56%,rgba(140,200,240,.65) 90%,transparent 90%) no-repeat;padding:0 6px;font-size:1.5rem !important}
-html.sk .ls-chip{border:1.4px solid #555 !important;border-radius:255px 12px 225px 12px/12px 225px 12px 255px !important;background:transparent !important;color:#2b2b2b !important;font-family:"Gaegu",cursive !important;font-size:1.1rem !important}
+html.sk .ls-chip{border:1.4px solid #555 !important;border-radius:255px 12px 225px 12px/12px 225px 12px 255px !important;background:transparent !important;color:#2b2b2b !important;font-family:"Poor Story","Gaegu",cursive !important;font-size:1.1rem !important}
 html.sk .ls-chip.cur{background:rgba(255,214,102,.6) !important}
 html.sk .ls-chip.done,html.sk .ls-chip[class*="ok"]{background:rgba(170,220,150,.6) !important}
 html.sk .ls-chip[class*="bad"],html.sk .ls-chip[class*="wrong"]{background:rgba(244,170,170,.6) !important}
 html.sk .ls-round{background:repeating-linear-gradient(-50deg,rgba(74,118,196,.9) 0 2px,#fffefb 2px 5px) !important;border:1.8px solid #444 !important;color:#2b2b2b !important}
-html.sk .ls-opt{border:1.6px solid #555 !important;border-radius:255px 16px 225px 16px/16px 225px 16px 255px !important;background:transparent !important;color:#2b2b2b !important;font-family:"Gaegu",cursive !important}
+html.sk .ls-opt{border:1.6px solid #555 !important;border-radius:255px 16px 225px 16px/16px 225px 16px 255px !important;background:transparent !important;color:#2b2b2b !important;font-family:"Poor Story","Gaegu",cursive !important}
 html.sk .ls-opt:nth-child(5n+1){box-shadow:2px 3px 0 rgba(74,118,196,.5) !important}html.sk .ls-opt:nth-child(5n+2){box-shadow:2px 3px 0 rgba(226,140,52,.5) !important}html.sk .ls-opt:nth-child(5n+3){box-shadow:2px 3px 0 rgba(88,160,96,.5) !important}html.sk .ls-opt:nth-child(5n+4){box-shadow:2px 3px 0 rgba(146,110,196,.5) !important}html.sk .ls-opt:nth-child(5n){box-shadow:2px 3px 0 rgba(214,92,96,.5) !important}
 html.sk .ls-speed button{border:1.4px solid #555 !important;border-radius:255px 12px 225px 12px/12px 225px 12px 255px !important;background:transparent !important;color:#2b2b2b !important}
 html.sk .ls-q{border:1.5px solid #888;border-radius:6px 12px 6px 10px}
@@ -379,11 +381,11 @@ html.sk #snCard details{border-top:1.4px dashed #bdbdbd !important}
 html.sk #snCard button,html.sk .sk-ui button{${PEN}background:transparent !important;color:#2b2b2b !important;font-weight:700 !important;font-size:1.12rem !important}
 html.sk #snCard button[style*="background:var(--accent"],html.sk .sk-ui button[style*="background:var(--accent"],html.sk #snCard button[style*="background:#dc2626"]{background:#ebebe8 !important}
 html.sk #snCard button:disabled{opacity:.45}
-html.sk #sWTime{border:1.5px solid #555 !important;border-radius:255px 16px 225px 16px/16px 225px 16px 255px !important;background:#fffefb !important;color:#2b2b2b !important;font-family:"Gaegu",cursive !important;font-size:1.15rem !important}
+html.sk #sWTime{border:1.5px solid #555 !important;border-radius:255px 16px 225px 16px/16px 225px 16px 255px !important;background:#fffefb !important;color:#2b2b2b !important;font-family:"Poor Story","Gaegu",cursive !important;font-size:1.15rem !important}
 html.sk #sWTime b{color:#2b2b2b !important}
-html.sk #mTop{background:#fffefb !important;color:#2b2b2b !important;border:1.6px solid #444 !important;border-radius:50% 46% 52% 48%/48% 52% 46% 50% !important;box-shadow:2px 2px 0 #d9d9d6 !important;font-family:"Gaegu",cursive !important;font-size:26px !important}
-html.sk h1,html.sk h2{font-family:"Gaegu","Nanum Pen Script",cursive !important}
-html.sk #studentView .nb-btn{${PEN}background:#fffefb !important;color:#2b2b2b !important;font-family:"Gaegu",cursive !important;font-weight:700 !important;font-size:1.05rem !important}
+html.sk #mTop{background:#fffefb !important;color:#2b2b2b !important;border:1.6px solid #444 !important;border-radius:50% 46% 52% 48%/48% 52% 46% 50% !important;box-shadow:2px 2px 0 #d9d9d6 !important;font-family:"Poor Story","Gaegu",cursive !important;font-size:26px !important}
+html.sk h1,html.sk h2{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
+html.sk #studentView .nb-btn{${PEN}background:#fffefb !important;color:#2b2b2b !important;font-family:"Poor Story","Gaegu",cursive !important;font-weight:700 !important;font-size:1.05rem !important}
 `; document.head.append(st);
   document.documentElement.classList.add('sk'); document.documentElement.dataset.theme = 'light';
 }
