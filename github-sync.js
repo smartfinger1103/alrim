@@ -29,13 +29,13 @@ if (!teacher) {
     try {
       let body;
       try {
-        const response=await fetch(endpoint+'?ref=main&t='+Date.now(), {cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
-        if (!response.ok) throw new Error();
-        body=validate(decode((await response.json()).content));
-      } catch (_) {
         const response=await fetch(dataUrl.href+'?t='+Date.now(), {cache:'no-store'});
         if (!response.ok) throw new Error();
         body=validate(await response.json());
+      } catch (_) {
+        const response=await fetch(endpoint+'?ref=main&t='+Date.now(), {cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+        if (!response.ok) throw new Error();
+        body=validate(decode((await response.json()).content));
       }
       const seed=body.students[id];
       if(seed.updated!==last) { app.receive(seed); last=seed.updated; window.alrimBase=seed.updated; }
@@ -88,9 +88,17 @@ function combine(body) {
   return {...result,data:JSON.stringify(d),words:JSON.stringify(words),notesData};
 }
 async function readRemote() {
-  const response=await fetch(endpoint+'?ref=main&t='+Date.now(),{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
-  if(!response.ok) throw new Error('과제를 불러오지 못했어요. 잠시 후 새로고침해 주세요.');
-  const file=await response.json(); sha=file.sha; return validate(decode(file.content));
+  const tk=(document.getElementById('githubToken')||{}).value||'', h={Accept:'application/vnd.github+json'}; if(tk.trim()) h.Authorization='Bearer '+tk.trim();
+  try {
+    let response=await fetch(endpoint+'?ref=main&t='+Date.now(),{cache:'no-store',headers:h});
+    if(!response.ok && h.Authorization) response=await fetch(endpoint+'?ref=main&t='+Date.now(),{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+    if(!response.ok) throw new Error();
+    const file=await response.json(); sha=file.sha; return validate(decode(file.content));
+  } catch(_) { /* GitHub 조회 한도(시간당 60번)를 넘으면 게시된 사본에서 읽어요 */
+    const response=await fetch(dataUrl.href+'?t='+Date.now(),{cache:'no-store'});
+    if(!response.ok) throw new Error('과제를 불러오지 못했어요. 잠시 후 새로고침해 주세요.');
+    return validate(await response.json());
+  }
 }
 readRemote().then(body=>{
   const seed=combine(body);
@@ -117,7 +125,7 @@ async function save(only){
   try {
     let out=students;
     if(only){ /* 한 학생만: 저장본을 새로 읽어 그 학생 것만 바꿔 넣어요 */
-      const r=await fetch(endpoint+'?ref=main&t='+Date.now(),{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+      const r=await fetch(endpoint+'?ref=main&t='+Date.now(),{cache:'no-store',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}});
       if(!r.ok) throw new Error('저장본을 불러오지 못했어요. 잠시 후 다시 눌러 주세요.');
       const file=await r.json(); sha=file.sha; const body=validate(decode(file.content));
       out={...body.students,[only]:students[only]};
