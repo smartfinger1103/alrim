@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-pvscroll">
+<meta name="build" content="2026-11-23-pvside">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -178,7 +178,7 @@ body.tmode .grid { grid-template-columns: minmax(0, 1fr) 14px minmax(240px, var(
 .gsplit::after { content: "⋮"; position: absolute; top: 150px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 1.2rem; }
 .gsplit:hover, .gsplit.on { background: color-mix(in srgb, var(--accent) 45%, transparent); }
 body:not(.tmode) .gsplit { display: none; }
-@media (max-width: 900px) { body.tmode .grid { grid-template-columns: minmax(0, 1fr); } .gsplit { display: none; } }
+@media (max-width: 760px) { body.tmode .grid { grid-template-columns: minmax(0, 1fr); } .gsplit { display: none; } }
 .steps { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 section.step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .step h2 { margin: 0; font-size: 1.02rem; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -435,7 +435,7 @@ details.import > *:not(summary) { margin-top: 10px; }
 aside.preview { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 @media (max-width: 900px) { aside.preview { position: static; } }
 /* 오른쪽 미리보기: 내용이 길면 그 안에서 따로 스크롤 */
-@media (min-width: 901px) { body.tmode aside.preview { max-height: calc(100vh - 32px - env(safe-area-inset-top, 0px)); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; } }
+@media (min-width: 761px) { body.tmode aside.preview { position: sticky; max-height: calc(100vh - 32px - env(safe-area-inset-top, 0px)); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; } }
 .canvas-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
 .canvas-box img { display: block; width: 100%; height: auto; border-radius: 6px; box-shadow: 0 6px 24px rgba(20, 40, 30, .14); }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
