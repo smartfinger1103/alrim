@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-navdic">
+<meta name="build" content="2026-11-23-pvscroll">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -434,6 +434,8 @@ details.import > *:not(summary) { margin-top: 10px; }
 .sw { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(0,0,0,.15); }
 aside.preview { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 @media (max-width: 900px) { aside.preview { position: static; } }
+/* 오른쪽 미리보기: 내용이 길면 그 안에서 따로 스크롤 */
+@media (min-width: 901px) { body.tmode aside.preview { max-height: calc(100vh - 32px - env(safe-area-inset-top, 0px)); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; } }
 .canvas-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
 .canvas-box img { display: block; width: 100%; height: auto; border-radius: 6px; box-shadow: 0 6px 24px rgba(20, 40, 30, .14); }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
