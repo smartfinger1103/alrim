@@ -61,6 +61,7 @@ const dayTot = (d, s) => ((LS.time[d] || {})[s] || 0);
 let fb = null;
 function runFloat() {
   if (TEACH) return; const R = LS.run;
+  pipSync();
   if (!R) { if (fb) { fb.remove(); fb = null; } return; }
   if (!fb) { fb = el('div', 'position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:10030;display:flex;flex-direction:column;align-items:center;gap:4px;user-select:none;-webkit-user-select:none;touch-action:none');
     const b = el('button', 'width:72px;height:72px;border-radius:50%;border:none;font-size:30px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.3);cursor:pointer;-webkit-touch-callout:none'); b.type = 'button'; b.id = 'snRunBtn';
@@ -70,12 +71,34 @@ function runFloat() {
     const up = (e) => { e.preventDefault(); b.style.transform = ''; if (timer) { clearTimeout(timer); timer = null; } if (!long && LS.run) { pauseRun(); runFloat(); render(); } };
     const cancel = () => { b.style.transform = ''; if (timer) { clearTimeout(timer); timer = null; } };
     b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointerleave', cancel); b.addEventListener('pointercancel', cancel); b.addEventListener('contextmenu', e => e.preventDefault());
-    fb.append(b, cap); document.body.append(fb); }
+    const pb = el('button', 'border:none;border-radius:10px;padding:5px 10px;font-weight:700;font-size:.78rem;background:#0f172a;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2)', '📺 다른 앱 위에 띄우기'); pb.type = 'button'; pb.id = 'snPipBtn'; pb.onclick = () => { if (pip) { try { document.exitPictureInPicture && document.exitPictureInPicture(); } catch (e) {} return; } pipOpen(); };
+    fb.append(b, cap, pb); document.body.append(fb); }
   const b = document.getElementById('snRunBtn'), cap = document.getElementById('snRunCap'), on = !!R.t;
   if (R.ready) { b.textContent = '▶'; b.style.background = '#15803d'; b.setAttribute('aria-label', R.s + ' 시작'); cap.textContent = R.s + ' · 눌러서 시작'; return; }
   b.textContent = on ? '⏸' : '▶'; b.style.background = on ? '#4f46e5' : '#f59e0b'; b.setAttribute('aria-label', R.s + (on ? ' 멈춤' : ' 계속') + ' (꾹 누르면 끝)');
-  cap.textContent = R.s + (on ? ' 공부 중' : ' 멈춤') + ' · 꾹 누르면 끝';
+  cap.textContent = R.s + (on ? ' 공부 중' : ' 멈춤') + ' · 꾹 누르면 끝'; const pbb = document.getElementById('snPipBtn'); if (pbb) pbb.textContent = pip ? '📺 띄운 창 닫기' : '📺 다른 앱 위에 띄우기';
 }
+/* 다른 앱 위에 띄우기: 작은 '화면 속 화면(PiP)' 창. 창의 ▶/⏸로 멈춤·계속, 다시 앱에서 꾹 누르면 끝 */
+let pip = null;
+function pipDraw() { if (!pip) return; const R = LS.run, c = pip.c, g = c.getContext('2d'); g.fillStyle = !R ? '#64748b' : R.ready ? '#15803d' : R.t ? '#4f46e5' : '#f59e0b'; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.font = 'bold 52px sans-serif'; g.fillText(R ? R.s : '끝', c.width / 2, 92);
+  g.font = 'bold 34px sans-serif'; g.fillText(!R ? '기록했어요' : R.ready ? '▶ 눌러서 시작' : R.t ? '⏺ 공부 중' : '⏸ 멈춤', c.width / 2, 150); }
+async function pipOpen() {
+  const v = document.createElement('video'), c = document.createElement('canvas'); c.width = 400; c.height = 200;
+  if (!c.captureStream || !(document.pictureInPictureEnabled || v.webkitSupportsPresentationMode)) { toast2('이 기기에서는 다른 앱 위에 띄우기가 안 돼요'); return; }
+  v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.style.cssText = 'position:fixed;width:2px;height:2px;opacity:0;left:0;bottom:0;pointer-events:none'; document.body.append(v);
+  pip = { v, c, iv: setInterval(pipDraw, 500), sync: false }; pipDraw(); v.srcObject = c.captureStream(4);
+  try { await v.play(); } catch (e) {}
+  const toTimer = (play) => { if (pip.sync || !LS.run) return; const R = LS.run; if (R.ready ? play : (play ? !R.t : !!R.t)) { pauseRun(); runFloat(); render(); pipDraw(); } };
+  v.addEventListener('play', () => toTimer(true)); v.addEventListener('pause', () => toTimer(false));
+  try { if ('mediaSession' in navigator) { navigator.mediaSession.setActionHandler('play', () => { v.play(); }); navigator.mediaSession.setActionHandler('pause', () => { v.pause(); }); } } catch (e) {}
+  const end = () => { if (!pip) return; clearInterval(pip.iv); try { v.srcObject = null; v.remove(); } catch (e) {} pip = null; runFloat(); };
+  v.addEventListener('leavepictureinpicture', end); v.addEventListener('webkitpresentationmodechanged', () => { if (v.webkitPresentationMode !== 'picture-in-picture') end(); });
+  try { if (v.requestPictureInPicture) await v.requestPictureInPicture(); else v.webkitSetPresentationMode('picture-in-picture'); }
+  catch (e) { end(); toast2('다른 앱 위에 띄우지 못했어요. 한 번 더 눌러 보세요'); }
+}
+function pipSync() { if (!pip) return; const R = LS.run; pip.sync = true; try { if (R && R.t) pip.v.play(); else if (R) pip.v.pause(); } catch (e) {} setTimeout(() => { if (pip) pip.sync = false; }, 300); pipDraw(); if (!R) setTimeout(() => { try { document.exitPictureInPicture && document.exitPictureInPicture(); pip && pip.v.webkitSetPresentationMode && pip.v.webkitSetPresentationMode('inline'); } catch (e) {} }, 1500); }
+function toast2(t) { const d = el('div', 'position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10031;background:#334155;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:90vw;text-align:center', t); document.body.append(d); setTimeout(() => d.remove(), 2600); }
 function toast(t) { const d = el('div', 'position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10031;background:#15803d;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.25)', '✅ ' + t); document.body.append(d); setTimeout(() => d.remove(), 2200); }
 function weekTot() { let t = 0; for (let i = 0; i < 7; i++) { const d = ymd(new Date(Date.now() - i * 864e5)); SUBJ.forEach(s => t += dayTot(d, s)); } return t; }
 
