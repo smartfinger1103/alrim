@@ -343,6 +343,29 @@ html.sk #snCard details:nth-of-type(3) summary{background:linear-gradient(176deg
 html.sk #snCard details:nth-of-type(4) summary,html.sk #snCard details:nth-of-type(5) summary,html.sk #snCard details:nth-of-type(6) summary{background:linear-gradient(176deg,transparent 58%,rgba(244,170,170,.55) 58%,rgba(244,170,170,.55) 90%,transparent 90%) no-repeat}
 html.sk #snCard > div:first-child b{color:#c0504d !important;text-decoration:underline wavy rgba(192,80,77,.5) 1.5px;text-underline-offset:6px}
 html.sk .ls-box button{border:1.4px solid #555 !important;border-radius:255px 14px 225px 14px/14px 225px 14px 255px !important;box-shadow:none !important}
+html.sk .sk-ui>div{border:1.7px solid #555 !important;border-radius:6px 16px 8px 14px/14px 7px 16px 8px !important;background:linear-gradient(90deg,transparent 30px,#e3b4b4 30px,#e3b4b4 31px,transparent 31px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;padding-left:42px !important;box-shadow:3px 4px 0 #e2e2df !important}
+html.sk .sk-ui>div>div:first-child>b:first-child{background:linear-gradient(176deg,transparent 56%,rgba(255,214,102,.65) 56%,rgba(255,214,102,.65) 90%,transparent 90%) no-repeat;padding:0 6px;font-size:1.45rem !important}
+html.sk .sk-ui i{background:repeating-linear-gradient(-50deg,rgba(74,118,196,.9) 0 1.8px,transparent 1.8px 4.5px) !important;border-right:1.5px solid #4a76c4}
+html.sk .sk-ui div[style*="border: 2px solid"]{border:1.8px solid #555 !important;border-radius:14px 6px 16px 8px/8px 16px 6px 14px !important;background:rgba(255,236,170,.28) !important;box-shadow:3px 3px 0 rgba(226,140,52,.35) !important}
+html.sk .sk-ui div[style*="cursor: pointer"]{background:rgba(170,215,245,.45) !important;color:#2b2b2b !important;border-radius:10px 4px 12px 5px !important}
+html.sk .sk-ui button:nth-of-type(4n+1){box-shadow:2px 3px 0 rgba(74,118,196,.5) !important}
+html.sk .sk-ui button:nth-of-type(4n+2){box-shadow:2px 3px 0 rgba(226,140,52,.5) !important}
+html.sk .sk-ui button:nth-of-type(4n+3){box-shadow:2px 3px 0 rgba(88,160,96,.5) !important}
+html.sk .sk-ui button:nth-of-type(4n){box-shadow:2px 3px 0 rgba(214,92,96,.5) !important}
+html.sk .sk-ui button[aria-pressed="true"],html.sk .ls-box [aria-pressed="true"]{background:rgba(255,214,102,.55) !important;border-color:#444 !important}
+html.sk .sk-ui b[style*="font-size: 1.15rem"],html.sk .sk-ui p{color:#2b2b2b !important}
+html.sk .sk-ui details>summary{color:#4a76c4 !important}
+html.sk .ls-box{background:linear-gradient(90deg,transparent 30px,#e3b4b4 30px,#e3b4b4 31px,transparent 31px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;border:1.7px solid #555 !important;border-radius:6px 16px 8px 14px/14px 7px 16px 8px !important;padding-left:42px !important;box-shadow:3px 4px 0 #e2e2df !important}
+html.sk .ls-box h2{background:linear-gradient(176deg,transparent 56%,rgba(140,200,240,.65) 56%,rgba(140,200,240,.65) 90%,transparent 90%) no-repeat;padding:0 6px;font-size:1.5rem !important}
+html.sk .ls-chip{border:1.4px solid #555 !important;border-radius:255px 12px 225px 12px/12px 225px 12px 255px !important;background:transparent !important;color:#2b2b2b !important;font-family:"Gaegu",cursive !important;font-size:1.1rem !important}
+html.sk .ls-chip.cur{background:rgba(255,214,102,.6) !important}
+html.sk .ls-chip.done,html.sk .ls-chip[class*="ok"]{background:rgba(170,220,150,.6) !important}
+html.sk .ls-chip[class*="bad"],html.sk .ls-chip[class*="wrong"]{background:rgba(244,170,170,.6) !important}
+html.sk .ls-round{background:repeating-linear-gradient(-50deg,rgba(74,118,196,.9) 0 2px,#fffefb 2px 5px) !important;border:1.8px solid #444 !important;color:#2b2b2b !important}
+html.sk .ls-opt{border:1.6px solid #555 !important;border-radius:255px 16px 225px 16px/16px 225px 16px 255px !important;background:transparent !important;color:#2b2b2b !important;font-family:"Gaegu",cursive !important}
+html.sk .ls-opt:nth-child(5n+1){box-shadow:2px 3px 0 rgba(74,118,196,.5) !important}html.sk .ls-opt:nth-child(5n+2){box-shadow:2px 3px 0 rgba(226,140,52,.5) !important}html.sk .ls-opt:nth-child(5n+3){box-shadow:2px 3px 0 rgba(88,160,96,.5) !important}html.sk .ls-opt:nth-child(5n+4){box-shadow:2px 3px 0 rgba(146,110,196,.5) !important}html.sk .ls-opt:nth-child(5n){box-shadow:2px 3px 0 rgba(214,92,96,.5) !important}
+html.sk .ls-speed button{border:1.4px solid #555 !important;border-radius:255px 12px 225px 12px/12px 225px 12px 255px !important;background:transparent !important;color:#2b2b2b !important}
+html.sk .ls-q{border:1.5px solid #888;border-radius:6px 12px 6px 10px}
 html.sk #snCard b{font-size:1.15em}
 html.sk #snCard small{font-size:1.02rem !important;color:#6f6f6f !important}
 html.sk #snCard details{border-top:1.4px dashed #bdbdbd !important}
