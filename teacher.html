@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-dicfloat2">
+<meta name="build" content="2026-11-23-verchk">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -5848,4 +5848,6 @@ no.onchange=function(){show((parseInt(no.value)||1)-1)};document.getElementById(
 var sx=null;pic.addEventListener('touchstart',function(e){if(e.touches.length===1)sx=e.touches[0].clientX},{passive:true});
 pic.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>60)show(i+(dx<0?1:-1))},{passive:true});
 document.addEventListener('keydown',function(e){if(ov.style.display!=='flex')return;if(e.key==='ArrowRight')show(i+1);if(e.key==='ArrowLeft')show(i-1);if(e.key==='Escape')ov.style.display='none';});})();</script>
+<script>/* 새 버전이 올라오면 위에 알려 줘요 (브라우저에 남은 예전 화면 방지) */
+(function(){var me=(document.querySelector('meta[name="build"]')||{}).content||'';function chk(){fetch(location.pathname+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/name="build" content="([^"]*)"/);if(!m||m[1]===me||document.getElementById('newVer'))return;var b=document.createElement('div');b.id='newVer';b.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:100000;background:#dc2626;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.3);cursor:pointer';b.textContent='🔄 새 버전이 있어요 · 눌러서 새로고침';b.onclick=function(){location.replace(location.pathname+'?v='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})}setTimeout(chk,4000);setInterval(chk,120000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk()})})();</script>
 </body></html>
