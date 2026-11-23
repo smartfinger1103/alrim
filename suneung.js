@@ -239,7 +239,7 @@ window.alrimAutoEntries = async (st, date) => { const out = [];
 let lCtx = null;
 function lOpen(unit, only, today) { if (!window.alrimListen) return; lCtx = { unit, only, today };
   window.alrimListen(only ? { id: 'sn-lr-' + today, subject: '듣기', task: '틀린 문제 다시 듣기', listen: { sets: [{ test: unit, only }] } } : { id: 'sn-l-' + today, subject: '듣기', task: '듣기 ' + unit + '회', listen: { test: unit } }); }
-window.addEventListener('alrim:rddone', e => { if (!me || !e.detail || !e.detail.log || !e.detail.log.length) return; LS.read.push({ d: ymd(), log: e.detail.log.map(x => ({ s: x.s, ok: x.ok, why: x.why })) }); LS.read = LS.read.slice(-200); save(); render(); });
+window.addEventListener('alrim:rddone', e => { if (!me || !e.detail || !e.detail.log || !e.detail.log.length) return; LS.read.push({ d: ymd(), log: e.detail.log.map(x => ({ s: x.s, ok: x.ok, why: x.why, lab: x.lab })) }); LS.read = LS.read.slice(-200); save(); render(); });
 window.addEventListener('alrim:lsdone', e => { if (!lCtx || !me) return; const d = e.detail || {};
   if (lCtx.only) { const x = LS.ldone[lCtx.today]; if (x) x.retry = (d.total - d.wrong.length) + '/' + d.total; }
   else LS.ldone[lCtx.today] = { unit: lCtx.unit, total: d.total, wrong: (d.wrong || []).map(w => w.n), retry: '' };
@@ -262,6 +262,62 @@ function markTab() { const bar = document.getElementById('snTabs'); if (!bar || 
 window.addEventListener('scroll', () => markTab(), { passive: true });
 const sumBox = (t) => { const sm = el('div', 'display:flex;flex-direction:column;gap:6px;border:1.5px dashed #999;border-radius:10px;padding:10px 12px'); sm.className = 'sn-sum'; sm.append(el('b', null, t)); return sm; };
 const pbar = (p, cls) => { const o = el('div', 'height:12px;border:1.4px solid #555;border-radius:255px 12px 225px 12px/12px 225px 12px 255px;overflow:hidden'), i = el('i', 'display:block;height:100%;width:' + Math.round(Math.min(1, p) * 100) + '%'); i.className = cls; o.append(i); return o; };
+
+/* ---------- 분석하기: 내 기록으로 약점 찾기 + 학습 방법 제안 (다른 학생과 비교하지 않아요) ---------- */
+const RTYPE = n => n === 21 ? '함축 의미' : n === 22 ? '요지' : n === 23 ? '주제' : n === 24 ? '제목' : n === 29 ? '어법' : n === 30 ? '어휘' : n >= 31 && n <= 34 ? '빈칸 추론' : n === 35 ? '무관한 문장' : n === 36 || n === 37 ? '글의 순서' : n === 38 || n === 39 ? '문장 삽입' : n === 40 ? '요약문' : n === 41 || n === 42 ? '장문' : '기타';
+const LTYPE = n => n <= 3 ? '목적·의견·요지 (1~3번)' : n === 4 ? '그림 (4번)' : n === 5 ? '할 일 (5번)' : n === 6 ? '금액 계산 (6번)' : n <= 9 ? '이유·언급·내용 일치 (7~9번)' : n === 10 ? '도표 (10번)' : n <= 14 ? '대화 응답 (11~14번)' : n === 15 ? '상황에 맞는 말 (15번)' : '긴 담화 (16~17번)';
+const TIP_R = { '함축 의미': '밑줄 표현을 바로 해석하지 말고, 밑줄 앞뒤 2문장에서 글쓴이의 주장을 먼저 찾은 뒤 그 주장으로 바꿔 읽어요.', '요지': '마지막 2문장과 Thus·However·should 같은 신호어 문장에 밑줄을 긋고, 그 문장을 우리말 한 줄로 줄여요.', '주제': '첫 문장과 마지막 문장을 먼저 읽고 글 전체가 문제점인지 해결책인지 장점인지부터 정해요. 선지는 범위가 너무 넓거나 좁은 것부터 지워요.', '제목': '요지를 한 줄로 쓴 다음, 그 내용을 비유로 바꾼 선지를 골라요. 지문 단어가 그대로 나온 선지를 조심해요.', '어법': '밑줄마다 "동사인가 준동사인가 / 수 일치 / 관계사 뒤가 완전한가 / 능동·수동"을 순서대로 확인해요. 틀린 문제는 어떤 항목이었는지 적어 둬요.', '어휘': '밑줄 단어가 글의 흐름과 반대인지 봐요. 앞뒤 문장의 방향(+/−)을 표시하면서 읽어요.', '빈칸 추론': '빈칸 문장을 먼저 읽고 무엇을 찾아야 하는지 정한 뒤, 같은 말을 되풀이한 문장(재진술)을 지문에서 찾아요. 하루 2문제만 시간을 재고 풀어요.', '무관한 문장': '첫 문장에서 소재와 방향을 잡고, 소재는 같지만 방향이 다른 문장을 골라요.', '글의 순서': '각 덩어리의 첫 단어(this, such, however, 대명사)가 가리키는 것을 앞 덩어리에서 찾아 선으로 이어요.', '문장 삽입': '주어진 문장의 연결어·대명사를 먼저 표시하고, 지문에서 내용이 갑자기 끊기는 곳을 찾아요.', '요약문': '요약문을 먼저 읽고 빈칸 두 개가 무엇과 무엇의 관계인지 정한 뒤 지문을 읽어요.', '장문': '문제를 먼저 읽고, 제목 문제는 전체 흐름으로, 어휘 문제는 밑줄 주변 문장으로 나눠 풀어요.' };
+const TIP_L = { '목적·의견·요지 (1~3번)': '끝까지 듣고 답해요. 마지막 한두 문장에 목적과 의견이 나와요. 선지를 미리 읽어 두어요.', '그림 (4번)': '듣기 전에 그림의 다섯 부분을 영어로 떠올려 두고, 들리는 순서대로 하나씩 ○×를 표시해요.', '할 일 (5번)': '대화 뒷부분에서 "I\'ll ~ / Can you ~" 뒤를 들어요. 앞에 나온 일은 함정이에요.', '금액 계산 (6번)': '숫자가 들릴 때마다 바로 적어요. 개수, 할인, 쿠폰을 따로 적고 마지막에 계산해요.', '이유·언급·내용 일치 (7~9번)': '선지를 먼저 읽고, 들리는 순서대로 선지에 표시해요.', '도표 (10번)': '조건이 나올 때마다 표에서 안 되는 줄을 지워요.', '대화 응답 (11~14번)': '마지막 말을 정확히 들어야 해요. 받아쓰기로 마지막 문장을 적어 보는 연습을 해요.', '상황에 맞는 말 (15번)': '누가 누구에게 말하는지 먼저 확인하고, 상황 설명의 마지막 문장을 들어요.', '긴 담화 (16~17번)': '16번은 첫 부분, 17번은 나열되는 항목을 들으면서 선지에 체크해요. 두 번 들려주니 첫 번째에 주제, 두 번째에 항목을 확인해요.' };
+const TIP_WHY = { '단어를 몰라서': '틀린 지문에서 모르는 단어를 5개만 골라 단어장에 적고, 다음 날 지문을 다시 읽어요. 단어 테스트의 틀린 단어부터 줄여요.', '해석이 안 돼서': '틀린 지문에서 해석이 막힌 문장 2개를 골라 주어/동사에 표시하고 끊어 읽기를 해요. 하루 2문장이면 충분해요.', '선지가 헷갈려서': '고른 답과 정답을 나란히 놓고, 지문의 어느 문장 때문에 정답인지 밑줄을 그어요. 지문에 없는 말이 들어간 선지를 지우는 연습을 해요.', '시간이 부족해서': '한 지문에 1분 40초 타이머를 맞추고, 넘으면 표시만 하고 넘어가요. 쉬운 유형(요지·주제·제목)을 먼저 풀어요.' };
+function analyze() { const S = sheet('📊 학습 분석'), B = S.body, mmss2 = s => Math.floor(s / 60) + '분 ' + Math.round(s % 60) + '초';
+  const H = t => B.append(el('b', 'font-size:1.15rem;margin-top:8px;border-bottom:2px solid #555;padding-bottom:2px', t)), P = (t, c) => B.append(el('div', 'line-height:1.45' + (c ? ';color:' + c : ''), t));
+  const tip = t => { const d = el('div', 'padding:8px 12px;border-left:5px solid #e28c34;background:rgba(255,236,170,.4);border-radius:6px;line-height:1.45', '✏️ ' + t); B.append(d); };
+  const row = (name, ok, n, extra) => { const r = el('div', 'display:grid;grid-template-columns:7.5em 1fr 6.5em;gap:8px;align-items:center'), p = n ? ok / n : 0; r.append(el('span', 'font-weight:700', name), pbar(p, p >= .8 ? 'sk-c3' : p >= .6 ? 'sk-c2' : 'sk-c5'), el('span', 'text-align:right;font-size:.92rem', ok + '/' + n + (extra ? ' · ' + extra : ''))); B.append(r); };
+  const trend = (a) => a.length < 4 ? '' : (() => { const h = Math.floor(a.length / 2), f = a.slice(0, h).reduce((x, y) => x + y, 0) / h, l = a.slice(-h).reduce((x, y) => x + y, 0) / h, d = Math.round((l - f) * 100); return d >= 3 ? ' · 처음보다 ' + d + '%p 올랐어요 📈' : d <= -3 ? ' · 처음보다 ' + (-d) + '%p 내려갔어요 📉' : ' · 비슷하게 유지 중'; })();
+  P('내 기록만으로 약한 곳을 찾고 공부 방법을 알려 줘요. 기록이 쌓일수록 정확해져요.', '#666');
+  /* 단어 */
+  H('📘 단어'); { const ds = Object.keys(LS.wdone).sort();
+    if (!ds.length) P('아직 단어 테스트 기록이 없어요. 테스트를 한 번 보면 분석이 시작돼요.', '#666');
+    else { const ps = ds.map(d => (LS.wdone[d].t - LS.wdone[d].w) / Math.max(1, LS.wdone[d].t)), avg = ps.reduce((a, x) => a + x, 0) / ps.length, carry = Object.values(LS.wwrong), many = carry.filter(x => x.n >= 3), secs = ds.map(d => (LS.wsec || {})[d] || 0), tavg = secs.reduce((a, x) => a + x, 0) / secs.length;
+      P('테스트 ' + ds.length + '일 · 첫 테스트 평균 ' + Math.round(avg * 100) + '%' + trend(ps)); P('하루 평균 단어 학습 ' + mmss2(tavg) + ' · 다시 나올 틀린 단어 ' + carry.length + '개' + (many.length ? ' · 3번 이상 틀린 단어 ' + many.length + '개' : ''));
+      if (many.length) { P('계속 틀리는 단어: ' + many.slice(0, 12).map(x => x.en).join(', '), '#7B2FBE'); tip('3번 이상 틀린 단어는 눈으로만 보지 말고, 예문을 한 문장 직접 쓰고 소리 내어 3번 읽어요. 자기 전에 이 단어들만 한 번 더 봐요.'); }
+      if (avg < .7) tip('첫 테스트 정답률이 70% 아래예요. 단어를 한 번 넘겨 본 뒤 바로 테스트하지 말고, 뜻을 가리고 스스로 말해 보는 걸 한 바퀴 더 한 다음 테스트를 봐요.');
+      else if (avg < .9) tip('뜻이 여러 개인 단어에서 틀리는 경우가 많아요. 오답 화면에서 어떤 뜻 때문에 틀렸는지 확인하고, 그 뜻만 따로 표시해 둬요.');
+      else tip('정답률이 좋아요. 틀린 단어를 다음 날 다시 맞히는지에 집중하고, 남는 시간은 독해 지문에서 본 모르는 단어를 정리해요.');
+      const hi = ds.filter((d, k) => secs[k] >= 900), lo = ds.filter((d, k) => secs[k] > 0 && secs[k] < 900); if (hi.length >= 2 && lo.length >= 2) { const f = a => a.reduce((x, d) => x + (LS.wdone[d].t - LS.wdone[d].w) / Math.max(1, LS.wdone[d].t), 0) / a.length; P('15분 이상 공부한 날 평균 ' + Math.round(f(hi) * 100) + '% · 15분 미만인 날 평균 ' + Math.round(f(lo) * 100) + '%'); } } }
+  /* 듣기 */
+  H('🎧 듣기'); { const ds = Object.keys(LS.ldone).sort();
+    if (!ds.length) P('아직 듣기 기록이 없어요.', '#666');
+    else { const ps = ds.map(d => (LS.ldone[d].total - LS.ldone[d].wrong.length) / Math.max(1, LS.ldone[d].total)), avg = ps.reduce((a, x) => a + x, 0) / ps.length, T = {};
+      ds.forEach(d => { const x = LS.ldone[d]; for (let n = 1; n <= x.total; n++) { const t = LTYPE(n); T[t] = T[t] || [0, 0]; T[t][1]++; if (!x.wrong.includes(n)) T[t][0]++; } });
+      P(ds.length + '회 · 평균 ' + (avg * 17).toFixed(1) + ' / 17 (' + Math.round(avg * 100) + '%)' + trend(ps));
+      const arr = Object.entries(T).sort((a, b) => a[1][0] / a[1][1] - b[1][0] / b[1][1]); arr.forEach(([t, v]) => row(t.replace(/ \(.*/, ''), v[0], v[1], t.match(/\((.*)\)/)[1]));
+      const weak = arr.filter(([t, v]) => v[0] / v[1] < .8).slice(0, 2); if (weak.length) weak.forEach(([t]) => { P('약한 유형: ' + t, '#dc2626'); tip(TIP_L[t]); }); else tip('모든 유형이 80% 이상이에요. 속도를 1.2배로 올려서 들어 보고, 틀린 문제만 받아쓰기를 해요.');
+      const noRetry = ds.filter(d => LS.ldone[d].wrong.length && !LS.ldone[d].retry).length; if (noRetry) { P('틀린 문제를 다시 안 푼 날이 ' + noRetry + '번 있어요.', '#dc2626'); tip('틀린 문제는 그날 바로 다시 듣고, 안 들린 부분을 대본 없이 한 문장 받아써요.'); } } }
+  /* 독해 */
+  H('📖 독해'); { const all = [].concat(...LS.read.map(x => x.log));
+    if (!all.length) P('아직 독해 기록이 없어요.', '#666');
+    else { const ok = all.filter(x => x.ok).length, avg = all.reduce((a, x) => a + x.s, 0) / all.length, dayP = LS.read.map(x => x.log.filter(y => y.ok).length / Math.max(1, x.log.length)), T = {}, W = {};
+      P(all.length + '문제 · 정답률 ' + Math.round(ok / all.length * 100) + '%' + trend(dayP) + ' · 한 문제 평균 ' + mmss2(avg));
+      all.forEach(x => { const m = /(\d+)번/.exec(x.lab || ''); if (m) { const t = RTYPE(+m[1]); T[t] = T[t] || [0, 0, 0]; T[t][1]++; T[t][2] += x.s; if (x.ok) T[t][0]++; } if (!x.ok) W[x.why || '기타'] = (W[x.why || '기타'] || 0) + 1; });
+      const arr = Object.entries(T).sort((a, b) => a[1][0] / a[1][1] - b[1][0] / b[1][1]); arr.forEach(([t, v]) => row(t, v[0], v[1], mmss2(v[2] / v[1]).replace('분 ', ':').replace('초', '')));
+      if (!arr.length) P('유형별 분석은 오늘부터 푸는 문제부터 쌓여요.', '#666');
+      arr.filter(([t, v]) => v[1] >= 2 && v[0] / v[1] < .7).slice(0, 3).forEach(([t]) => { P('약한 유형: ' + t, '#dc2626'); tip(TIP_R[t] || ''); });
+      const slow = arr.filter(([t, v]) => v[1] >= 2 && v[2] / v[1] > 130).map(x => x[0]); if (slow.length) { P('시간이 오래 걸리는 유형: ' + slow.join(', ') + ' (평균 2분 10초 넘음)', '#b45309'); tip(TIP_WHY['시간이 부족해서']); }
+      const ws = Object.entries(W).sort((a, b) => b[1] - a[1]); if (ws.length) { P('틀린 이유: ' + ws.map(x => x[0] + ' ' + x[1] + '번').join(' · ')); if (TIP_WHY[ws[0][0]]) tip(TIP_WHY[ws[0][0]]); }
+      const fastWrong = all.filter(x => !x.ok && x.s < 50).length; if (fastWrong >= 2) { P('50초 안에 풀고 틀린 문제가 ' + fastWrong + '개 있어요.', '#dc2626'); tip('급하게 고른 문제예요. 답을 고르기 전에 지문에서 근거 문장에 밑줄을 하나 긋고 나서 번호를 눌러요.'); } } }
+  /* 공부 시간 */
+  H('⏱ 공부 시간'); { const days = Array.from({ length: 14 }, (_, k) => { const d = new Date(); d.setDate(d.getDate() - k); return ymd(d); }), tot = SUBJ.map(s => days.reduce((a, d) => a + dayTot(d, s), 0)), sum = tot.reduce((a, x) => a + x, 0), act = days.filter(d => SUBJ.some(s => dayTot(d, s) > 0)).length;
+    if (!sum) P('아직 공부 시간 기록이 없어요. 과목 이름을 눌러 시간을 재면 분석돼요.', '#666');
+    else { P('최근 14일 중 ' + act + '일 공부 · 하루 평균 ' + (x => Math.floor(x / 3600) + '시간 ' + Math.floor(x % 3600 / 60) + '분')(sum / Math.max(1, act)) + ' (공부한 날 기준)'); const mx = Math.max(...tot); SUBJ.forEach((s, k) => { const r = el('div', 'display:grid;grid-template-columns:5em 1fr 6em;gap:8px;align-items:center'); r.append(el('span', 'font-weight:700', s), pbar(mx ? tot[k] / mx : 0, 'sk-c' + (k + 1)), el('span', 'text-align:right;font-size:.92rem', Math.floor(tot[k] / 3600) + '시간 ' + Math.floor(tot[k] % 3600 / 60) + '분')); B.append(r); });
+      const lowS = SUBJ.filter((s, k) => tot[k] < sum / SUBJ.length * .5); if (lowS.length) { P('시간이 적은 과목: ' + lowS.join(', '), '#dc2626'); tip('가장 적은 과목을 하루의 첫 공부로 30분만 먼저 해요. 하기 싫은 과목은 앞에 두어야 빠지지 않아요.'); }
+      if (act <= 9) tip('공부한 날이 14일 중 ' + act + '일이에요. 양을 늘리기보다, 짧게라도 매일 하는 것을 먼저 목표로 해요.'); } }
+  /* 이번 주 할 일 */
+  H('🗓 이번 주 이렇게 해 봐요'); { const todo = [], carry = Object.values(LS.wwrong).length, lds = Object.keys(LS.ldone), all = [].concat(...LS.read.map(x => x.log));
+    todo.push('단어: 테스트 전에 뜻을 가리고 스스로 말해 보기 한 바퀴' + (carry ? ' · 파란색(틀렸던) 단어 ' + carry + '개 먼저' : ''));
+    todo.push('듣기: 틀린 문제는 그날 다시 듣고, 안 들린 문장 1개 받아쓰기');
+    todo.push('독해: 답을 누르기 전에 근거 문장에 펜으로 밑줄 긋기' + (all.length && all.reduce((a, x) => a + x.s, 0) / all.length > 110 ? ' · 한 지문 1분 40초 넘으면 표시하고 넘어가기' : ''));
+    todo.forEach((t, k) => P((k + 1) + '. ' + t)); if (!lds.length && !all.length) P('기록이 3일 이상 쌓이면 약한 유형에 맞춘 방법이 나와요.', '#666'); } }
 function render() { render0(); addTabs(); }
 /* 선생님이 따로 적은 과제가 없는 날에는 빈 알림장("과제가 없어요")을 숨겨요 */
 setInterval(() => { if (TEACH || !card || !me) return; const nb = document.getElementById('nb'); if (!nb) return; const c = nb.querySelector('.nb-count'), empty = !!c && /과제가 없어요/.test(c.textContent);
@@ -274,6 +330,7 @@ function render0() {
   top.append(el('b', 'font-family:var(--font-display,inherit);font-size:1.7rem;color:var(--accent,#4f46e5)', '🎯 수능 ' + (left > 0 ? 'D-' + left : left === 0 ? 'D-DAY' : 'D+' + (-left))), el('span', 'color:var(--muted,#666);font-size:.9rem', dd.replace(/-/g, '.') + ' · 이번 주 공부 ' + fmt(weekTot())));
   if (TEACH) card.append(el('small', 'color:var(--muted,#666);font-weight:600', '👀 ' + me.name + ' 학생 화면에 보이는 수능 도우미 (미리보기 · 여기서 누른 기록은 학생에게 안 넘어가요)'));
   card.append(top);
+  if (!TEACH || true) { const ab = btn('📊 분석하기', analyze, 'align-self:flex-start;padding:6px 14px;font-weight:700'); ab.setAttribute('aria-pressed', 'true'); card.append(ab); }
   /* 매일 단어 */
   { const P = wPlan(today); if (!P && me.wbook && me.wbook.start && startN(me.wbook.start, today) < 0) { const [d, b] = sec('📘 단어 공부'); b.append(el('b', 'font-size:1.05rem', (me.wbook.title || '단어') + ' · Day ' + Math.max(1, me.wbook.from || 1)), el('div', 'color:var(--muted,#666)', kd(me.wbook.start) + ' 아침 6시부터 시작해요.')); card.append(d); }
     if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
