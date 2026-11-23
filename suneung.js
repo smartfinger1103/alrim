@@ -279,7 +279,7 @@ function render0() {
     if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
       b.append(el('b', 'font-size:1.05rem', (me.wbook.title ? me.wbook.title + ' · ' : '') + (P.over ? '범위를 모두 끝냈어요 🎉' : P.day.n + ' · ' + P.day.w.length + '개')));
       if (P.all.length) { const ws = (LS.wsec || {})[today] || 0, okT = ws >= 1200, ln = el('div', 'font-size:.95rem;font-weight:700;display:flex;flex-wrap:wrap;gap:4px 12px');
-        ln.append(el('span', 'color:' + (okT ? '#15803d' : '#dc2626'), '⏱ 단어 학습 ' + (ws >= 60 ? Math.floor(ws / 60) + '분 ' : '') + (ws % 60) + '초 / 최소 30분'));
+        ln.append(el('span', 'color:#555', '⏱ 오늘 단어 학습 ' + (ws >= 60 ? Math.floor(ws / 60) + '분 ' : '') + (ws % 60) + '초'));
         const many = P.rev.filter(w => { const x = LS.wwrong[wk(w)]; return x && (x.n || 1) >= 3; }).length;
         if (many) ln.append(el('span', 'color:#7c3aed', '3번 이상 틀림 ' + many)); if (P.rev.length - many) ln.append(el('span', 'color:#1E5BD8', '틀렸던 단어 ' + (P.rev.length - many))); ln.append(el('span', 'color:#555', '새 단어 ' + P.day.w.length)); b.append(ln); }
       if (P.all.length) { const st = wSt(today, P), seenN = st.list.filter(k => st.seen.includes(k)).length, ready = seenN >= st.list.length, fin = st.round > 0 && !st.list.length;
