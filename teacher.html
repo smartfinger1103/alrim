@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-sn">
+<meta name="build" content="2026-11-23-daily2">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -763,6 +763,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" class="tsub" data-box="fbPron" data-s="발음 단어" title="과제 적기 · 발음 단어로 바로 가기">발음 단어</button>
     <button type="button" class="tsub" data-box="fbL" data-s="듣기" title="과제 적기 · 듣기로 바로 가기">듣기</button>
     <button type="button" class="tsub" data-box="fbPdf" data-s="학습자료" title="과제 적기 · 학습자료(PDF)로 바로 가기">학습자료</button>
+    <button type="button" class="tsub" data-box="fbRd" title="과제 적기 · 독해 캡처 문제로 바로 가기">독해문제</button>
     <button type="button" class="tsub" data-box="fbSn" id="tsubSn" hidden title="과제 적기 · 수능 관리로 바로 가기">🎯 수능</button>
     <button type="button" class="tsub" data-box="fbEtc" data-s="기타" title="과제 적기 · 기타로 바로 가기">기타</button>
     <button type="button" class="tsub" data-box="fSentsBox" data-s="문장 연습" title="과제 적기 · 문장 연습로 바로 가기">문장 연습</button>
@@ -914,12 +915,38 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             <p class="hint">저장하면 이미지로 GitHub에 올라가고, 학생 화면 그날 과제에 "📄 학습자료 보기" 버튼이 생겨요. 학생은 PDF 앱 없이 쪽 번호로 넘겨 봐요. 저장소가 공개라 링크를 아는 사람은 볼 수 있으니 시판 교재·답지 전체는 올리지 마세요.</p>
             <p class="hint" id="pdfMsg" role="status"></p></div>
           </div>
+          <div class="fbox" id="fbRd">
+            <div class="fhead"><b>📖 독해 문제 (캡처 · 최대 5지문)</b><span class="fsp"></span><button type="button" class="small primary" id="rdSave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody">
+              <label class="lab">제목<input type="text" id="rdTitle" placeholder="예: 빈칸 추론 5지문"></label>
+              <div id="rdRows" style="display:flex;flex-direction:column;gap:8px"></div>
+              <p class="hint">지문 칸을 누르고 캡처를 <b>Ctrl+V</b>로 붙여요. 정답 번호는 꼭 골라 주세요. 학생이 틀리면 핵심 문장 → 선생님 풀이 → 해설지 순서로 과외처럼 보여 줘요. 맞으면 바로 다음 지문으로 넘어가고, 시간은 조용히 재요.</p>
+              <p class="hint" id="rdMsg" role="status"></p>
+            </div>
+          </div>
           <div class="fbox" id="fbSn" hidden style="border:2px solid var(--accent)">
             <div class="fhead"><b>🎯 수능 관리 · <span id="snWho"></span></b><span class="fsp"></span><button type="button" class="small primary" id="snSave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
             <div class="fbody">
               <div class="sgrid">
                 <label>수능 날짜<input type="date" id="snDday"></label>
                 <label class="sgrow">매일 고정 과제 (한 줄에 하나)<textarea id="snDaily" rows="4" placeholder="단어 Day 1개 외우기&#10;듣기 1회 풀고 틀린 문제 다시 듣기&#10;독해 5지문 시간 재고 풀기"></textarea></label>
+              </div>
+              <b style="font-size:.9rem">📘 매일 단어 (단어책 1권 · 날마다 Day 1개씩, 주말·공휴일 포함)</b>
+              <div class="row" style="align-items:flex-end">
+                <label class="lab" style="flex:1 1 180px">단어책 이름<input type="text" id="snWTitle" placeholder="예: 워드마스터 수능 2000"></label>
+                <label class="lab" style="width:6em">시작 Day<input type="text" id="snWFrom" inputmode="numeric" value="1"></label>
+                <label class="lab" style="width:6em">끝 Day<input type="text" id="snWTo" inputmode="numeric" placeholder="끝까지"></label>
+                <label class="lab" style="width:9.5em">시작하는 날<input type="date" id="snWStart"></label>
+                <label class="lab" style="width:7.5em">하루 단어 수<input type="text" id="snWPer" inputmode="numeric" value="30" title="Day 표시가 없는 책일 때만 써요"></label>
+              </div>
+              <div class="row"><label class="btn">단어책 파일 고르기 (엑셀·CSV·텍스트)<input type="file" id="snWFile" accept=".xlsx,.xls,.csv,.txt,.tsv"></label><span class="hint" id="snWSum"></span></div>
+              <textarea class="mono" id="snWText" rows="4" spellcheck="false" placeholder="또는 여기에 책 전체를 붙여넣기&#10;Day 1&#10;abandon - 버리다&#10;ability - 능력&#10;Day 2&#10;..."></textarea>
+              <b style="font-size:.9rem">🎧 매일 듣기 (날마다 1회씩)</b>
+              <div class="row" style="align-items:flex-end">
+                <label class="lab" style="flex:1 1 180px">듣기 책<select id="snLBook"><option value="">(안 함)</option></select></label>
+                <label class="lab" style="width:6em">시작 회<input type="text" id="snLFrom" inputmode="numeric" value="1"></label>
+                <label class="lab" style="width:6em">끝 회<input type="text" id="snLTo" inputmode="numeric" value="24"></label>
+                <label class="lab" style="width:9.5em">시작하는 날<input type="date" id="snLStart"></label>
               </div>
               <b style="font-size:.9rem">📊 모의고사 성적 (등급)</b>
               <div class="row" style="align-items:flex-end">
@@ -2323,7 +2350,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     try { lsData = await (await fetch(new URL('data/listening.json', location.href).href + '?_=' + Date.now())).json(); } catch (e) { lsData = {}; }
     return lsData;
   }
-  function lsBook(J, who) { const id = (J.students || {})[who] || ''; const b = (J.books || {})[id]; return b ? { ...b, id } : null; }
+  function lsBook(J, who) { const st0 = (D.students || []).find(x => x.name === who); const id = (st0 && st0.lbook && st0.lbook.id) || (J.students || {})[who] || ''; const b = (J.books || {})[id]; return b ? { ...b, id } : null; }
   function lsStyle() {
     if (document.getElementById('lsCss')) return;
     const st = document.createElement('style'); st.id = 'lsCss';
@@ -2766,6 +2793,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     }
     async function finish() {
       const wrongI = items.map((x, i) => i).filter(i => pick[i] !== items[i].ans);
+      try { window.dispatchEvent(new CustomEvent('alrim:lsdone', { detail: { id: it.id, total: items.length, wrong: wrongI.map(i => ({ test: items[i].test, n: items[i].n })), retake: !!L.retake } })); } catch (e) {}
       const rows = [...new Set(items.map(x => x.test))].map(t => {
         const ix = items.map((x, i) => i).filter(i => items[i].test === t), wr = ix.filter(i => pick[i] !== items[i].ans);
         return { who: state.cls || '', test: String(t) + (L.retake ? '재' : ''), score: (ix.length - wr.length) + '/' + ix.length,
@@ -3442,6 +3470,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
         if (mt) tx.append(el('small', null, mt));
         const ws = it.words ? (isPron(it) ? pronWords(it.words) : parseWords(it.words, '')) : [];
         const act = el('div', 'nb-act');
+        if (it.rd && it.rd.length) { const rr = window.alrimRdRes && window.alrimRdRes(it.id); tx.append(el('small', 'nb-prog', '📖 독해 ' + it.rd.length + '지문' + (rr ? ' · 지난 결과 ' + rr.ok + '/' + rr.n : ''))); const rb = el('button', 'nb-btn', rr ? '📖 다시 풀기' : '📖 독해 풀기'); rb.type = 'button'; rb.onclick = () => window.alrimOpenRd && window.alrimOpenRd(it); act.style.flexDirection = 'column'; act.append(rb); }
         if (it.imgs && it.imgs.length) { tx.append(el('small', 'nb-prog', '📄 학습자료 ' + it.imgs.length + '쪽')); const pb = el('button', 'nb-btn', '📄 학습자료 보기'); pb.type = 'button'; pb.onclick = () => window.alrimOpenImgs(it.imgs, it.task); act.style.flexDirection = 'column'; act.append(pb); }
         else if (it.pdf) { tx.append(el('small', 'nb-prog', '📄 ' + (it.pdfName || 'PDF 학습자료'))); const pb = el('button', 'nb-btn', '📄 학습자료 보기'); pb.type = 'button'; pb.onclick = () => window.alrimOpenPdf(it.pdf, it.task); act.append(pb); }
         if (it.sents && saParse(it.sents).length) { const sn = saParse(it.sents), sd = saDoneN(it, sn); if (!d) tx.append(el('small', 'nb-prog', `문장 ${sd}/${sn.length}개 완성`)); const sb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '문장 다시 보기' : '✍️ 문장 분석'); sb.type = 'button'; sb.onclick = () => openSA(it); act.append(sb); }
@@ -4409,7 +4438,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     box.style.cssText = 'margin-top:10px;padding:12px;border:2px solid var(--accent);border-radius:12px;background:var(--bg);display:flex;flex-direction:column;gap:6px;font-size:0.92rem';
     host.after(box);
     const ROSTER = { gyumin: '김규민', sua: '조수아', hyena: '유혜나' }, REPO = 'https://api.github.com/repos/smartfinger1103/alrim/contents/';
-    const FIELDS = ['date', 'subject', 'task', 'range', 'note', 'words', 'sents', 'exam', 'imgs', 'pdf', 'book', 'chap', 'carry', 'due'];
+    const FIELDS = ['date', 'subject', 'task', 'range', 'note', 'words', 'sents', 'exam', 'imgs', 'pdf', 'rd', 'book', 'chap', 'carry', 'due'];
     const sig = (e) => JSON.stringify(FIELDS.map(k => e[k] === undefined || e[k] === null || e[k] === false ? '' : e[k]));
     const name1 = (e) => (e.date || '').slice(5).replace('-', '/') + ' ' + (e.subject ? e.subject + ' · ' : '') + String(e.task || '').split('\n')[0].slice(0, 24);
     const few = (a) => a.slice(0, 3).map(name1).join(' / ') + (a.length > 3 ? ' 외 ' + (a.length - 3) + '개' : '');
@@ -4496,15 +4525,73 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     };
   })();
 
+  /* ---------- 독해 문제 (캡처) ---------- */
+  (function () {
+    const host = $('rdRows'); if (!host) return; const R = [];
+    const zone = (label, get, set) => { const z = el('div', 'capzone'); z.tabIndex = 0; z.style.cssText = 'flex:1 1 150px;min-height:74px;padding:8px;position:relative';
+      const paint = () => { z.textContent = ''; const v = get(); if (v) { const im = document.createElement('img'); im.src = v; im.style.cssText = 'max-width:100%;max-height:120px;border-radius:6px'; const x = el('button', 'small', '✕'); x.type = 'button'; x.style.cssText = 'position:absolute;top:4px;right:4px;padding:0 6px'; x.onclick = (e) => { e.stopPropagation(); set(''); paint(); }; z.append(im, x); } else z.append(el('b', null, label), el('span', null, '누르고 Ctrl+V')); };
+      const add = async (f) => { if (f && /^image\//.test(f.type)) { set(await toJpeg(f)); paint(); } };
+      z.addEventListener('paste', e => { const f = [...(e.clipboardData || {}).items || []].filter(i => i.kind === 'file').map(i => i.getAsFile())[0]; if (f) { e.preventDefault(); add(f); } });
+      z.addEventListener('click', () => z.focus()); z.addEventListener('dragover', e => e.preventDefault()); z.addEventListener('drop', e => { e.preventDefault(); add(e.dataTransfer.files[0]); });
+      paint(); return z; };
+    const build = () => { host.textContent = ''; R.length = 0;
+      for (let k = 0; k < 5; k++) { const r = { q: '', a: '', ex: '', key: '', why: '' }; R.push(r);
+        const w = el('div'); w.style.cssText = 'border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px';
+        const top = el('div', 'row'); const sel = el('select'); sel.style.width = 'auto'; sel.append(new Option('정답', '')); [1, 2, 3, 4, 5].forEach(n => sel.append(new Option('①②③④⑤'[n - 1], n))); sel.onchange = () => r.a = sel.value;
+        top.append(el('b', null, (k + 1) + '번 지문'), sel); 
+        const zs = el('div', 'row'); zs.style.alignItems = 'stretch'; zs.append(zone('지문·문제 캡처', () => r.q, v => r.q = v), zone('해설지 캡처 (선택)', () => r.ex, v => r.ex = v));
+        const key = el('textarea'); key.rows = 2; key.placeholder = '🔑 정답으로 가는 핵심 문장 (선택) — 지문에서 정답의 근거가 되는 문장'; key.oninput = () => r.key = key.value.trim(); key.style.minHeight = '48px';
+        const why = el('textarea'); why.rows = 2; why.placeholder = '👩‍🏫 선생님 풀이 (선택) — 왜 이 답인지, 오답 선지는 왜 틀렸는지'; why.oninput = () => r.why = why.value.trim(); why.style.minHeight = '48px';
+        w.append(top, zs, key, why); host.append(w); } };
+    build();
+    $('rdSave').onclick = async () => { const msg = $('rdMsg'), use = R.filter(r => r.q);
+      if (!use.length) { msg.textContent = '지문 캡처를 하나 이상 붙여 주세요.'; return; }
+      const noA = R.map((r, k) => r.q && !r.a ? k + 1 : 0).filter(Boolean); if (noA.length) { msg.textContent = noA.join(', ') + '번 지문의 정답 번호를 골라 주세요.'; return; }
+      let token = ($('githubToken') && $('githubToken').value.trim()) || ''; try { token = token || localStorage.getItem('alrim:github-save-token') || ''; } catch (_) {}
+      if (!token) { msg.textContent = '먼저 저장 칸의 "GitHub 저장 연결"에 저장 권한을 넣어 주세요.'; return; }
+      const date = $('fDate').value, who = $('fWho').value, dir = 'materials/rd-' + date + '-' + Date.now().toString(36) + '/', out = [];
+      const put = async (path, dataUrl) => { const res = await fetch('https://api.github.com/repos/smartfinger1103/alrim/contents/' + path, { method: 'PUT', headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: '독해 문제 올리기', content: dataUrl.split(',')[1], branch: 'main' }) });
+        if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? 'GitHub 권한을 확인해 주세요.' : '그림을 올리지 못했어요 (' + res.status + '). 다시 저장을 눌러 주세요.'); return path; };
+      $('rdSave').disabled = true;
+      try { for (let k = 0; k < use.length; k++) { msg.textContent = `독해 문제 올리는 중… ${k + 1}/${use.length}`; const r = use[k], o = { q: await put(dir + 'q' + (k + 1) + '.jpg', r.q), a: +r.a };
+          if (r.ex) o.ex = await put(dir + 'e' + (k + 1) + '.jpg', r.ex); if (r.key) o.key = r.key; if (r.why) o.why = r.why; out.push(o); }
+        const e = { id: uid(), date, who, subject: '독해', task: $('rdTitle').value.trim() || '독해 ' + out.length + '지문 풀기', rd: out };
+        D.entries.push(e); state.date = date; changed(); $('rdTitle').value = ''; build();
+        msg.textContent = '✅ "' + e.task + '"를 넣었어요. 저장 칸에서 그 학생을 검증하고 저장해야 학생 화면에 보여요.';
+      } catch (er) { msg.textContent = er.message || '올리지 못했어요.'; } finally { $('rdSave').disabled = false; } };
+  })();
+
   /* ---------- 수능 관리 (track: 'suneung' 학생만) ---------- */
   (function () {
-    if (!$('fbSn')) return; let shown = null, mocks = [];
+    if (!$('fbSn')) return; let shown = null, mocks = [], newDays = null;
+    /* 단어책 글 → Day별 단어. "Day 3" 같은 줄이 있으면 그대로, 없으면 하루 단어 수로 나눠요 */
+    function parseBook(text, per) { const days = []; let cur = null, marked = false; const flat = [];
+      String(text || '').split(/\r?\n/).forEach(line => { const t = line.replace(/^[\s•·\-*\d.)]+(?=[A-Za-z])/, '').trim(); if (!line.trim()) return;
+        const h = line.trim().match(/^(?:day|unit|chapter|lesson|part)\s*\.?\s*(\d+)\s*$/i) || line.trim().match(/^(\d+)\s*(?:일차|강|과|일)\s*$/);
+        if (h) { marked = true; cur = { n: 'Day ' + (+h[1]), w: [] }; days.push(cur); return; }
+        let m = t.includes('\t') ? t.split('\t').map(x => x.trim()).filter(Boolean) : null;
+        if (m && m.length >= 2 && /^\d+$/.test(m[0])) m = m.slice(1);
+        if (!m || m.length < 2) { const r = t.match(/^([A-Za-z][A-Za-z\s'’\-.()~\/]*?)\s*(?:\s[-–:=]\s|\s{2,}|\s(?=[가-힣(~\[]))\s*(.+)$/); m = r ? [r[1].trim(), r[2].trim()] : null; }
+        if (!m || !/[A-Za-z]/.test(m[0]) || !m[1]) return; const w = [m[0], fixKo(m[1]).ko || m[1]]; flat.push(w); if (cur) cur.w.push(w); });
+      if (!marked) { per = Math.max(5, per || 30); for (let k = 0; k < flat.length; k += per) days.push({ n: 'Day ' + (k / per + 1), w: flat.slice(k, k + per) }); }
+      return days.filter(d => d.w.length); }
+    const sum = (days) => days && days.length ? days.length + ' Day · ' + days.reduce((a, d) => a + d.w.length, 0) + '단어' : '';
+    const readBook = () => { const t = $('snWText').value; if (!t.trim()) { newDays = null; return; } newDays = parseBook(t, parseInt($('snWPer').value, 10)); $('snWSum').textContent = newDays.length ? '읽은 결과: ' + sum(newDays) + ' (저장을 누르면 바뀌어요)' : '단어를 읽지 못했어요. "영어 - 뜻" 형식인지 확인해 주세요.'; };
+    $('snWText').addEventListener('input', readBook); $('snWPer').addEventListener('input', readBook);
+    $('snWFile').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; try { let text = '';
+        if (/\.(xlsx|xls)$/i.test(f.name)) { if (!window.XLSX) throw new Error('엑셀 읽기 도구를 불러오지 못했어요. 새로고침해 주세요.'); const wb = XLSX.read(await f.arrayBuffer()); text = wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1 }).map(r => r.map(c => c == null ? '' : String(c)).join('\t')).join('\n')).join('\n'); }
+        else text = (await f.text()).replace(/,(?=\S)/g, '\t');
+        $('snWText').value = text; if (!$('snWTitle').value) $('snWTitle').value = f.name.replace(/\.[^.]+$/, ''); readBook(); } catch (er) { $('snWSum').textContent = er.message || '파일을 읽지 못했어요.'; } e.target.value = ''; };
+    fetch(new URL('data/listening.json', location.href).href + '?_=' + Date.now()).then(r => r.json()).then(J => { Object.entries(J.books || {}).forEach(([id, b]) => $('snLBook').append(new Option(b.name || id, id))); shown = null; }).catch(() => {});
     const cur = () => D.students.find(x => x.name === state.cls && x.track === 'suneung');
     const list = () => { const b = $('snMList'); b.textContent = ''; mocks.sort((a, c) => (a.date || '').localeCompare(c.date || '')).forEach((m, i) => { const r = el('div', 'row'); r.style.cssText = 'padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-size:.88rem';
       const x = el('button', 'small danger', '✕'); x.type = 'button'; x.onclick = () => { mocks.splice(i, 1); list(); };
       r.append(el('b', null, (m.date || '') + ' ' + (m.name || '')), el('span', null, ['국어 ' + (m.kor || '-'), '수학 ' + (m.math || '-'), '영어 ' + (m.eng || '-'), '탐구 ' + (m.t1 || '-') + '/' + (m.t2 || '-')].join(' · ')), x); b.append(r); }); };
     const fill = () => { const st = cur(); $('fbSn').hidden = !st; $('tsubSn').hidden = !st; if (!st) return; $('snWho').textContent = st.name;
-      $('snDday').value = st.dday || '2027-11-18'; $('snDaily').value = (st.daily || []).join('\n'); mocks = (st.mocks || []).map(m => Object.assign({}, m)); list(); $('snMsg').textContent = ''; };
+      $('snDday').value = st.dday || '2027-11-18'; $('snDaily').value = (st.daily || []).join('\n'); mocks = (st.mocks || []).map(m => Object.assign({}, m)); list(); $('snMsg').textContent = '';
+      const W = st.wbook || {}, Lb = st.lbook || {}, td = new Date(Date.now() + 9 * 36e5).toISOString().slice(0, 10); newDays = null; $('snWText').value = '';
+      $('snWTitle').value = W.title || ''; $('snWFrom').value = W.from || 1; $('snWTo').value = W.to || ''; $('snWStart').value = W.start || td; $('snWSum').textContent = W.days ? '저장된 책: ' + sum(W.days) + ' (새로 넣으면 바뀌어요)' : '아직 단어책이 없어요.';
+      $('snLBook').value = Lb.id || ''; $('snLFrom').value = Lb.from || 1; $('snLTo').value = Lb.to || 24; $('snLStart').value = Lb.start || td; };
     setInterval(() => { if (shown !== state.cls) { shown = state.cls; fill(); } }, 400);
     $('snMAdd').onclick = () => { const g = (id) => { const v = parseInt($(id).value, 10); return v >= 1 && v <= 9 ? v : ''; };
       if (!$('snMDate').value) { $('snMsg').textContent = '시험 날짜를 골라 주세요.'; return; }
@@ -4512,6 +4599,10 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       ['snMName', 'snMkor', 'snMmath', 'snMeng', 'snMt1', 'snMt2'].forEach(id => $(id).value = ''); list(); $('snMsg').textContent = '성적을 목록에 넣었어요. 위 "저장"을 눌러 주세요.'; };
     $('snSave').onclick = () => { const st = cur(); if (!st) return;
       st.dday = $('snDday').value || '2027-11-18'; st.daily = $('snDaily').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean); st.mocks = mocks.map(m => Object.assign({}, m));
+      const days = newDays && newDays.length ? newDays : (st.wbook || {}).days, num = (id, d) => parseInt($(id).value, 10) || d;
+      if (days && days.length) st.wbook = { title: $('snWTitle').value.trim(), days, from: num('snWFrom', 1), to: Math.min(days.length, num('snWTo', days.length)), start: $('snWStart').value }; 
+      if ($('snLBook').value) st.lbook = { id: $('snLBook').value, from: num('snLFrom', 1), to: num('snLTo', 24), start: $('snLStart').value }; else delete st.lbook;
+      newDays = null; $('snWText').value = ''; if (st.wbook) $('snWSum').textContent = '저장된 책: ' + sum(st.wbook.days) + ' · Day ' + st.wbook.from + '~' + st.wbook.to + ' · ' + st.wbook.start + '부터';
       changed(); $('snMsg').textContent = '✅ 수능 관리 내용을 적었어요. 저장 칸에서 "💾 ' + st.name + '만 저장"을 눌러야 학생 화면에 보여요.'; };
   })();
 
@@ -5669,6 +5760,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     if (!D.students.some(x => x.name === '유혜나')) { D.students.push({ name: '유혜나', start: '2026-11-23', startN: 1, slug: 'hyena', track: 'suneung' }); try { changed(); } catch (e) {} }
   }
   setTimeout(ensureRoster, 1500); setTimeout(ensureRoster, 6000);
+  window.alrimListen = (it) => openListening(it);
   window.alrimSync = {
     snapshot,
     receive(seed) {
@@ -5683,7 +5775,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
 
 })();
 </script>
-<script src="github-sync.js?v=20261123-1"></script><nav id="mBar" aria-label="빠른 메뉴">
+<script src="github-sync.js?v=20261123-1"></script><script src="suneung.js?v=20261123-3"></script><nav id="mBar" aria-label="빠른 메뉴">
   <button type="button" data-mgo="hWt">📝<span>단어테스트</span></button>
   <button type="button" data-mgo="h2s" class="main">✏️<span>과제적기</span></button>
   <button type="button" data-mbottom>📒<span>알림장보기</span></button>

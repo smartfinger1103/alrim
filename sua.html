@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-sn">
+<meta name="build" content="2026-11-23-daily">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -1291,7 +1291,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     try { lsData = await (await fetch(new URL('data/listening.json', location.href).href + '?_=' + Date.now())).json(); } catch (e) { lsData = {}; }
     return lsData;
   }
-  function lsBook(J, who) { const id = (J.students || {})[who] || ''; const b = (J.books || {})[id]; return b ? { ...b, id } : null; }
+  function lsBook(J, who) { const st0 = (D.students || []).find(x => x.name === who); const id = (st0 && st0.lbook && st0.lbook.id) || (J.students || {})[who] || ''; const b = (J.books || {})[id]; return b ? { ...b, id } : null; }
   function lsStyle() {
     if (document.getElementById('lsCss')) return;
     const st = document.createElement('style'); st.id = 'lsCss';
@@ -1549,6 +1549,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     }
     async function finish() {
       const wrongI = items.map((x, i) => i).filter(i => pick[i] !== items[i].ans);
+      try { window.dispatchEvent(new CustomEvent('alrim:lsdone', { detail: { id: it.id, total: items.length, wrong: wrongI.map(i => ({ test: items[i].test, n: items[i].n })), retake: !!L.retake } })); } catch (e) {}
       const rows = [...new Set(items.map(x => x.test))].map(t => {
         const ix = items.map((x, i) => i).filter(i => items[i].test === t), wr = ix.filter(i => pick[i] !== items[i].ans);
         return { who: state.cls || '', test: String(t) + (L.retake ? '재' : ''), score: (ix.length - wr.length) + '/' + ix.length,
@@ -1878,6 +1879,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         if (mt) tx.append(el('small', null, mt));
         const ws = it.words ? (isPron(it) ? pronWords(it.words) : parseWords(it.words, '')) : [];
         const act = el('div', 'nb-act');
+        if (it.rd && it.rd.length) { const rr = window.alrimRdRes && window.alrimRdRes(it.id); tx.append(el('small', 'nb-prog', '📖 독해 ' + it.rd.length + '지문' + (rr ? ' · 지난 결과 ' + rr.ok + '/' + rr.n : ''))); const rb = el('button', 'nb-btn', rr ? '📖 다시 풀기' : '📖 독해 풀기'); rb.type = 'button'; rb.onclick = () => window.alrimOpenRd && window.alrimOpenRd(it); act.style.flexDirection = 'column'; act.append(rb); }
         if (it.imgs && it.imgs.length) { tx.append(el('small', 'nb-prog', '📄 학습자료 ' + it.imgs.length + '쪽')); const pb = el('button', 'nb-btn', '📄 학습자료 보기'); pb.type = 'button'; pb.onclick = () => window.alrimOpenImgs(it.imgs, it.task); act.style.flexDirection = 'column'; act.append(pb); }
         else if (it.pdf) { tx.append(el('small', 'nb-prog', '📄 ' + (it.pdfName || 'PDF 학습자료'))); const pb = el('button', 'nb-btn', '📄 학습자료 보기'); pb.type = 'button'; pb.onclick = () => window.alrimOpenPdf(it.pdf, it.task); act.append(pb); }
         if (it.sents && saParse(it.sents).length) { const sn = saParse(it.sents), sd = saDoneN(it, sn); if (!d) tx.append(el('small', 'nb-prog', `문장 ${sd}/${sn.length}개 완성`)); const sb = el('button', 'nb-btn' + (d ? ' ghost' : ''), d ? '문장 다시 보기' : '✍️ 문장 분석'); sb.type = 'button'; sb.onclick = () => openSA(it); act.append(sb); }
@@ -3574,6 +3576,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     // 학생 링크(#1, #2)로 열면 학생이 보는 화면 그대로 보여요
     if (state.mode === 'student' && !studentFromHash()) enterTeacher();
   });
+  window.alrimListen = (it) => openListening(it);
   window.alrimSync = {
     snapshot,
     receive(seed) {
@@ -3588,7 +3591,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 
 })();
 </script>
-<script src="github-sync.js?v=20261123-1"></script><script src="suneung.js?v=20261123-1"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
+<script src="github-sync.js?v=20261123-1"></script><script src="suneung.js?v=20261123-3"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
 <style>#mTop{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:9999;width:48px;height:48px;border-radius:50%;border:none;background:#4f46e5;color:#fff;font-size:22px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;cursor:pointer}
 #mTop.on{opacity:.92;pointer-events:auto}@media (min-width:821px){#mTop{display:none}}</style>
 <script>(function(){var b=document.getElementById('mTop');function u(){b.classList.toggle('on',(window.scrollY||document.documentElement.scrollTop)>300)}window.addEventListener('scroll',u,{passive:true});u();b.onclick=function(){window.scrollTo({top:0,behavior:'smooth'})}})();</script>
