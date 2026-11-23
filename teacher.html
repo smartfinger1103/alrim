@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-stumenu">
+<meta name="build" content="2026-11-23-mtls">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -2733,7 +2733,8 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     const saveP = () => store.set(SK, JSON.stringify({ pick, idx }));
     if (![1, 1.2, 1.5].includes(speed)) speed = 1;
     const C = ['①', '②', '③', '④', '⑤'];
-    const url = (x) => book.base + book.prefix + String(x.test).padStart(2, '0') + '_' + String(x.n).padStart(2, '0') + '.mp3';
+    const url = (x) => book.codes ? book.base + String(x.test).padStart(2, '0') + '_' + book.codes[x.test] + '_S' + String(Math.min(x.n, 16)).padStart(2, '0') + '.mp3'   /* 마더텅 수능기출: 16·17번은 한 음원 */
+      : book.base + book.prefix + String(x.test).padStart(2, '0') + '_' + String(x.n).padStart(2, '0') + '.mp3';
     const Q = (s) => box.querySelector(s);
     const fmt = (t) => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
     let seeking = false, loaded = -1;
