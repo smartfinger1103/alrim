@@ -1,7 +1,8 @@
 import subprocess,sys,cv2,numpy as np,glob,os
 U='/mnt/user-data/uploads/'
 BOOK={'16':(U+'_16차_개정판_고교영어듣기_24회_모의고사_1학년_본문_정답표시O___1_.pdf',U+'_16차_개정판_고교영어듣기_24회_모의고사_1학년_본문_정답표시X___1_.pdf'),
-      '17':(U+'17차_개정판_중학영어듣기_2학년_본문_정답O___2_.pdf',U+'17차_개정판_중학영어듣기_2학년_본문_정답X___1_.pdf')}
+      '17':(U+'17차_개정판_중학영어듣기_2학년_본문_정답O___2_.pdf',U+'17차_개정판_중학영어듣기_2학년_본문_정답X___1_.pdf'),
+      '18':(U+'18차_개정판_중학영어듣기_3학년_본문_정답O.pdf',U+'18차_개정판_중학영어듣기_3학년_본문_정답X.pdf')}
 def render(pdf,p,tag,dpi=130):
     out=f'/tmp/p/w/{tag}'
     subprocess.run(['pdftoppm','-r',str(dpi),'-f',str(p),'-l',str(p),'-png','-singlefile',pdf,out],check=True)
