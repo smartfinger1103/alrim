@@ -269,32 +269,52 @@ function render() {
       pts.forEach((m, i) => { mk('circle', { cx: x(i), cy: y(+m.eng), r: 3.5, fill: '#4f46e5' }); mk('text', { x: x(i), y: H - 4, 'font-size': 8, 'text-anchor': 'middle', fill: '#666' }).textContent = (m.date || '').slice(5).replace('-', '/'); });
       b.append(el('small', 'color:var(--muted,#666)', '영어 등급 추이 (위로 갈수록 좋은 등급)'), sv); }
     card.append(d); }
-  /* 공부 시간 */
-  { const [d, b] = sec('⏱ 과목별 공부 시간'); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px');
-    SUBJ.forEach(s => { const on = LS.run && !LS.run.ready && LS.run.s === s; const x = btn((on ? '⏹ ' + s + ' 끝내기' : '▶ ' + s), () => { if (on) { stopRun(); render(); toast(s + ' 공부 시간을 기록했어요'); return; } const prev = LS.run && !LS.run.ready && LS.run.s; if (LS.run) { if (LS.run.ready) LS.run = null; else stopRun(); } LS.run = { s, t0: Date.now(), t: Date.now(), acc: 0 }; save(); render(); if (prev) toast(prev + ' 기록하고 ' + s + ' 시작했어요'); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
-    b.append(row); const live = el('div', 'font-weight:700'); live.id = 'snLive'; b.append(live);
-    const cal = ymd(), view = LS.tview || 'day', tabs = el('div', 'display:flex;gap:6px;margin-top:4px');
-    [['day', '오늘'], ['week', '이번 주']].forEach(([k, t]) => tabs.append(btn(t, () => { LS.tview = k; save(); render(); }, 'padding:6px 14px;' + (view === k ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''))));
+  /* 공부 시간 (아이폰 '스크린 타임' 느낌) */
+  { const [d, b] = sec('⏱ 과목별 공부 시간');
+    const COL = { '영어': '#0A84FF', '국어': '#FF9F0A', '수학': '#30D158', '통합과학': '#BF5AF2', '통합사회': '#FF375F' }, F = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo",system-ui,sans-serif';
+    const hm = s => { s = Math.round(s / 60); const h = Math.floor(s / 60), m = s % 60; return h ? h + '시간 ' + (m ? m + '분' : '') : m + '분'; };
+    const ios = el('div', 'font-family:' + F + ';background:#fff;color:#1c1c1e;border-radius:18px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:14px');
+    /* 과목 시작 칩 */
+    const chips = el('div', 'display:flex;flex-wrap:wrap;gap:8px');
+    SUBJ.forEach(s => { const on = LS.run && !LS.run.ready && LS.run.s === s, c = COL[s] || '#8E8E93';
+      const x = el('button', 'font:600 15px ' + F + ';display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;cursor:pointer;border:none;' + (on ? 'background:' + c + ';color:#fff;box-shadow:0 4px 12px ' + c + '55' : 'background:#f2f2f7;color:#1c1c1e'));
+      x.type = 'button'; x.append(el('span', 'width:9px;height:9px;border-radius:50%;background:' + (on ? '#fff' : c) + (on ? ';animation:snPulse 1.4s infinite' : '')), document.createTextNode(on ? s + ' · 끝내기' : s));
+      x.onclick = () => { if (on) { stopRun(); render(); toast(s + ' 공부 시간을 기록했어요'); return; } const prev = LS.run && !LS.run.ready && LS.run.s; if (LS.run) { if (LS.run.ready) LS.run = null; else stopRun(); } LS.run = { s, t0: Date.now(), t: Date.now(), acc: 0 }; save(); render(); if (prev) toast(prev + ' 기록하고 ' + s + ' 시작했어요'); };
+      chips.append(x); });
+    if (!document.getElementById('snPulseCss')) { const st = document.createElement('style'); st.id = 'snPulseCss'; st.textContent = '@keyframes snPulse{0%,100%{opacity:1}50%{opacity:.35}}'; document.head.append(st); }
+    const live = el('div', 'font:500 13px ' + F + ';color:#8e8e93;margin-top:-6px'); live.id = 'snLive';
+    /* 오늘 / 이번 주 */
+    const cal = ymd(), view = LS.tview || 'day', seg = el('div', 'display:grid;grid-template-columns:1fr 1fr;background:#eeeef0;border-radius:9px;padding:2px');
+    [['day', '오늘'], ['week', '이번 주']].forEach(([k, t]) => { const s = el('button', 'font:600 13px ' + F + ';border:none;border-radius:7px;padding:6px 0;cursor:pointer;' + (view === k ? 'background:#fff;color:#1c1c1e;box-shadow:0 1px 3px rgba(0,0,0,.12)' : 'background:transparent;color:#3c3c43'), t); s.type = 'button'; s.onclick = () => { LS.tview = k; save(); render(); }; seg.append(s); });
     const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), wk = Array.from({ length: 7 }, (_, k) => ymd(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + k)));
-    const days = view === 'day' ? [cal] : wk, val = s => days.reduce((a, d) => a + dayTot(d, s), 0), vals = SUBJ.map(val), tot = vals.reduce((a, x) => a + x, 0), mx = Math.max(60, ...vals), mn = Math.min(...vals);
-    const hm = s => { s = Math.round(s / 60); const h = Math.floor(s / 60), m = s % 60; return h ? h + '시간 ' + m + '분' : m + '분'; };
-    const chart = el('div', 'display:flex;flex-direction:column;gap:7px;margin-top:6px');
-    SUBJ.forEach((s, k) => { const v = vals[k], low = tot > 0 && v === mn, r = el('div', 'display:grid;grid-template-columns:4.6em 1fr auto;gap:8px;align-items:center;font-size:.9rem');
-      const bar = el('div', 'height:16px;border-radius:8px;background:var(--soft,#e5e7eb);overflow:hidden'); bar.append(el('i', 'display:block;height:100%;border-radius:8px;width:' + (v / mx * 100) + '%;background:' + (low ? '#dc2626' : 'var(--accent,#4f46e5)')));
-      r.append(el('b', low ? 'color:#dc2626' : null, s), bar, el('span', 'font-weight:600;' + (low ? 'color:#dc2626' : ''), hm(v) + (low ? ' · 부족' : ''))); chart.append(r); });
-    b.append(tabs, el('div', 'font-weight:700;margin-top:6px', (view === 'day' ? '오늘' : '이번 주(월~일)') + ' 합계 ' + hm(tot)), chart);
-    if (view === 'week') { const dn = ['월', '화', '수', '목', '금', '토', '일'], dt = wk.map(d => SUBJ.reduce((a, s) => a + dayTot(d, s), 0)), dm = Math.max(60, ...dt);
-      const cols = el('div', 'display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:110px;margin-top:10px;padding-top:4px');
-      wk.forEach((d, k) => { const c = el('div', 'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;font-size:.75rem'); c.append(el('span', 'color:var(--muted,#666)', dt[k] ? hm(dt[k]).replace('시간 ', 'h').replace('분', 'm') : ''), el('i', 'display:block;width:70%;border-radius:6px 6px 0 0;min-height:2px;height:' + (dt[k] / dm * 70) + 'px;background:' + (d === cal ? 'var(--accent,#4f46e5)' : '#a5b4fc')), el('b', d === cal ? 'color:var(--accent,#4f46e5)' : null, dn[k])); cols.append(c); });
-      b.append(el('small', 'color:var(--muted,#666);margin-top:6px;display:block', '요일별 합계'), cols); }
-    b.append(el('small', 'color:var(--muted,#666)', '과목을 누르면 바로 시작하고, 한 번 더 누르면 끝나요. 끝내기를 안 눌러도 지금까지 시간이 자동으로 더해져요. 빨간색이 가장 부족한 과목이에요.')); card.append(d); }
+    const days = view === 'day' ? [cal] : wk, vals = SUBJ.map(s => days.reduce((a, dd) => a + dayTot(dd, s), 0)), tot = vals.reduce((a, x) => a + x, 0), mx = Math.max(60, ...vals), mn = Math.min(...vals);
+    const head = el('div'); head.append(el('div', 'font:600 13px ' + F + ';color:#8e8e93', view === 'day' ? '오늘 순공 시간' : '이번 주 순공 시간 · 하루 평균 ' + hm(tot / Math.max(1, ((now.getDay() + 6) % 7) + 1))), el('div', 'font:700 30px ' + F + ';letter-spacing:-.5px;margin-top:2px', tot ? hm(tot) : '0분'));
+    /* 비율 막대 */
+    const stack = el('div', 'display:flex;height:10px;border-radius:5px;overflow:hidden;background:#eeeef0;gap:2px');
+    SUBJ.forEach((s, k) => { if (vals[k] > 0) stack.append(el('i', 'display:block;height:100%;flex:' + vals[k] + ';background:' + COL[s])); });
+    /* 요일별 막대 (이번 주) */
+    let weekEl = null;
+    if (view === 'week') { const dn = ['월', '화', '수', '목', '금', '토', '일'], dt = wk.map(dd => SUBJ.map(s => dayTot(dd, s))), dsum = dt.map(a => a.reduce((x, y) => x + y, 0)), dm = Math.max(3600, ...dsum), H = 120, avg = tot / Math.max(1, ((now.getDay() + 6) % 7) + 1);
+      weekEl = el('div', 'position:relative;height:' + (H + 22) + 'px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end');
+      if (avg > 0) { const ln = el('div', 'position:absolute;left:0;right:0;border-top:1.5px dashed #34c759;bottom:' + (22 + avg / dm * H) + 'px'); ln.append(el('span', 'position:absolute;right:0;top:-17px;font:600 10px ' + F + ';color:#34c759', '평균')); weekEl.append(ln); }
+      wk.forEach((dd, k) => { const c = el('div', 'display:flex;flex-direction:column;align-items:center;gap:5px'), col = el('div', 'width:100%;max-width:26px;height:' + Math.max(3, dsum[k] / dm * H) + 'px;display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;background:#eeeef0');
+        SUBJ.forEach((s, j) => { if (dt[k][j] > 0) col.append(el('i', 'display:block;width:100%;flex:' + dt[k][j] + ';background:' + COL[s])); });
+        c.append(col, el('span', 'font:' + (dd === cal ? '700' : '500') + ' 11px ' + F + ';color:' + (dd === cal ? '#1c1c1e' : '#8e8e93'), dn[k])); weekEl.append(c); }); }
+    /* 과목별 줄 */
+    const list = el('div', 'display:flex;flex-direction:column');
+    SUBJ.map((s, k) => [s, vals[k]]).sort((a, c) => c[1] - a[1]).forEach(([s, v], k, arr) => { const low = tot > 0 && v === mn, r = el('div', 'display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;padding:10px 0;' + (k < arr.length - 1 ? 'border-bottom:.5px solid #e5e5ea' : ''));
+      const mid = el('div', 'display:flex;flex-direction:column;gap:6px'), nm = el('div', 'font:600 15px ' + F + ';display:flex;align-items:center;gap:6px', s); if (low) nm.append(el('span', 'font:700 10px ' + F + ';color:#ff3b30;background:#ff3b3014;padding:2px 7px;border-radius:999px', '부족'));
+      const tr = el('div', 'height:6px;border-radius:3px;background:#eeeef0;overflow:hidden'); tr.append(el('i', 'display:block;height:100%;border-radius:3px;width:' + (v / mx * 100) + '%;background:' + COL[s])); mid.append(nm, tr);
+      r.append(el('span', 'width:10px;height:10px;border-radius:50%;background:' + COL[s]), mid, el('span', 'font:600 15px ' + F + ';color:' + (low ? '#ff3b30' : '#3c3c43') + ';font-variant-numeric:tabular-nums', v ? hm(v) : '—')); list.append(r); });
+    ios.append(chips, live, seg, head, stack); if (weekEl) ios.append(weekEl); ios.append(list);
+    b.append(ios, el('small', 'color:var(--muted,#666)', '과목을 누르면 바로 시작, 한 번 더 누르면 끝나요. 끝내기를 안 눌러도 지금까지 시간이 자동으로 더해져요.')); card.append(d); }
   tick();
 }
 /* 하루는 아침 6시에 바뀌어요: 6시 전에는 어제 과제가 그대로 보여요 */
 const sday = () => ymd(new Date(Date.now() - 6 * 36e5)); let lastDay = '';
 function tick() {
   if (card && lastDay && sday() !== lastDay) { render(); return; }
-  if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run && !LS.run.ready ? '⏺ ' + LS.run.s + ' 공부 중 · 한 번 더 누르면 끝나고 기록돼요' : ''; runFloat();
+  if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run && !LS.run.ready ? LS.run.s + ' 공부 중 · 한 번 더 누르면 끝나요' : ''; runFloat();
   const rd = document.getElementById('snRead'); if (rd && LS.rd && !LS.rd.ask) { const s = (Date.now() - LS.rd.t) / 1000; rd.textContent = mmss(s); rd.style.color = s > 100 ? '#dc2626' : 'inherit'; }
   if (LS.run && !LS.run.ready && ymd(new Date(LS.run.t0)) !== ymd()) { const s = LS.run.s; stopRun(); LS.run = { s, t0: Date.now(), t: Date.now(), acc: 0 }; save(); render(); }
   if (LS.run && runSec() >= 4 * 3600) { stopRun(); render(); }
