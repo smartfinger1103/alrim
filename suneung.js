@@ -200,7 +200,7 @@ function wTest(P, today) { const st = wSt(today, P), M = wByKey(P);
     if (!st.round) { /* 첫 테스트 결과만 기록하고, 틀린 단어는 다음 날로 넘겨요 */
       qs.forEach(w => { const k = wk(w), x = LS.wwrong[k]; if (wset.has(k)) LS.wwrong[k] = { en: w[0], ko: w[1], n: (x ? x.n : 0) + 1, last: today }; else if (x && x.last < today) delete LS.wwrong[k]; });
       LS.wdone[today] = { t: qs.length, w: wrong.length }; }
-    st.res = { t: qs.length, w: wrong.length, round: st.round }; st.round++; st.list = wrong.map(wk); st.seen = []; save();
+    st.res = { t: qs.length, w: wrong.length, round: st.round }; (st.hist = st.hist || []).push([qs.length, wrong.length]); st.round++; st.list = wrong.map(wk); st.seen = []; save();
     S.body.append(el('div', 'font-family:var(--font-display,inherit);font-size:2.4rem;text-align:center', (qs.length - wrong.length) + ' / ' + qs.length));
     if (!wrong.length) { S.body.append(el('b', 'color:#15803d;text-align:center;font-size:1.1rem', '모두 맞았어요! 🎉 오늘 단어 끝!')); return; }
     S.body.append(el('b', 'color:#dc2626', '틀린 단어 ' + wrong.length + '개 · 어떤 뜻 때문에 틀렸는지 보세요'));
@@ -260,6 +260,8 @@ function addTabs() {
 }
 function markTab() { const bar = document.getElementById('snTabs'); if (!bar || !card) return; let cur = -1; TABS.forEach((t, k) => { const x = tabTarget(k); if (x && x.getBoundingClientRect().top <= 110) cur = k; }); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === cur)); }
 window.addEventListener('scroll', () => markTab(), { passive: true });
+const sumBox = (t) => { const sm = el('div', 'display:flex;flex-direction:column;gap:6px;border:1.5px dashed #999;border-radius:10px;padding:10px 12px'); sm.className = 'sn-sum'; sm.append(el('b', null, t)); return sm; };
+const pbar = (p, cls) => { const o = el('div', 'height:12px;border:1.4px solid #555;border-radius:255px 12px 225px 12px/12px 225px 12px 255px;overflow:hidden'), i = el('i', 'display:block;height:100%;width:' + Math.round(Math.min(1, p) * 100) + '%'); i.className = cls; o.append(i); return o; };
 function render() { render0(); addTabs(); }
 /* 선생님이 따로 적은 과제가 없는 날에는 빈 알림장("과제가 없어요")을 숨겨요 */
 setInterval(() => { if (TEACH || !card || !me) return; const nb = document.getElementById('nb'); if (!nb) return; const c = nb.querySelector('.nb-count'), empty = !!c && /과제가 없어요/.test(c.textContent);
@@ -285,6 +287,24 @@ function render0() {
         if (fin) b.append(el('div', 'color:#15803d;font-weight:700', done && done.w ? '✅ 틀린 단어까지 다시 테스트해서 다 맞았어요. 오늘 단어 끝!' : '✅ 오늘 단어 끝!'));
         else { b.append(el('div', 'font-size:.92rem;color:' + (st.round ? '#dc2626' : 'var(--muted,#666)') + ';font-weight:600', (st.round ? '틀린 단어 ' + st.list.length + '개 · ' : '') + '단어 공부 ' + seenN + ' / ' + st.list.length + ' 봤어요' + (ready ? ' · 이제 테스트를 볼 수 있어요' : '')));
           const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); row.append(btn(st.round ? '📖 틀린 단어 다시 공부' : '📖 단어 공부', () => wStudy(P, today), ready ? '' : 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'), btn(st.round ? '✏️ 틀린 단어 다시 테스트' : '✏️ 테스트 보기', () => wTest(P, today), ready ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : 'opacity:.6')); b.append(row); } }
+      { /* 단어 요약: 오늘 테스트 기록 · 아직 못 외운 단어 · 누적 */
+        const sm = el('div', 'display:flex;flex-direction:column;gap:6px;border:1.5px dashed #999;border-radius:10px;padding:10px 12px'); sm.className = 'sn-sum';
+        const stT = (LS.wst || {})[today], hist = (stT && stT.hist) || [], M = wByKey(P), chip = (w) => { const lv = wLv(w), c = el('span', 'display:inline-block;margin:2px 4px 2px 0;padding:2px 8px;border:1.3px solid ' + (LVC[lv] === 'inherit' ? '#888' : LVC[lv]) + ';border-radius:10px;font-size:.92rem;color:' + (LVC[lv] === 'inherit' ? '#333' : LVC[lv])); c.append(Object.assign(el('b', 'font-family:"Times New Roman",Times,serif', w[0]), { className: 'sn-en' }), document.createTextNode(' ' + String(w[1]).split(/[,;]/)[0])); return c; };
+        sm.append(el('b', null, '📋 오늘 단어 요약'));
+        { const tot = P.all.length, lst = stT ? stT.list.length : tot, seen = stT ? stT.list.filter(k => stT.seen.includes(k)).length : 0, memo = stT && stT.round > 0 ? tot - lst : 0;
+          sm.append(el('div', 'font-weight:700', '오늘 ' + tot + '개 중 · 넘겨 본 단어 ' + (stT && stT.round > 0 ? tot - lst + seen : seen) + '개 · 외운 단어 ' + memo + '개 · 남은 단어 ' + (stT && stT.round > 0 ? lst : tot - seen) + '개'), pbar(tot ? (stT && stT.round > 0 ? memo / tot : seen / tot) : 0, 'sk-c1'));
+          const W = me.wbook, from = Math.max(1, W.from || 1), to = Math.min(W.days.length, W.to || W.days.length), k = from + Math.max(0, startN(W.start, today)), allW = W.days.slice(from - 1, to).reduce((a, d) => a + d.w.length, 0), doneW = W.days.slice(from - 1, Math.min(to, k - 1)).reduce((a, d) => a + d.w.length, 0);
+          sm.append(el('div', 'color:#555', '책 진도 · Day ' + Math.min(k, to) + ' / ' + to + ' · 지금까지 ' + doneW + '개 / 전체 ' + allW + '개 · 남은 ' + Math.max(0, to - k) + '일'), pbar(allW ? doneW / allW : 0, 'sk-c3')); }
+        if (!hist.length) sm.append(el('div', 'color:var(--muted,#666)', '아직 테스트를 안 봤어요. 테스트가 끝나면 결과가 여기에 쌓여요.'));
+        else { const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); hist.forEach((h, k) => row.append(el('span', 'padding:2px 10px;border-radius:10px;font-weight:700;background:' + (h[1] ? 'rgba(244,170,170,.5)' : 'rgba(170,220,150,.6)'), (k ? '재시험 ' + k : '첫 테스트') + ' ' + (h[0] - h[1]) + '/' + h[0]))); sm.append(row); }
+        const left = stT && stT.round > 0 ? stT.list.map(k => M[k]).filter(Boolean) : [];
+        if (hist.length) { if (left.length) { sm.append(el('div', 'font-weight:700;color:#dc2626', '아직 못 외운 단어 ' + left.length + '개')); const bx = el('div'); left.forEach(w => bx.append(chip(w))); sm.append(bx); } else sm.append(el('div', 'font-weight:700;color:#15803d', '✅ 오늘 단어를 모두 외웠어요')); }
+        const days = Object.keys(LS.wdone).sort(), carry = Object.values(LS.wwrong);
+        if (days.length) { const tt = days.reduce((a, d) => a + LS.wdone[d].t, 0), ww = days.reduce((a, d) => a + LS.wdone[d].w, 0), tsec = Object.values(LS.wsec || {}).reduce((a, x) => a + x, 0);
+          sm.append(el('div', 'border-top:1px dashed #bbb;padding-top:6px;font-weight:700', '📈 누적 · 테스트 ' + days.length + '일 · 첫 테스트 정답률 ' + Math.round((tt - ww) / Math.max(1, tt) * 100) + '% · 단어 학습 ' + Math.floor(tsec / 3600) + '시간 ' + Math.floor(tsec % 3600 / 60) + '분'));
+          const bars = el('div', 'display:flex;align-items:flex-end;gap:5px;height:54px'); days.slice(-10).forEach(d => { const x = LS.wdone[d], p = (x.t - x.w) / Math.max(1, x.t), col = el('div', 'flex:1;max-width:30px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:.7rem;color:#666'); const i = el('i', 'display:block;width:100%;height:' + Math.max(4, Math.round(p * 34)) + 'px;border:1.3px solid #555;border-bottom:none'); i.className = p >= .9 ? 'sk-c3' : p >= .7 ? 'sk-c2' : 'sk-c5'; col.append(el('span', null, Math.round(p * 100) + ''), i, el('span', null, +d.slice(8) + '일')); bars.append(col); }); sm.append(bars); }
+        if (carry.length) { sm.append(el('div', 'font-weight:700;color:#1E5BD8', '🔁 다음에 다시 나올 틀린 단어 ' + carry.length + '개 (많이 틀린 순)')); const bx = el('div'); carry.sort((a, b) => b.n - a.n).slice(0, 30).forEach(x => bx.append(chip([x.en, x.ko]))); sm.append(bx); if (carry.length > 30) sm.append(el('small', 'color:#666', '외 ' + (carry.length - 30) + '개')); }
+        b.append(sm); }
       b.append(el('small', 'color:var(--muted,#666)', '매일 아침 6시에 새 Day가 자동으로 나와요. 단어를 끝까지 넘겨 본 뒤 테스트를 봐요. 점수는 테스트가 끝나야 보여요. 첫 테스트에서 틀린 단어는 다음 날 파란색으로 다시 나와요.')); card.append(d); } }
   /* 매일 듣기 */
   { const P = lPlan(today), [d, b] = sec('🎧 듣기 연습'); if (!P) b.append(el('div', 'color:var(--muted,#666)', me.lbook && me.lbook.start && startN(me.lbook.start, today) < 0 ? (me.lbook.from || 1) + '회 · ' + kd(me.lbook.start) + ' 아침 6시부터 시작해요.' : '듣기 책이 정해지면 날마다 1회씩 여기에 떠요.')); if (P) { const done = LS.ldone[today];
@@ -297,7 +317,16 @@ function render0() {
       }
     let cur = 1; try { cur = parseFloat(localStorage.getItem('alrim:rate')) || 1; } catch (e) {} const sp = el('div', 'display:flex;flex-wrap:wrap;gap:6px;align-items:center'); sp.append(el('small', 'color:var(--muted,#666);font-weight:600', '듣기 속도'));
     [0.8, 1, 1.2, 1.5].forEach(r => { const x = btn(r + '배', () => { try { localStorage.setItem('alrim:rate', r); } catch (e) {} render(); }, 'padding:5px 10px;' + (r === cur ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : '')); x.setAttribute('aria-pressed', r === cur); sp.append(x); });
-    b.append(sp); card.append(d); }
+    b.append(sp);
+    if (P) { const sm = sumBox('📋 듣기 요약'), dn = LS.ldone[today], L = me.lbook, to = L.to || 24, from = L.from || 1;
+      if (dn && dn.unit === P.unit) { sm.append(el('div', 'font-weight:700', '오늘 ' + P.unit + '회 · ' + (dn.total - dn.wrong.length) + ' / ' + dn.total + (dn.wrong.length ? ' · 틀린 문제 ' + dn.wrong.join(', ') + '번' + (dn.retry ? ' (다시 풀기 완료)' : ' (다시 풀기 남음)') : ' · 만점!'))); }
+      else sm.append(el('div', 'color:var(--muted,#666)', '오늘 ' + (P.over ? '' : P.unit + '회 · ') + '17문제 · 아직 안 풀었어요.'));
+      const ds = Object.keys(LS.ldone).sort(); if (ds.length) { const tt = ds.reduce((a, k) => a + LS.ldone[k].total, 0), ww = ds.reduce((a, k) => a + LS.ldone[k].wrong.length, 0), cnt = {}; ds.forEach(k => LS.ldone[k].wrong.forEach(n => cnt[n] = (cnt[n] || 0) + 1));
+        sm.append(el('div', 'border-top:1px dashed #bbb;padding-top:6px;font-weight:700', '📈 누적 · ' + ds.length + '회 풀었어요 · 정답률 ' + Math.round((tt - ww) / Math.max(1, tt) * 100) + '%'));
+        const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 5); if (top.length) sm.append(el('div', 'color:#dc2626;font-weight:600', '자주 틀리는 번호 · ' + top.map(x => x[0] + '번(' + x[1] + ')').join(' ')));
+        const bars = el('div', 'display:flex;align-items:flex-end;gap:5px;height:54px'); ds.slice(-10).forEach(k => { const x = LS.ldone[k], p = (x.total - x.wrong.length) / Math.max(1, x.total), col = el('div', 'flex:1;max-width:30px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:.7rem;color:#666'), i = el('i', 'display:block;width:100%;height:' + Math.max(4, Math.round(p * 34)) + 'px;border:1.3px solid #555;border-bottom:none'); i.className = p >= .9 ? 'sk-c3' : p >= .7 ? 'sk-c2' : 'sk-c5'; col.append(el('span', null, (x.total - x.wrong.length) + ''), i, el('span', null, x.unit + '회')); bars.append(col); }); sm.append(bars); }
+      sm.append(el('div', 'color:#555', '책 진도 · ' + Math.min(P.unit, to) + '회 / ' + to + '회 · 남은 ' + Math.max(0, to - P.unit) + '회'), pbar((Math.min(P.unit, to + 1) - from) / Math.max(1, to - from + 1), 'sk-c1')); b.append(sm); }
+    card.append(d); }
   /* 독해 타이머 */
   { const [d, b] = sec('📖 독해'); const R = LS.rd, RP = rPlan(today);
     if (RP && RP.wait) b.append(el('div', 'color:var(--muted,#666)', '오늘 독해를 불러오는 중…'));
@@ -309,6 +338,14 @@ function render0() {
       hr.append(tx, btn(rr ? '다시 풀기' : '▶ 독해 시작', () => window.alrimOpenRd({ id, rd: RP.rd }), 'flex:none;padding:6px 12px;font-size:.95rem;background:var(--accent,#4f46e5);color:#fff;font-weight:700')); b.append(hr);
       if (rr) b.append(el('div', 'font-weight:700;color:' + (rr.ok === rr.n ? '#15803d' : '#dc2626'), (rr.ok === rr.n ? '✅ ' : '') + '오늘 결과 ' + rr.ok + ' / ' + rr.n));
       b.append(el('small', 'color:var(--muted,#666)', '문제를 풀고 답을 고르면 맞으면 다음으로, 틀리면 정답과 지문을 다시 보여 줘요. (' + RP.last + ' / ' + RP.total + '지문)')); }
+    if (RP && RP.ps && RP.ps.length) { const sm = sumBox('📋 독해 요약'), rr = window.alrimRdRes && window.alrimRdRes('sn-rd-' + today), tl = LS.read.filter(x => x.d === ymd() || x.d === today).slice(-1)[0];
+      if (rr) { sm.append(el('div', 'font-weight:700', '오늘 ' + rr.n + '문제 중 ' + rr.ok + '개 맞음 · ' + (rr.n - rr.ok) + '개 틀림'));
+        if (tl) { const row = el('div', 'display:flex;flex-wrap:wrap;gap:5px'); tl.log.forEach((x, k) => row.append(el('span', 'padding:2px 8px;border-radius:10px;font-size:.9rem;font-weight:700;background:' + (x.ok ? 'rgba(170,220,150,.6)' : 'rgba(244,170,170,.55)'), (k + 1) + (x.ok ? ' ⭕' : ' ❌ ' + (x.why || '')) + ' ' + Math.floor(x.s / 60) + ':' + String(Math.floor(x.s % 60)).padStart(2, '0')))); sm.append(row); } }
+      else sm.append(el('div', 'color:var(--muted,#666)', '오늘 지문 ' + RP.ps.length + '개 · 아직 안 풀었어요.'));
+      const all = [].concat(...LS.read.map(x => x.log)); if (all.length) { const ok = all.filter(x => x.ok).length, avg = all.reduce((a, x) => a + x.s, 0) / all.length, cnt = {}; all.filter(x => !x.ok).forEach(x => cnt[x.why || '기타'] = (cnt[x.why || '기타'] || 0) + 1);
+        sm.append(el('div', 'border-top:1px dashed #bbb;padding-top:6px;font-weight:700', '📈 누적 · ' + all.length + '문제 · 정답률 ' + Math.round(ok / all.length * 100) + '% · 한 문제 평균 ' + Math.floor(avg / 60) + '분 ' + Math.round(avg % 60) + '초'));
+        const ws = Object.entries(cnt).sort((a, b) => b[1] - a[1]); if (ws.length) sm.append(el('div', 'color:#dc2626;font-weight:600', '틀린 이유 · ' + ws.map(x => x[0] + ' ' + x[1]).join(' · '))); }
+      sm.append(el('div', 'color:#555', '책 진도 · ' + RP.last + ' / ' + RP.total + '지문 · 남은 ' + (RP.total - RP.last) + '지문 (약 ' + Math.ceil((RP.total - RP.last) / Math.max(1, me.rbook.per || 7)) + '일)'), pbar(RP.last / RP.total, 'sk-c3')); b.append(sm); }
     if (RP) {} else if (me.rbook && me.rbook.id) { b.append(el('b', 'font-size:1.05rem', '독해 지문 ' + Math.max(1, me.rbook.per || 7) + '개'), el('div', 'color:var(--muted,#666)', me.rbook.start && startN(me.rbook.start, today) < 0 ? kd(me.rbook.start) + ' 아침 6시부터 시작해요.' : '오늘 독해를 준비하는 중…')); }
     else if (!R) { b.append(btn('▶ 독해 시작', () => { LS.rd = { n: 1, t: Date.now(), log: [] }; save(); render(); }, 'background:var(--accent,#4f46e5);color:#fff;font-weight:700')); }
     else if (R.ask) { b.append(el('b', null, R.n + '번 지문 · 왜 틀렸나요?')); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); WHY.forEach(w => row.append(btn(w, () => { R.log.push({ s: R.ask, ok: false, why: w }); R.ask = 0; R.n++; R.t = Date.now(); save(); render(); }))); b.append(row); }
@@ -445,6 +482,7 @@ html.sk .ls-speed button{border:1.4px solid #555 !important;border-radius:255px 
 html.sk .ls-q{border:1.5px solid #888;border-radius:6px 12px 6px 10px}
 html.sk #snCard #snTabs button{background:var(--c) !important;border:1.5px solid var(--d) !important;border-bottom:none !important;border-radius:8px 10px 0 0/10px 8px 0 0 !important;box-shadow:inset 0 -3px 0 rgba(255,255,255,.35) !important;font-size:1.15rem !important;padding:6px 0 7px !important}html.sk #snCard #snTabs button.on{padding-top:9px !important}
 html.sk #snCard button[aria-pressed="true"]{background:rgba(255,214,102,.65) !important}
+html.sk #snCard .sn-sum{border:1.5px dashed #888 !important;background:rgba(255,236,170,.18)}html.sk #snCard .sn-sum span,html.sk #snCard .sn-sum div{font-size:1rem}
 html.sk #snCard b{font-size:1.15em}
 html.sk #snCard small{font-size:1.02rem !important;color:#6f6f6f !important}
 html.sk #snCard details{border-top:2px solid #555 !important;border-radius:255px 15px 225px 15px/3px 2px 3px 2px;margin-top:14px !important;padding-top:14px !important}
