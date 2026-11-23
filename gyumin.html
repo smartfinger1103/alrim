@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-daily">
+<meta name="build" content="2026-11-23-tri">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -1166,6 +1166,9 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   $('calToday').onclick = () => { OV.month = todayStr().slice(0, 7); renderOverview(); };
 
   /* ---------- 틀린 단어 단계: 0 새 단어(검정) · 1 지난 시간 틀림(파랑) · 2+ 두 번 이상(빨강) ---------- */
+  /* 수업 중 단어 테스트의 세모(△, 반만 맞음) 표시: D.miss[학생]['△'+단어키] */
+  const triOf = (who, w) => !!((D.miss || {})[who] || {})['△' + wkey(w)];
+  function triTag(card, w) { if (!triOf(state.cls, w)) return; const tg = el('div', 'lv-tag', '△ 세모 단어 · 반만 맞았어요'); tg.style.cssText = 'color:#7a4f00;background:#FFE08A;border-radius:8px;padding:2px 10px;font-weight:700'; card.append(tg); card.style.boxShadow = 'inset 0 0 0 4px #E0A100'; }
   const missLv = (who, w) => { const n = ((D.miss || {})[who] || {})[wkey(w)] || 0; return n >= 3 ? 3 : n; };
   const LV_TXT = ['', '1번 틀린 단어', '2번 틀린 단어', '3번 이상 틀린 단어'];
 
@@ -1892,6 +1895,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
           const m = memCount('t:' + it.id, ws);
           if (!d) tx.append(el('small', 'nb-prog', isPron(it) ? `발음 ${m}/${ws.length}개 통과 · 단어마다 3번 PASS하면 완성` : `단어 ${m}/${ws.length}개 외움 · 다 외우면 자동으로 완료`));
           if (!isPron(it)) { const wl = el('small', 'wt-line'); wl.dataset.from = it.date; wl.style.cssText = 'display:block;font-weight:600'; tx.append(wl); setTimeout(wtLines, 0); }
+          { const triN = ws.filter(w => triOf(state.cls, w)).length; if (triN) { const ts = el('small', 'nb-lv', '△ 세모 단어 ' + triN + '개'); ts.style.cssText = 'display:inline-block;color:#7a4f00;background:#FFE08A;border-radius:6px;padding:0 8px;font-weight:700'; tx.append(ts); } }
           const lvc = [0, 0, 0, 0]; ws.forEach(w => lvc[missLv(state.cls, w)]++);
           if (lvc[1] || lvc[2] || lvc[3]) {
             const lv = el('small', 'nb-lv');
@@ -3253,7 +3257,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const lv = missLv(state.cls, w), got = mem.has(wkey(w));
       const li = el('li'); li.style.alignItems = 'center'; li.style.flexWrap = 'nowrap';
       const tx = el('div'); tx.style.minWidth = '0'; tx.style.flex = '1';
-      const en = el('b', lv ? 'lv' + lv : null, w.en); en.style.display = 'block'; en.style.overflowWrap = 'anywhere';
+      const en = el('b', lv ? 'lv' + lv : null, w.en); if (triOf(state.cls, w)) { en.textContent = '△ ' + w.en; li.style.border = '2px solid #E0A100'; li.style.background = '#FFF6D6'; li.style.color = '#1D2A26'; } en.style.display = 'block'; en.style.overflowWrap = 'anywhere';
       const ko = el('span', null, hideKo ? '(눌러서 뜻 보기)' : w.ko); ko.style.color = 'var(--muted)'; ko.style.fontSize = '0.9rem'; ko.style.display = 'block';
       if (hideKo) { ko.style.cursor = 'pointer'; ko.onclick = () => { ko.textContent = w.ko; ko.onclick = null; }; }
       tx.append(en, ko);
@@ -3300,7 +3304,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const lv = missLv(state.cls, w), lc = lv ? ' lv' + lv : '';
     const top = el('div', hideKo ? 'st-ko' : 'st-en' + lc, hideKo ? w.ko : w.en);
     const bot = el('div', hideKo ? 'st-en' + lc : 'st-ko', hideKo ? w.en : w.ko);
-    if (lv) card.append(el('div', 'lv-tag lv' + lv, LV_TXT[lv]));
+    if (lv) card.append(el('div', 'lv-tag lv' + lv, LV_TXT[lv])); triTag(card, w);
     card.append(top, bot);
     b.append(card);
     if (canSpeak) { const sp = el('button', 'q-say', '발음 듣기'); sp.type = 'button'; sp.onclick = () => speak(w.en); b.append(sp); }
@@ -3324,7 +3328,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const g = el('div', 'pp-grid' + (P >= 20 ? ' dense' : ''));
     page.forEach(w => {
       const lv = missLv(state.cls, w), front = quiz.dir === 'ko' ? w.ko : w.en, back = quiz.dir === 'ko' ? w.en : w.ko;
-      const t = el('button', 'pp-tile' + (lv ? ' lv' + lv : '')); t.type = 'button';
+      const t = el('button', 'pp-tile' + (lv ? ' lv' + lv : '')); t.type = 'button'; if (triOf(state.cls, w)) { t.style.boxShadow = 'inset 0 0 0 3px #E0A100'; t.style.background = '#FFF6D6'; }
       const f = el('div', 'pp-f', front), k = el('div', 'pp-b', back); k.hidden = true;
       if (lv) t.append(el('div', 'lv-tag lv' + lv, LV_TXT[lv]));
       t.append(f, k);
@@ -3359,7 +3363,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     const tip = el('div', 'q-tip', tipText);
     if (w.unit) card.append(el('div', 'q-unit', w.unit));
     const lv = missLv(state.cls, w);
-    if (lv) { card.append(el('div', 'lv-tag lv' + lv, LV_TXT[lv])); if (quiz.dir !== 'en') k.classList.add('lv' + lv); }
+    if (lv) { card.append(el('div', 'lv-tag lv' + lv, LV_TXT[lv])); if (quiz.dir !== 'en') k.classList.add('lv' + lv); } triTag(card, w);
     card.append(el('div', 'q-front' + (lv && quiz.dir === 'en' ? ' lv' + lv : ''), front), k, tip);
     const acts = el('div', 'q-acts');
     const again = el('button', 'again', '다시 볼래요'); again.type = 'button';
