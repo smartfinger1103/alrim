@@ -338,9 +338,11 @@ function render0() {
   if (BRF && ((BRF.items || []).length || BRF.hello)) { BRF.items = BRF.items || []; const [d, b] = sec('🏠 홈 · 새 소식'); const dn = BRF.date ? kd(BRF.date) : '';
     if (BRF.hello) b.append(el('div', 'font-size:1.25rem;font-weight:700;line-height:1.4;padding:10px 14px;border:1.6px solid #555;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:rgba(255,214,102,.35);transform:rotate(-.4deg)', '👋 ' + BRF.hello));
     b.append(el('small', 'color:var(--muted,#666)', BRF.items.length ? dn + ' 아침 소식' + (BRF.for ? ' · ' + BRF.for : '') : '새 소식은 매일 아침에 들어와요.'));
-    BRF.items.slice(0, 6).forEach(it => { const bx = el('div', 'display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1.4px dashed #999;border-radius:10px;cursor:pointer'); bx.className = 'sn-sum';
+    const ban = new Set((me.newsBan || []).map(x => x.t)); BRF.items.filter(it => !ban.has(it.t)).slice(0, 6).forEach(it => { const bx = el('div', 'display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1.4px dashed #999;border-radius:10px;cursor:pointer'); bx.className = 'sn-sum';
       const h = el('div', 'font-weight:700;display:flex;gap:6px;align-items:baseline'), ar = el('span', 'margin-left:auto;color:#888;flex:none', '▼'); if (it.tag) h.append(el('span', 'flex:none;padding:0 8px;border-radius:8px;background:rgba(140,200,240,.6);font-size:.85em', it.tag)); h.append(el('span', null, it.t || ''), ar); bx.append(h);
-      const body = el('div', 'display:none;flex-direction:column;gap:2px;padding-top:4px'); if (it.s) body.append(el('div', 'line-height:1.4', it.s)); if (it.src) body.append(el('small', 'color:#777', '출처 · ' + it.src)); bx.append(body);
+      const body = el('div', 'display:none;flex-direction:column;gap:2px;padding-top:4px'); if (it.s) body.append(el('div', 'line-height:1.4', it.s)); if (it.src) body.append(el('small', 'color:#777', '출처 · ' + it.src));
+      if (TEACH && window.alrimStuPatch) { const x = btn('🚫 이런 뉴스는 빼기', (e) => { e.stopPropagation(); window.alrimStuPatch(me.name, s => { s.newsBan = (s.newsBan || []).concat([{ t: it.t, tag: it.tag || '', s: String(it.s || '').slice(0, 80), d: ymd() }]).slice(-40); }); me.newsBan = (me.newsBan || []).concat([{ t: it.t }]); toast2('뺐어요. 저장 칸에서 ⬆️ 올리기를 누르면 다음 아침부터 이런 뉴스는 안 가져와요.'); render(); }, 'align-self:flex-start;padding:3px 10px;font-size:.9rem'); body.append(x); }
+      bx.append(body);
       bx.onclick = () => { const on = body.style.display === 'none'; body.style.display = on ? 'flex' : 'none'; ar.textContent = on ? '▲' : '▼'; }; b.append(bx); });
     if (BRF.note && BRF.items.length) b.append(el('small', 'color:var(--muted,#666)', BRF.note)); card.append(d); }
   { const P = wPlan(today); if (!P && me.wbook && me.wbook.start && startN(me.wbook.start, today) < 0) { const [d, b] = sec('📘 단어 공부'); b.append(el('b', 'font-size:1.05rem', (me.wbook.title || '단어') + ' · Day ' + Math.max(1, me.wbook.from || 1)), el('div', 'color:var(--muted,#666)', kd(me.wbook.start) + ' 아침 6시부터 시작해요.')); card.append(d); }
@@ -572,7 +574,7 @@ function sync() {
   if (card && st && me && st.name !== me.name) { card.remove(); card = null; }
   if (!st || st.track !== 'suneung') { if (card) { card.remove(); card = null; } return; }
   sketchSkin();
-  const s2 = JSON.stringify([st.name, st.dday, st.daily, st.mocks, st.lbook, st.rbook, st.wbook && [st.wbook.title, st.wbook.from, st.wbook.to, st.wbook.start, (st.wbook.days || []).length]]);
+  const s2 = JSON.stringify([st.name, (st.newsBan || []).length, st.dday, st.daily, st.mocks, st.lbook, st.rbook, st.wbook && [st.wbook.title, st.wbook.from, st.wbook.to, st.wbook.start, (st.wbook.days || []).length]]);
   if (!card) { me = st; load(); card = el('section', 'background:var(--panel,#fff);border:2px solid var(--accent,#4f46e5);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px'); card.id = 'snCard';
     if (TEACH) { card.style.marginBottom = '10px'; view.before(card); } else { const anchor = document.getElementById('sWTime') || view.querySelector('header'); if (anchor && anchor.parentNode === view) anchor.after(card); else view.prepend(card); } sig = s2; render(); }
   else if (s2 !== sig) { me = st; sig = s2; render(); }
