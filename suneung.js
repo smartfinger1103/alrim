@@ -340,23 +340,25 @@ function render0() {
   if (!card) return; card.textContent = ''; const today = sday(); lastDay = today;
   /* D-day */
   const dd = me.dday || '2027-11-18', left = Math.ceil((new Date(dd + 'T00:00:00') - new Date(today + 'T00:00:00')) / 864e5);
-  const top = el('div', 'display:flex;align-items:baseline;gap:10px;flex-wrap:wrap');
-  top.append(el('b', 'font-family:var(--font-display,inherit);font-size:1.7rem;color:var(--accent,#4f46e5)', '🎯 수능 ' + (left > 0 ? 'D-' + left : left === 0 ? 'D-DAY' : 'D+' + (-left))), el('span', 'color:var(--muted,#666);font-size:.9rem', dd.replace(/-/g, '.') + ' · 이번 주 공부 ' + fmt(weekTot())));
+  const top = el('div', 'display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap');
+  top.append(el('b', 'font-family:var(--font-display,inherit);font-size:1.25rem;color:var(--accent,#4f46e5)', '🎯 수능 ' + (left > 0 ? 'D-' + left : left === 0 ? 'D-DAY' : 'D+' + (-left))), el('span', 'color:var(--muted,#666);font-size:.8rem', dd.replace(/-/g, '.') + ' · 이번 주 공부 ' + fmt(weekTot())));
   if (TEACH) card.append(el('small', 'color:var(--muted,#666);font-weight:600', '👀 ' + me.name + ' 학생 화면에 보이는 수능 도우미 (미리보기 · 여기서 누른 기록은 학생에게 안 넘어가요)'));
   card.append(top);
-  if (!TEACH || true) { const ab = btn('📊 분석하기', analyze, 'align-self:flex-start;padding:6px 14px;font-weight:700'); ab.setAttribute('aria-pressed', 'true'); card.append(ab); }
+  if (!TEACH || true) { const ab = btn('📊 분석하기', analyze, 'margin-left:auto;padding:2px 10px;font-weight:700'); ab.className = (ab.className ? ab.className + ' ' : '') + 'sn-an'; ab.setAttribute('aria-pressed', 'true'); top.append(ab); }
   /* 매일 단어 */
   /* 입시 브리핑 (매일 아침 갱신되는 data/briefing.json) */
   if (BRF === null) { BRF = 0; fetch(new URL('data/briefing.json', location.href).href + '?_=' + Date.now()).then(r => r.ok ? r.json() : null).then(j => { BRF = j || 0; if (j) render(); }).catch(() => {}); }
-  if (BRF && ((BRF.items || []).length || BRF.hello)) { BRF.items = BRF.items || []; const [d, b] = sec('🏠 홈 · 새 소식'); const dn = BRF.date ? kd(BRF.date) : '';
-    if (BRF.hello) b.append(el('div', 'font-size:1.25rem;font-weight:700;line-height:1.4;padding:10px 14px;border:1.6px solid #555;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:rgba(255,214,102,.35);transform:rotate(-.4deg)', '👋 ' + BRF.hello));
+  if (BRF && ((BRF.items || []).length || BRF.hello)) { BRF.items = BRF.items || []; const [d, b] = sec('🏠 홈 · 새 소식'); d.classList.add('sn-home'); b.style.gap = '4px'; b.style.padding = '4px 0';
+    if (!document.getElementById('snHomeCss')) { const st = document.createElement('style'); st.id = 'snHomeCss'; st.textContent = 'html #snCard details.sn-home{margin-top:6px !important;padding-top:6px !important}html #snCard details.sn-home > summary{font-size:.95rem !important}html #snCard details.sn-home small{font-size:.78rem !important;line-height:1.3}html #snCard button.sn-an{font-size:.88rem !important;padding:2px 10px !important}html #snCard details.sn-home .sn-nt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}html #snCard details.sn-home .sn-op .sn-nt{white-space:normal}html #snCard details.sn-home button{font-size:.85rem !important}'; document.head.append(st); }
+    const dn = BRF.date ? kd(BRF.date) : '';
+    if (BRF.hello) b.append(el('div', 'font-size:.92rem;font-weight:700;line-height:1.35;padding:6px 12px;border:1.6px solid #555;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:rgba(255,214,102,.35);transform:rotate(-.4deg)', '👋 ' + BRF.hello));
     b.append(el('small', 'color:var(--muted,#666)', BRF.items.length ? dn + ' 아침 소식' + (BRF.for ? ' · ' + BRF.for : '') : '새 소식은 매일 아침에 들어와요.'));
-    const ban = new Set((me.newsBan || []).map(x => x.t)); BRF.items.filter(it => !ban.has(it.t)).slice(0, 6).forEach(it => { const bx = el('div', 'display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1.4px dashed #999;border-radius:10px;cursor:pointer'); bx.className = 'sn-sum';
-      const h = el('div', 'font-weight:700;display:flex;gap:6px;align-items:baseline'), ar = el('span', 'margin-left:auto;color:#888;flex:none', '▼'); if (it.tag) h.append(el('span', 'flex:none;padding:0 8px;border-radius:8px;background:rgba(140,200,240,.6);font-size:.85em', it.tag)); h.append(el('span', null, it.t || ''), ar); bx.append(h);
-      const body = el('div', 'display:none;flex-direction:column;gap:2px;padding-top:4px'); if (it.s) body.append(el('div', 'line-height:1.4', it.s)); if (it.src) body.append(el('small', 'color:#777', '출처 · ' + it.src));
+    const ban = new Set((me.newsBan || []).map(x => x.t)); BRF.items.filter(it => !ban.has(it.t)).slice(0, 6).forEach(it => { const bx = el('div', 'display:flex;flex-direction:column;gap:2px;padding:3px 8px;border:1.4px dashed #999;border-radius:8px;cursor:pointer;font-size:.86rem'); bx.className = 'sn-sum';
+      const h = el('div', 'font-weight:700;display:flex;gap:6px;align-items:baseline;font-size:.86rem;line-height:1.35'), ar = el('span', 'margin-left:auto;color:#888;flex:none;font-size:.7rem', '▼'); if (it.tag) h.append(el('span', 'flex:none;padding:0 6px;border-radius:8px;background:rgba(140,200,240,.6);font-size:.74rem', it.tag)); { const tt = el('span', 'font-size:.86rem', it.t || ''); tt.className = 'sn-nt'; h.append(tt, ar); } bx.append(h);
+      const body = el('div', 'display:none;flex-direction:column;gap:2px;padding:2px 0 4px;font-size:.86rem'); if (it.s) body.append(el('div', 'line-height:1.45;font-size:.86rem', it.s)); if (it.src) body.append(el('small', 'color:#777', '출처 · ' + it.src));
       if (TEACH && window.alrimStuPatch) { const x = btn('🚫 이런 뉴스는 빼기', (e) => { e.stopPropagation(); window.alrimStuPatch(me.name, s => { s.newsBan = (s.newsBan || []).concat([{ t: it.t, tag: it.tag || '', s: String(it.s || '').slice(0, 80), d: ymd() }]).slice(-40); }); me.newsBan = (me.newsBan || []).concat([{ t: it.t }]); toast2('뺐어요. 저장 칸에서 ⬆️ 올리기를 누르면 다음 아침부터 이런 뉴스는 안 가져와요.'); render(); }, 'align-self:flex-start;padding:3px 10px;font-size:.9rem'); body.append(x); }
       bx.append(body);
-      bx.onclick = () => { const on = body.style.display === 'none'; body.style.display = on ? 'flex' : 'none'; ar.textContent = on ? '▲' : '▼'; }; b.append(bx); });
+      bx.onclick = () => { const on = body.style.display === 'none'; body.style.display = on ? 'flex' : 'none'; ar.textContent = on ? '▲' : '▼'; bx.classList.toggle('sn-op', on); }; b.append(bx); });
     if (BRF.note && BRF.items.length) b.append(el('small', 'color:var(--muted,#666)', BRF.note)); card.append(d); }
   { const P = wPlan(today); if (!P && me.wbook && me.wbook.start && startN(me.wbook.start, today) < 0) { const [d, b] = sec('📘 단어 공부'); b.append(el('b', 'font-size:1.05rem', (me.wbook.title || '단어') + ' · Day ' + Math.max(1, me.wbook.from || 1)), el('div', 'color:var(--muted,#666)', kd(me.wbook.start) + ' 아침 6시부터 시작해요.')); card.append(d); }
     if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
