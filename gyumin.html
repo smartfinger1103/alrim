@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-20-imgfix">
+<meta name="build" content="2026-11-23-hyena">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -771,7 +771,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   const names = () => D.students.map(s => s.name);
   const GH = 'https://smartfinger1103.github.io/alrim/';
   const slugOf = (n) => { const st = D.students.find(x => x.name === n); const i = D.students.indexOf(st);
-    return (st && st.slug) || ({ '김규민': 'gyumin', '조수아': 'sua' })[n] || 'student' + (i + 1); };
+    return (st && st.slug) || ({ '김규민': 'gyumin', '조수아': 'sua', '유혜나': 'hyena' })[n] || 'student' + (i + 1); };
   const studentOf = (n) => D.students.find(s => s.name === n);
   const forWho = (who, name) => !who || who === name;
 
@@ -1836,7 +1836,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     Object.entries({ bg: T.bg, line: T.line, margin: T.margin, ink: T.ink, sub: T.sub, acc: T.accent, chip: T.chipBg, badge: T.badgeInk, box: T.box, hot: T.hot, lv1: T.lv1, lv2: T.lv2, lv3: T.lv3 })
       .forEach(([k, v]) => nb.style.setProperty('--p-' + k, v));
     if (state.mode === 'student') {   // 학생별 색: 규민 파랑 · 조수아 핑크
-      const SK = skinGet(), H00 = ({ '김규민': 214, '조수아': 330 })[state.cls], H0 = H00 || (SK.h ? 1 : 0), H = SK.h || (H0 === 330 ? 352 : H0), K = SK.h ? (SK.k || 1) : (H0 === 330 ? 0.42 : 1);
+      const SK = skinGet(), H00 = ({ '김규민': 214, '조수아': 330, '유혜나': 168 })[state.cls], H0 = H00 || (SK.h ? 1 : 0), H = SK.h || (H0 === 330 ? 352 : H0), K = SK.h ? (SK.k || 1) : (H0 === 330 ? 0.42 : 1);
       if (H0) {
         const dk = document.documentElement.dataset.theme === 'dark' || (document.documentElement.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
         const R = document.documentElement.style;
@@ -3588,7 +3588,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 
 })();
 </script>
-<script src="github-sync.js?v=20261116-1"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
+<script src="github-sync.js?v=20261123-1"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
 <style>#mTop{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:9999;width:48px;height:48px;border-radius:50%;border:none;background:#4f46e5;color:#fff;font-size:22px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;cursor:pointer}
 #mTop.on{opacity:.92;pointer-events:auto}@media (min-width:821px){#mTop{display:none}}</style>
 <script>(function(){var b=document.getElementById('mTop');function u(){b.classList.toggle('on',(window.scrollY||document.documentElement.scrollTop)>300)}window.addEventListener('scroll',u,{passive:true});u();b.onclick=function(){window.scrollTo({top:0,behavior:'smooth'})}})();</script>
