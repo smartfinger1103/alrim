@@ -73,11 +73,25 @@ function wStudy(P) { const S = sheet('📖 ' + (P.day.n || '단어') + ' 공부'
       if (lv) t.append(el('small', 'display:block;font-weight:600;color:' + LVC[lv], LVT[lv])); r.append(t, btn('🔊', () => say(w[0]))); S.body.append(r); }); }; draw(); }
 function wTest(P, today) { const S = sheet('✏️ ' + (P.day.n || '단어') + ' 테스트'); const sh = a => a.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
   const qs = sh(P.all), wrong = []; let i = 0;
-  const ask = () => { S.body.textContent = ''; if (i >= qs.length) return end(); const w = qs[i], lv = wLv(w);
-    const others = sh(P.pool.filter(x => x[1] !== w[1] && x[0] !== w[0])).slice(0, 3), opts = sh(others.concat([w]));
-    S.body.append(el('small', 'color:var(--muted,#666)', (i + 1) + ' / ' + qs.length), el('div', 'font-family:var(--font-display,inherit);font-size:2.1rem;text-align:center;padding:14px 0;color:' + LVC[lv], w[0]), btn('🔊 발음 듣기', () => say(w[0])));
-    opts.forEach(o => { const b = btn(o[1], () => { const ok = o === w; S.body.querySelectorAll('button[data-o]').forEach(x => { x.disabled = true; if (x.dataset.o === wk(w)) x.style.cssText += ';background:#15803d;color:#fff;border-color:#15803d'; }); if (!ok) { b.style.cssText += ';background:#dc2626;color:#fff;border-color:#dc2626'; wrong.push(w); }
-        setTimeout(() => { i++; ask(); }, ok ? 450 : 1500); }, 'text-align:left;padding:12px;font-size:1rem'); b.dataset.o = wk(o); S.body.append(b); }); };
+  /* 뜻이 하나면 맞는 뜻 고르기, 여러 개면 뜻 전체를 보여 주고 '아닌 것' 고르기 */
+  const parts = ko => { const out = []; let cur = '', dep = 0; for (const ch of String(ko)) { if ('([<'.includes(ch)) dep++; if (')]>'.includes(ch)) dep = Math.max(0, dep - 1); if ((ch === ',' || ch === ';') && !dep) { if (cur.trim()) out.push(cur.trim()); cur = ''; } else cur += ch; } if (cur.trim()) out.push(cur.trim()); return out; };
+  const allParts = [...new Set([].concat(...P.pool.map(x => parts(x[1]))))];
+  const ask = () => { S.body.textContent = ''; if (i >= qs.length) return end(); const w = qs[i], lv = wLv(w), mine = parts(w[1]), mode = mine.length === 1 ? 'one' : mine.length <= 3 ? 'all' : 'not';
+    const fake = sh(allParts.filter(x => !mine.includes(x) && !mine.some(m => m.includes(x) || x.includes(m))));
+    const opts = sh(mode === 'one' ? [mine[0]].concat(fake.slice(0, 3)) : mode === 'all' ? mine.concat(fake.slice(0, 6 - mine.length)) : mine.concat([fake[0]]));
+    const good = o => mode === 'not' ? o === fake[0] : mine.includes(o);   /* 눌러야 하는 보기 */
+    S.body.append(el('small', 'color:var(--muted,#666)', (i + 1) + ' / ' + qs.length), el('div', 'font-family:var(--font-display,inherit);font-size:2.1rem;text-align:center;padding:10px 0;color:' + LVC[lv], w[0]), btn('🔊 발음 듣기', () => say(w[0])),
+      el('b', 'text-align:center;font-size:1.05rem;color:' + (mode === 'not' ? '#dc2626' : 'var(--accent,#4f46e5)'), mode === 'one' ? '맞는 뜻을 고르세요' : mode === 'all' ? '뜻이 ' + mine.length + '개예요. 모두 고르세요' : '뜻이 ' + mine.length + '개예요. 뜻이 아닌 것 하나를 고르세요'));
+    const sel = new Set(); let done = false;
+    const grade = () => { if (done) return; done = true; const ok = mode === 'all' ? sel.size === mine.length && mine.every(m => sel.has(m)) : good([...sel][0]);
+      S.body.querySelectorAll('button[data-o]').forEach(x => { x.disabled = true; const o = x.dataset.o, isMean = mine.includes(o);
+        x.style.cssText += isMean ? ';background:#15803d;color:#fff;border-color:#15803d' : ';background:#fff;color:#dc2626;border-color:#dc2626;text-decoration:line-through';
+        if (sel.has(o) && !good(o)) x.style.cssText += ';outline:3px solid #dc2626'; });
+      const cf = S.body.querySelector('#snOk'); if (cf) cf.remove();
+      if (!ok) { wrong.push(w); S.body.append(el('div', 'padding:10px;border-radius:10px;background:#fef2f2;color:#991b1b;font-weight:600', w[0] + ' = ' + w[1])); }
+      setTimeout(() => { i++; ask(); }, ok ? 800 : 2800); };
+    opts.forEach(o => { const b = btn(o, () => { if (done) return; if (mode === 'all') { if (sel.has(o)) { sel.delete(o); b.style.background = 'transparent'; b.style.fontWeight = ''; b.style.boxShadow = ''; b.textContent = o; } else { sel.add(o); b.style.background = '#c7d2fe'; b.style.fontWeight = '700'; b.style.boxShadow = 'inset 0 0 0 2px #4f46e5'; b.textContent = '✔ ' + o; } const cf = S.body.querySelector('#snOk'); cf.disabled = !sel.size; cf.textContent = '확인 (' + sel.size + '개 고름)'; } else { sel.add(o); grade(); } }, 'text-align:left;padding:12px;font-size:1rem'); b.dataset.o = o; S.body.append(b); });
+    if (mode === 'all') { const cf = btn('확인 (0개 고름)', grade, 'background:var(--accent,#4f46e5);color:#fff;font-weight:700;padding:12px'); cf.id = 'snOk'; cf.disabled = true; S.body.append(cf); } };
   const end = () => { const wset = new Set(wrong.map(wk));
     qs.forEach(w => { const k = wk(w), x = LS.wwrong[k]; if (wset.has(k)) LS.wwrong[k] = { en: w[0], ko: w[1], n: (x ? x.n : 0) + 1, last: today }; else if (x && x.last < today) delete LS.wwrong[k]; });
     LS.wdone[today] = { t: qs.length, w: wrong.length }; save();
