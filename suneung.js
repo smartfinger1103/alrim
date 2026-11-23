@@ -57,7 +57,8 @@ function student() { try { const s = app.snapshot(), d = JSON.parse(s.data); if 
 const runSec = () => { const R = LS.run; if (!R) return 0; return Math.min(4 * 3600, (R.acc || 0) + (R.t ? (Date.now() - R.t) / 1000 : 0)); };
 function stopRun() { const R = LS.run; if (!R) return; const d = ymd(new Date(R.t0 || R.t || Date.now())); LS.time[d] = LS.time[d] || {}; LS.time[d][R.s] = (LS.time[d][R.s] || 0) + runSec(); LS.run = null; save(); }
 function pauseRun() { const R = LS.run; if (!R) return; if (R.ready) { R.ready = false; R.t0 = R.t = Date.now(); R.acc = 0; save(); return; } if (R.t) { R.acc = (R.acc || 0) + (Date.now() - R.t) / 1000; R.t = null; } else R.t = Date.now(); save(); }
-const dayTot = (d, s) => ((LS.time[d] || {})[s] || 0);
+/* 끝내기를 안 눌러도 지금 세고 있는 시간이 그날 합계에 자동으로 더해져요 */
+const dayTot = (d, s) => ((LS.time[d] || {})[s] || 0) + (LS.run && !LS.run.ready && LS.run.s === s && ymd(new Date(LS.run.t0 || Date.now())) === d ? runSec() : 0);
 let fb = null;
 function runFloat() {
   if (fb) { fb.remove(); fb = null; } return;   /* 떠 있는 버튼은 쓰지 않아요: 과목 이름을 누르면 시작, 한 번 더 누르면 끝 */
@@ -272,9 +273,21 @@ function render() {
   { const [d, b] = sec('⏱ 과목별 공부 시간'); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px');
     SUBJ.forEach(s => { const on = LS.run && !LS.run.ready && LS.run.s === s; const x = btn((on ? '⏹ ' + s + ' 끝내기' : '▶ ' + s), () => { if (on) { stopRun(); render(); toast(s + ' 공부 시간을 기록했어요'); return; } const prev = LS.run && !LS.run.ready && LS.run.s; if (LS.run) { if (LS.run.ready) LS.run = null; else stopRun(); } LS.run = { s, t0: Date.now(), t: Date.now(), acc: 0 }; save(); render(); if (prev) toast(prev + ' 기록하고 ' + s + ' 시작했어요'); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
     b.append(row); const live = el('div', 'font-weight:700'); live.id = 'snLive'; b.append(live);
-    const tb = el('div', 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px'); let tot = 0;
-    SUBJ.forEach(s => { const v = dayTot(today, s); tot += v; const c = el('div', 'padding:6px 8px;border-radius:8px;background:var(--soft,#eef);font-size:.88rem'); c.append(el('b', 'display:block', s), el('span', null, fmt(v))); c.dataset.s = s; tb.append(c); });
-    b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 바로 시작하고, 한 번 더 누르면 끝나고 기록돼요. 앱을 닫아도 시간은 계속 세요. 오늘 합계 ' + fmt(tot))); card.append(d); }
+    const cal = ymd(), view = LS.tview || 'day', tabs = el('div', 'display:flex;gap:6px;margin-top:4px');
+    [['day', '오늘'], ['week', '이번 주']].forEach(([k, t]) => tabs.append(btn(t, () => { LS.tview = k; save(); render(); }, 'padding:6px 14px;' + (view === k ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''))));
+    const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), wk = Array.from({ length: 7 }, (_, k) => ymd(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + k)));
+    const days = view === 'day' ? [cal] : wk, val = s => days.reduce((a, d) => a + dayTot(d, s), 0), vals = SUBJ.map(val), tot = vals.reduce((a, x) => a + x, 0), mx = Math.max(60, ...vals), mn = Math.min(...vals);
+    const hm = s => { s = Math.round(s / 60); const h = Math.floor(s / 60), m = s % 60; return h ? h + '시간 ' + m + '분' : m + '분'; };
+    const chart = el('div', 'display:flex;flex-direction:column;gap:7px;margin-top:6px');
+    SUBJ.forEach((s, k) => { const v = vals[k], low = tot > 0 && v === mn, r = el('div', 'display:grid;grid-template-columns:4.6em 1fr auto;gap:8px;align-items:center;font-size:.9rem');
+      const bar = el('div', 'height:16px;border-radius:8px;background:var(--soft,#e5e7eb);overflow:hidden'); bar.append(el('i', 'display:block;height:100%;border-radius:8px;width:' + (v / mx * 100) + '%;background:' + (low ? '#dc2626' : 'var(--accent,#4f46e5)')));
+      r.append(el('b', low ? 'color:#dc2626' : null, s), bar, el('span', 'font-weight:600;' + (low ? 'color:#dc2626' : ''), hm(v) + (low ? ' · 부족' : ''))); chart.append(r); });
+    b.append(tabs, el('div', 'font-weight:700;margin-top:6px', (view === 'day' ? '오늘' : '이번 주(월~일)') + ' 합계 ' + hm(tot)), chart);
+    if (view === 'week') { const dn = ['월', '화', '수', '목', '금', '토', '일'], dt = wk.map(d => SUBJ.reduce((a, s) => a + dayTot(d, s), 0)), dm = Math.max(60, ...dt);
+      const cols = el('div', 'display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:110px;margin-top:10px;padding-top:4px');
+      wk.forEach((d, k) => { const c = el('div', 'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;font-size:.75rem'); c.append(el('span', 'color:var(--muted,#666)', dt[k] ? hm(dt[k]).replace('시간 ', 'h').replace('분', 'm') : ''), el('i', 'display:block;width:70%;border-radius:6px 6px 0 0;min-height:2px;height:' + (dt[k] / dm * 70) + 'px;background:' + (d === cal ? 'var(--accent,#4f46e5)' : '#a5b4fc')), el('b', d === cal ? 'color:var(--accent,#4f46e5)' : null, dn[k])); cols.append(c); });
+      b.append(el('small', 'color:var(--muted,#666);margin-top:6px;display:block', '요일별 합계'), cols); }
+    b.append(el('small', 'color:var(--muted,#666)', '과목을 누르면 바로 시작하고, 한 번 더 누르면 끝나요. 끝내기를 안 눌러도 지금까지 시간이 자동으로 더해져요. 빨간색이 가장 부족한 과목이에요.')); card.append(d); }
   tick();
 }
 /* 하루는 아침 6시에 바뀌어요: 6시 전에는 어제 과제가 그대로 보여요 */
@@ -283,7 +296,9 @@ function tick() {
   if (card && lastDay && sday() !== lastDay) { render(); return; }
   if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run && !LS.run.ready ? '⏺ ' + LS.run.s + ' 공부 중 · 한 번 더 누르면 끝나고 기록돼요' : ''; runFloat();
   const rd = document.getElementById('snRead'); if (rd && LS.rd && !LS.rd.ask) { const s = (Date.now() - LS.rd.t) / 1000; rd.textContent = mmss(s); rd.style.color = s > 100 ? '#dc2626' : 'inherit'; }
+  if (LS.run && !LS.run.ready && ymd(new Date(LS.run.t0)) !== ymd()) { const s = LS.run.s; stopRun(); LS.run = { s, t0: Date.now(), t: Date.now(), acc: 0 }; save(); render(); }
   if (LS.run && runSec() >= 4 * 3600) { stopRun(); render(); }
+  if (LS.run && !LS.run.ready && Date.now() - (tick.last || 0) > 60000) { tick.last = Date.now(); render(); }
 }
 function sync() {
   const st = student(), view = TEACH ? (document.querySelector('#teacherView aside.preview .canvas-box') || document.getElementById('hcPanel')) : document.getElementById('studentView'); if (!view) return;
