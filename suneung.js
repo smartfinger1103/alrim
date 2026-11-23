@@ -144,6 +144,7 @@ function toast(t) { const d = el('div', 'position:fixed;left:50%;bottom:calc(170
 function weekTot() { let t = 0; for (let i = 0; i < 7; i++) { const d = ymd(new Date(Date.now() - i * 864e5)); SUBJ.forEach(s => t += dayTot(d, s)); } return t; }
 
 /* ---- 매일 단어 · 매일 듣기 ---- */
+const kd = (s) => +s.slice(5, 7) + '/' + +s.slice(8, 10) + '(' + '일월화수목금토'[new Date(s + 'T00:00:00').getDay()] + ')';
 const dayDiff = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
 const wk = w => w[0].toLowerCase() + '|' + w[1];
 function wPlan(today) { const B = me.wbook; if (!B || !(B.days || []).length || !B.start) return null; const n = dayDiff(B.start, today); if (n < 0) return null;
@@ -159,6 +160,7 @@ const parts = ko => { const out = []; let cur = '', dep = 0; for (const ch of St
 function wSt(today, P) { LS.wst = LS.wst || {}; let s = LS.wst[today]; if (!s) { s = LS.wst[today] = { round: 0, list: P.all.map(wk), seen: [], res: null }; save(); } return s; }
 const wByKey = (P) => { const m = {}; P.all.concat(P.pool).forEach(w => m[wk(w)] = w); return m; };
 function wStudy(P, today) { const st = wSt(today, P), M = wByKey(P), list = st.list.map(k => M[k]).filter(Boolean); if (!list.length) return;
+  { const n0 = document.body.children.length; setTimeout(() => { const ov = document.body.lastElementChild; if (!ov || document.body.children.length <= n0) return; const iv = setInterval(() => { if (!ov.isConnected) { clearInterval(iv); save(); render(); return; } if (document.hidden) return; LS.wsec = LS.wsec || {}; LS.wsec[today] = (LS.wsec[today] || 0) + 1; if (LS.wsec[today] % 10 === 0) save(); }, 1000); }, 50); }
   const S = sheet('📖 ' + (st.round ? '틀린 단어 다시 공부' : (P.day.n || '단어') + ' 공부')); let i = Math.min(list.length - 1, Math.max(0, list.findIndex(w => !st.seen.includes(wk(w))))), show = false;
   const draw = () => { S.body.textContent = ''; const w = list[i], lv = wLv(w), n = new Set(st.seen.filter(k => st.list.includes(k))).size;
     if (!st.seen.includes(wk(w))) { st.seen.push(wk(w)); save(); }
@@ -257,6 +259,9 @@ function addTabs() {
 function markTab() { const bar = document.getElementById('snTabs'); if (!bar || !card) return; let cur = -1; TABS.forEach((t, k) => { const x = tabTarget(k); if (x && x.getBoundingClientRect().top <= 110) cur = k; }); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === cur)); }
 window.addEventListener('scroll', () => markTab(), { passive: true });
 function render() { render0(); addTabs(); }
+/* 선생님이 따로 적은 과제가 없는 날에는 빈 알림장("과제가 없어요")을 숨겨요 */
+setInterval(() => { if (TEACH || !card || !me) return; const nb = document.getElementById('nb'); if (!nb) return; const c = nb.querySelector('.nb-count'), empty = !!c && /과제가 없어요/.test(c.textContent);
+  [nb, (document.getElementById('sCur') || {}).parentNode, document.querySelector('#studentView .skin-row')].forEach(x => { if (x && x.style) x.style.display = empty ? 'none' : ''; }); }, 800);
 function render0() {
   if (!card) return; card.textContent = ''; const today = sday(); lastDay = today;
   /* D-day */
@@ -266,9 +271,13 @@ function render0() {
   if (TEACH) card.append(el('small', 'color:var(--muted,#666);font-weight:600', '👀 ' + me.name + ' 학생 화면에 보이는 수능 도우미 (미리보기 · 여기서 누른 기록은 학생에게 안 넘어가요)'));
   card.append(top);
   /* 매일 단어 */
-  { const P = wPlan(today); if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
+  { const P = wPlan(today); if (!P && me.wbook && me.wbook.start && today < me.wbook.start) { const [d, b] = sec('📘 단어 공부'); b.append(el('b', 'font-size:1.05rem', (me.wbook.title || '단어') + ' · Day ' + Math.max(1, me.wbook.from || 1)), el('div', 'color:var(--muted,#666)', kd(me.wbook.start) + ' 아침 6시부터 시작해요.')); card.append(d); }
+    if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
       b.append(el('b', 'font-size:1.05rem', (me.wbook.title ? me.wbook.title + ' · ' : '') + (P.over ? '범위를 모두 끝냈어요 🎉' : P.day.n + ' · ' + P.day.w.length + '개')));
-      if (P.rev.length) b.append(el('div', 'color:#1E5BD8;font-weight:600;font-size:.92rem', '어제까지 틀린 단어 ' + P.rev.length + '개가 오늘 단어에 같이 나와요'));
+      if (P.all.length) { const ws = (LS.wsec || {})[today] || 0, okT = ws >= 1800, ln = el('div', 'font-size:.95rem;font-weight:700;display:flex;flex-wrap:wrap;gap:4px 12px');
+        ln.append(el('span', 'color:' + (okT ? '#15803d' : '#dc2626'), '⏱ 단어 학습 ' + (ws >= 60 ? Math.floor(ws / 60) + '분 ' : '') + (ws % 60) + '초 / 최소 30분'));
+        const many = P.rev.filter(w => { const x = LS.wwrong[wk(w)]; return x && (x.n || 1) >= 3; }).length;
+        if (many) ln.append(el('span', 'color:#7c3aed', '3번 이상 틀림 ' + many)); if (P.rev.length - many) ln.append(el('span', 'color:#1E5BD8', '틀렸던 단어 ' + (P.rev.length - many))); ln.append(el('span', 'color:#555', '새 단어 ' + P.day.w.length)); b.append(ln); }
       if (P.all.length) { const st = wSt(today, P), seenN = st.list.filter(k => st.seen.includes(k)).length, ready = seenN >= st.list.length, fin = st.round > 0 && !st.list.length;
         if (done) b.append(el('div', 'font-weight:700;color:' + (done.w ? '#dc2626' : '#15803d'), (done.w ? '오늘 첫 테스트 ' : '✅ 오늘 테스트 ') + (done.t - done.w) + ' / ' + done.t + (done.w ? ' · 틀린 ' + done.w + '개는 내일 다시 나와요' : ' · 만점!')));
         if (fin) b.append(el('div', 'color:#15803d;font-weight:700', done && done.w ? '✅ 틀린 단어까지 다시 테스트해서 다 맞았어요. 오늘 단어 끝!' : '✅ 오늘 단어 끝!'));
@@ -276,7 +285,7 @@ function render0() {
           const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); row.append(btn(st.round ? '📖 틀린 단어 다시 공부' : '📖 단어 공부', () => wStudy(P, today), ready ? '' : 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'), btn(st.round ? '✏️ 틀린 단어 다시 테스트' : '✏️ 테스트 보기', () => wTest(P, today), ready ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : 'opacity:.6')); b.append(row); } }
       b.append(el('small', 'color:var(--muted,#666)', '매일 아침 6시에 새 Day가 자동으로 나와요. 단어를 끝까지 넘겨 본 뒤 테스트를 봐요. 점수는 테스트가 끝나야 보여요. 첫 테스트에서 틀린 단어는 다음 날 파란색으로 다시 나와요.')); card.append(d); } }
   /* 매일 듣기 */
-  { const P = lPlan(today), [d, b] = sec('🎧 듣기 연습'); if (!P) b.append(el('div', 'color:var(--muted,#666)', '듣기 책이 정해지면 날마다 1회씩 여기에 떠요.')); if (P) { const done = LS.ldone[today];
+  { const P = lPlan(today), [d, b] = sec('🎧 듣기 연습'); if (!P) b.append(el('div', 'color:var(--muted,#666)', me.lbook && me.lbook.start && today < me.lbook.start ? (me.lbook.from || 1) + '회 · ' + kd(me.lbook.start) + ' 아침 6시부터 시작해요.' : '듣기 책이 정해지면 날마다 1회씩 여기에 떠요.')); if (P) { const done = LS.ldone[today];
       b.append(el('b', 'font-size:1.05rem', P.over ? '범위를 모두 끝냈어요 🎉' : '오늘은 ' + P.unit + '회 (매일 아침 6시에 다음 회로)'));
       if (!P.over) { if (!done || done.unit !== P.unit) b.append(btn('▶ ' + P.unit + '회 풀기 (다 풀면 바로 채점)', () => lOpen(P.unit, null, today), 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'));
         else { b.append(el('div', 'font-weight:700', '채점: ' + (done.total - done.wrong.length) + ' / ' + done.total));
@@ -285,7 +294,7 @@ function render0() {
           if (done.wrong.length && done.retry) b.append(btn('틀린 문제 한 번 더 듣기', () => lOpen(P.unit, done.wrong, today))); } }
       }
     let cur = 1; try { cur = parseFloat(localStorage.getItem('alrim:rate')) || 1; } catch (e) {} const sp = el('div', 'display:flex;flex-wrap:wrap;gap:6px;align-items:center'); sp.append(el('small', 'color:var(--muted,#666);font-weight:600', '듣기 속도'));
-    [0.8, 1, 1.2, 1.5].forEach(r => sp.append(btn(r + '배', () => { try { localStorage.setItem('alrim:rate', r); } catch (e) {} render(); }, 'padding:5px 10px;' + (r === cur ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''))));
+    [0.8, 1, 1.2, 1.5].forEach(r => { const x = btn(r + '배', () => { try { localStorage.setItem('alrim:rate', r); } catch (e) {} render(); }, 'padding:5px 10px;' + (r === cur ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : '')); x.setAttribute('aria-pressed', r === cur); sp.append(x); });
     b.append(sp); card.append(d); }
   /* 독해 타이머 */
   { const [d, b] = sec('📖 독해'); const R = LS.rd, RP = rPlan(today);
@@ -293,11 +302,13 @@ function render0() {
     else if (RP && RP.err) b.append(el('div', 'color:#dc2626', '독해 문제집을 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.'));
     else if (RP && RP.over) b.append(el('b', null, '독해 문제집을 모두 끝냈어요 🎉'));
     else if (RP) { const id = 'sn-rd-' + today, rr = window.alrimRdRes && window.alrimRdRes(id), p0 = RP.ps[0], p1 = RP.ps[RP.ps.length - 1];
-      b.append(el('b', 'font-size:1.05rem', '오늘 ' + RP.ps.length + '지문 · ' + p0.r + '회 ' + p0.qs[0].n + '번 ~ ' + p1.r + '회 ' + p1.qs[p1.qs.length - 1].n + '번'));
+      const hr = el('div', 'display:flex;align-items:center;justify-content:space-between;gap:10px'), tx = el('div', 'display:flex;flex-direction:column;min-width:0');
+      tx.append(el('b', 'font-size:1.05rem', '독해 지문 ' + RP.ps.length + '개'), el('small', 'color:var(--muted,#666)', p0.r + '회 ' + p0.qs[0].n + '번 ~ ' + p1.r + '회 ' + p1.qs[p1.qs.length - 1].n + '번'));
+      hr.append(tx, btn(rr ? '다시 풀기' : '▶ 독해 시작', () => window.alrimOpenRd({ id, rd: RP.rd }), 'flex:none;padding:6px 12px;font-size:.95rem;background:var(--accent,#4f46e5);color:#fff;font-weight:700')); b.append(hr);
       if (rr) b.append(el('div', 'font-weight:700;color:' + (rr.ok === rr.n ? '#15803d' : '#dc2626'), (rr.ok === rr.n ? '✅ ' : '') + '오늘 결과 ' + rr.ok + ' / ' + rr.n));
-      b.append(btn(rr ? '📖 다시 풀기' : '▶ 오늘 독해 풀기', () => window.alrimOpenRd({ id, rd: RP.rd }), 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'));
       b.append(el('small', 'color:var(--muted,#666)', '문제를 풀고 답을 고르면 맞으면 다음으로, 틀리면 정답과 지문을 다시 보여 줘요. (' + RP.last + ' / ' + RP.total + '지문)')); }
-    if (RP) {} else if (!R) { b.append(btn('▶ 독해 시작', () => { LS.rd = { n: 1, t: Date.now(), log: [] }; save(); render(); }, 'background:var(--accent,#4f46e5);color:#fff;font-weight:700')); }
+    if (RP) {} else if (me.rbook && me.rbook.id) { b.append(el('b', 'font-size:1.05rem', '독해 지문 ' + Math.max(1, me.rbook.per || 7) + '개'), el('div', 'color:var(--muted,#666)', me.rbook.start && today < me.rbook.start ? kd(me.rbook.start) + ' 아침 6시부터 시작해요.' : '오늘 독해를 준비하는 중…')); }
+    else if (!R) { b.append(btn('▶ 독해 시작', () => { LS.rd = { n: 1, t: Date.now(), log: [] }; save(); render(); }, 'background:var(--accent,#4f46e5);color:#fff;font-weight:700')); }
     else if (R.ask) { b.append(el('b', null, R.n + '번 지문 · 왜 틀렸나요?')); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); WHY.forEach(w => row.append(btn(w, () => { R.log.push({ s: R.ask, ok: false, why: w }); R.ask = 0; R.n++; R.t = Date.now(); save(); render(); }))); b.append(row); }
     else { const t = el('div', 'font-family:var(--font-display,inherit);font-size:2rem'); t.id = 'snRead'; b.append(el('b', null, R.n + '번 지문'), t);
       const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); const lap = () => (Date.now() - R.t) / 1000;
@@ -431,9 +442,10 @@ html.sk .ls-opt:nth-child(5n+1){box-shadow:2px 3px 0 rgba(74,118,196,.5) !import
 html.sk .ls-speed button{border:1.4px solid #555 !important;border-radius:255px 12px 225px 12px/12px 225px 12px 255px !important;background:transparent !important;color:#2b2b2b !important}
 html.sk .ls-q{border:1.5px solid #888;border-radius:6px 12px 6px 10px}
 html.sk #snCard #snTabs button{background:var(--c) !important;border:1.5px solid var(--d) !important;border-bottom:none !important;border-radius:8px 10px 0 0/10px 8px 0 0 !important;box-shadow:inset 0 -3px 0 rgba(255,255,255,.35) !important;font-size:1.15rem !important;padding:6px 0 7px !important}html.sk #snCard #snTabs button.on{padding-top:9px !important}
+html.sk #snCard button[aria-pressed="true"]{background:rgba(255,214,102,.65) !important}
 html.sk #snCard b{font-size:1.15em}
 html.sk #snCard small{font-size:1.02rem !important;color:#6f6f6f !important}
-html.sk #snCard details{border-top:1.4px dashed #bdbdbd !important}
+html.sk #snCard details{border-top:2px solid #555 !important;border-radius:255px 15px 225px 15px/3px 2px 3px 2px;margin-top:14px !important;padding-top:14px !important}
 html.sk #snCard button,html.sk .sk-ui button{${PEN}background:transparent !important;color:#2b2b2b !important;font-weight:700 !important;font-size:1.12rem !important}
 html.sk #snCard button[style*="background:var(--accent"],html.sk .sk-ui button[style*="background:var(--accent"],html.sk #snCard button[style*="background:#dc2626"]{background:#ebebe8 !important}
 html.sk #snCard button:disabled{opacity:.45}
