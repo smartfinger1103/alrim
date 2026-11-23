@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-tri2">
+<meta name="build" content="2026-11-23-navdic">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -755,6 +755,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
   <nav class="tnav tnav-float" aria-label="바로 가기 (고정)">
     <button type="button" data-go="hLs" data-s="숙제&#10;검사" class="big">숙제 검사</button>
     <button type="button" data-go="hWt" data-s="단어&#10;테스트" class="primary big">단어 테스트 · 틀린 단어 체크</button>
+    <input type="text" id="navDicQ" placeholder="🔍 단어 검색" autocomplete="off" aria-label="단어 사전 검색" title="영어 단어를 적고 Enter" style="width:100%;min-width:0;padding:7px 6px;font-size:.8rem;border-radius:10px;border:2px solid var(--nv-ac,#3F4FB8);text-align:center">
     <button type="button" data-go="h2s" data-s="과제적기" class="big main">과제 적기</button>
     <div class="tsubs" role="group" aria-label="과제 적기 항목">
     <button type="button" class="tsub" data-box="fbG" data-s="문법" title="과제 적기 · 문법로 바로 가기">문법</button>
@@ -5673,6 +5674,19 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
   function dicInit() {
     if (!$('dicQ')) return;
     $('dicGo').onclick = () => dicSearch($('dicQ').value);
+    /* 왼쪽 메뉴의 단어 검색: 결과를 메뉴 옆 작은 창에 보여 줘요 */
+    if ($('navDicQ')) { const nq = $('navDicQ'); let pop = null;
+      const closePop = () => { if (pop) { pop.remove(); pop = null; } };
+      const run = async () => { const q = nq.value.trim(); if (!q) { closePop(); return; } $('dicQ').value = q;
+        closePop(); pop = el('div'); const r = nq.getBoundingClientRect();
+        pop.style.cssText = 'position:fixed;z-index:70;left:' + Math.round(r.right + 10) + 'px;top:' + Math.max(8, Math.round(r.top - 6)) + 'px;width:min(360px,calc(100vw - ' + Math.round(r.right + 24) + 'px));max-height:70vh;overflow:auto;background:var(--panel);color:var(--ink);border:2px solid var(--nv-ac,#3F4FB8);border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)';
+        const x = el('button', 'small', '닫기 ✕'); x.type = 'button'; x.style.cssText = 'float:right'; x.onclick = closePop; const body = el('div', null, '찾는 중…'); pop.append(x, body); document.body.append(pop);
+        try { await dicSearch(q); } catch (e) {}
+        if (!pop) return; body.textContent = ''; const c = $('dicRes').cloneNode(true); c.removeAttribute('id'); body.append(c);
+        const word = q.toLowerCase().replace(/[^a-z' -]/g, '').trim(); c.querySelectorAll('button').forEach(b => { if (b.textContent.includes('🔊')) b.onclick = () => speak(word); else b.remove(); });
+        if (!c.textContent.trim()) body.textContent = '"' + q + '"의 뜻을 찾지 못했어요.'; };
+      nq.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); run(); } if (e.key === 'Escape') { closePop(); nq.blur(); } });
+      document.addEventListener('mousedown', e => { if (pop && !pop.contains(e.target) && e.target !== nq) closePop(); }); }
     $('dicQ').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); dicSearch($('dicQ').value); } });
     $('dicMake').onclick = dicMake; $('dicCopy').onclick = dicCopy;
     const zone = $('dicCap');
