@@ -5,11 +5,11 @@
   const el = (t, css, txt) => { const e = document.createElement(t); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
   const img = (p) => { const im = el('img', 'max-width:100%;border-radius:8px;background:#fff;border:1px solid #ddd'); im.alt = '지문'; im.onerror = () => { if (im.dataset.raw) return; im.dataset.raw = 1; im.src = 'https://raw.githubusercontent.com/smartfinger1103/alrim/main/' + p + '?t=' + Date.now(); }; im.src = /^data:|^https?:/.test(p) ? p : new URL(p, location.href).href; return im; };
   /* ---- 펜 필기 (아이패드/갤탭) ---- */
-  const INK = { on: false, tool: 'pen', c: '#1a1a1a', last: null }, INKS = new Set(), BARS = new Set();
-  const inkSync = () => { INKS.forEach(f => f.apply()); BARS.forEach(f => f()); };
+  const INK = { on: false, tool: 'pen', c: '#1a1a1a', last: null, z: 1 }, INKS = new Set(), BARS = new Set(), ZOOMS = new Set();
+  const inkSync = () => { INKS.forEach(f => f.apply()); BARS.forEach(f => f()); ZOOMS.forEach(f => f()); };
   const inkBar = () => { const bar = el('div', 'position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#fffefb;border:1.4px solid #555;border-radius:10px;padding:6px 8px'); let clr = 0, tm = 0;
     const mk = (t, fn, st) => { const b = el('button', B + 'padding:5px 10px;font-size:1rem;' + (st || ''), t); b.type = 'button'; b.onclick = fn; return b; };
-    const draw = () => { bar.textContent = ''; bar.append(mk(INK.on ? '✏️ 필기 켜짐' : '✏️ 필기 끄기', () => { INK.on = !INK.on; inkSync(); }, INK.on ? 'background:#ffe08a;font-weight:700' : ''));
+    const draw = () => { bar.textContent = ''; bar.append(mk('🔍−', () => { INK.z = Math.max(1, +(INK.z - .5).toFixed(1)); inkSync(); }, INK.z <= 1 ? 'opacity:.4' : ''), el('small', 'min-width:2.6em;text-align:center;font-weight:700', Math.round(INK.z * 100) + '%'), mk('🔍+', () => { INK.z = Math.min(3, +(INK.z + .5).toFixed(1)); inkSync(); }, INK.z >= 3 ? 'opacity:.4' : '')); bar.append(mk(INK.on ? '✏️ 필기 켜짐' : '✏️ 필기 끄기', () => { INK.on = !INK.on; inkSync(); }, INK.on ? 'background:#ffe08a;font-weight:700' : ''));
       if (!INK.on) { bar.append(el('small', 'color:#777', '펜으로 지문에 바로 쓸 수 있어요')); return; }
       if (INK.finger) bar.append(el('small', 'color:#b45309;flex-basis:100%', '손가락으로 쓰는 동안에는 지문 밖을 밀어서 화면을 내려요.'));
       [['#1a1a1a', '검정'], ['#d32f2f', '빨강'], ['#1d5fd1', '파랑']].forEach(([c, n]) => bar.append(mk('', () => { INK.tool = 'pen'; INK.c = c; inkSync(); }, 'width:30px;height:30px;padding:0;border-radius:50%;background:' + c + ' !important;' + (INK.tool === 'pen' && INK.c === c ? 'outline:2.5px solid #555' : ''))));
@@ -25,20 +25,20 @@
     const api = { apply() { cv.style.pointerEvents = INK.on ? 'auto' : 'none'; cv.style.touchAction = INK.on ? 'none' : 'auto'; cv.style.cursor = INK.on ? 'crosshair' : 'default'; }, clear() { S = []; save(); paint(); }, undo() { S.pop(); save(); paint(); } };
     INKS.add(api); api.apply(); box.append(cv); if (window.ResizeObserver) new ResizeObserver(paint).observe(box); im.addEventListener('load', paint); paint();
     const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, e.pressure || .5]; };
-    let cur = null, scr = null, scrollEl = null;
+    let cur = null, scr = null, scrX = 0, scrollEl = null;
     const scroller = () => { let n = box.parentNode; while (n && n !== document.body) { const o = getComputedStyle(n).overflowY; if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight) return n; n = n.parentNode; } return document.scrollingElement; };
     box.addEventListener('pointerdown', e => { if (e.pointerType === 'pen' && !INK.on) { INK.on = true; inkSync(); } }, true);
     cv.addEventListener('pointerdown', e => { if (!INK.on) return; cv.setPointerCapture(e.pointerId);
-      if (e.pointerType === 'touch' && !INK.finger) { scr = e.clientY; scrollEl = scroller(); return; }
+      if (e.pointerType === 'touch' && !INK.finger) { scr = e.clientY; scrX = e.clientX; scrollEl = scroller(); return; }
       INK.last = api; const q = pos(e);
       if (INK.tool === 'er') { cur = { er: 1 }; erase(q); return; }
       cur = { t: INK.tool, c: INK.c, p: [q] }; S.push(cur); paint(); e.preventDefault(); });
     const erase = q => { const w = cv.clientWidth, h = cv.clientHeight, n = S.length; S = S.filter(s => !s.p.some(a => Math.hypot((a[0] - q[0]) * w, (a[1] - q[1]) * h) < 14)); if (S.length !== n) paint(); };
-    cv.addEventListener('pointermove', e => { if (scr != null) { scrollEl.scrollTop -= e.clientY - scr; scr = e.clientY; return; } if (!cur) return; (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]).forEach(ev => { const q = pos(ev); if (cur.er) erase(q); else cur.p.push(q); }); if (!cur.er) paint(); e.preventDefault(); });
+    cv.addEventListener('pointermove', e => { if (scr != null) { scrollEl.scrollTop -= e.clientY - scr; scr = e.clientY; if (box.parentNode) box.parentNode.scrollLeft -= e.clientX - scrX; scrX = e.clientX; return; } if (!cur) return; (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]).forEach(ev => { const q = pos(ev); if (cur.er) erase(q); else cur.p.push(q); }); if (!cur.er) paint(); e.preventDefault(); });
     const end = () => { if (scr != null) { scr = null; return; } if (cur) { save(); cur = null; } };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); };
   const imgs = (q, noInk) => { const w = el('div', 'display:flex;flex-direction:column;gap:6px'); const list = Array.isArray(q) ? q : [q]; if (!noInk) w.append(inkBar());
-    list.forEach(p => { const im = img(p), box = el('div', 'position:relative;line-height:0'); box.append(im); w.append(box); if (!noInk) attachInk(box, im, p); }); return w; };
+    list.forEach(p => { const im = img(p), box = el('div', 'position:relative;line-height:0'), sc = el('div', 'overflow-x:auto;-webkit-overflow-scrolling:touch'); im.style.width = '100%'; im.style.maxWidth = 'none'; box.append(im); sc.append(box); w.append(sc); const z = () => { box.style.width = (INK.z * 100) + '%'; }; z(); if (!noInk) { ZOOMS.add(z); attachInk(box, im, p); } }); return w; };
   const B = 'font:inherit;border-radius:12px;border:1.5px solid #4f46e5;background:#fff;color:#111;cursor:pointer;';
   window.alrimOpenRd = (it) => { const Q = (it.rd || []).filter(x => x && x.q); if (!Q.length) return;
     const ov = el('div', 'position:fixed;inset:0;z-index:10045;background:rgba(15,23,42,.92);overflow:auto;padding:10px'), bx = el('div', 'max-width:760px;margin:0 auto;background:#fff;color:#111;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px'); ov.append(bx); document.body.append(ov);
@@ -254,11 +254,11 @@ const TABS = [['홈', '#ffc9a3', '#e28c34', '#snTabs'], ['단어', '#ffd666', '#
 function tabTarget(k) { const t = TABS[k][3]; if (t === '#snTabs') return document.getElementById('snTabs') || card; if (t[0] === '#') return card.querySelector(t); return [...card.querySelectorAll('details[data-sec]')].find(d => d.dataset.sec.includes(t.replace('📖 ', ''))); }
 function addTabs() {
   if (!card) return;
-  if (!document.getElementById('snTabCss')) { const st = document.createElement('style'); st.id = 'snTabCss'; st.textContent = '#snCard .sn-hide{display:none !important}#snCard details:not(.sn-hide){border-top:none !important;margin-top:0 !important}#snTabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;margin:-14px -14px 8px -28px;padding:10px 10px 0;background:#fffefb;border-radius:12px 12px 0 0}#snTabs button{flex:1;position:relative;font:inherit;font-family:"Poor Story","Gaegu",cursive;font-size:1.05rem;white-space:nowrap;color:#2b2b2b;padding:6px 0 7px;background:var(--c);border:1.5px solid var(--d);border-bottom:none;border-radius:8px 10px 0 0/10px 8px 0 0;transform:rotate(var(--r)) translateY(3px);transform-origin:bottom;cursor:pointer;transition:transform .15s;box-shadow:inset 0 -3px 0 rgba(255,255,255,.35);margin-bottom:-1px}#snTabs button::before{content:"";position:absolute;left:50%;top:-6px;width:30px;height:9px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,255,255,.6);border:1px dashed rgba(0,0,0,.12)}#snTabs button.on{transform:rotate(var(--r)) translateY(-2px);font-weight:700;padding-top:9px}#snTabs{border-bottom:1.5px solid #555}'; document.head.append(st); }
+  if (!document.getElementById('snTabCss')) { const st = document.createElement('style'); st.id = 'snTabCss'; st.textContent = '#snTabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;margin:-14px -14px 8px -28px;padding:10px 10px 0;background:#fffefb;border-radius:12px 12px 0 0}#snTabs button{flex:1;position:relative;font:inherit;font-family:"Poor Story","Gaegu",cursive;font-size:1.05rem;white-space:nowrap;color:#2b2b2b;padding:6px 0 7px;background:var(--c);border:1.5px solid var(--d);border-bottom:none;border-radius:8px 10px 0 0/10px 8px 0 0;transform:rotate(var(--r)) translateY(3px);transform-origin:bottom;cursor:pointer;transition:transform .15s;box-shadow:inset 0 -3px 0 rgba(255,255,255,.35);margin-bottom:-1px}#snTabs button::before{content:"";position:absolute;left:50%;top:-6px;width:30px;height:9px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,255,255,.6);border:1px dashed rgba(0,0,0,.12)}#snTabs button.on{transform:rotate(var(--r)) translateY(-2px);font-weight:700;padding-top:9px}#snTabs{border-bottom:1.5px solid #555}'; document.head.append(st); }
   const bar = el('div'); bar.id = 'snTabs';
   TABS.forEach((t, k) => { if (!tabTarget(k)) return; const b = el('button', null, t[0]); b.type = 'button'; b.style.cssText = '--c:' + t[1] + ';--d:' + t[2] + ';--r:' + (k % 2 ? -1.5 : 1.2) + 'deg'; b.dataset.k = k;
-    b.onclick = () => { curTab = k; applyTab(); const y = card.getBoundingClientRect().top + scrollY - 8; if (scrollY > y) scrollTo({ top: y }); if (k === 5) { const x = tabTarget(k); if (x) x.scrollIntoView({ block: 'start' }); } }; bar.append(b); });
-  card.insertBefore(bar, card.firstChild); applyTab();
+    b.onclick = () => { const x = tabTarget(k); if (!x) return; if (x.tagName === 'DETAILS') x.open = true; if (x.id === 'snTabs') { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; } x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; bar.append(b); });
+  card.insertBefore(bar, card.firstChild); markTab();
 }
 let curTab = 0;
 /* 탭마다 한 화면씩: 고른 탭의 항목만 보여요 (페이지를 새로 여는 게 아니라서 바로 바뀌어요) */
@@ -266,7 +266,7 @@ function applyTab() { const bar = document.getElementById('snTabs'); if (!bar ||
   if (![...card.children].some(n => n !== bar && (grp(n) === curTab || (curTab === 5 && grp(n) === 4)))) curTab = 0;
   [...card.children].forEach(n => { if (n === bar) return; const gp = grp(n), on = gp === curTab || (curTab === 5 && gp === 4); n.classList.toggle('sn-hide', !on); if (on && n.tagName === 'DETAILS') n.open = true; });
   bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === curTab)); }
-function markTab() { return; const bar = document.getElementById('snTabs'); if (!bar || !card) return; let cur = -1; TABS.forEach((t, k) => { const x = tabTarget(k); if (x && (k === 0 || x.getBoundingClientRect().top <= 110)) cur = k; }); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === cur)); }
+function markTab() { const bar = document.getElementById('snTabs'); if (!bar || !card) return; let cur = -1; TABS.forEach((t, k) => { const x = tabTarget(k); if (x && (k === 0 || x.getBoundingClientRect().top <= 110)) cur = k; }); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === cur)); }
 window.addEventListener('scroll', () => markTab(), { passive: true });
 const sumBox = (t) => { const sm = el('div', 'display:flex;flex-direction:column;gap:6px;border:1.5px dashed #999;border-radius:10px;padding:10px 12px'); sm.className = 'sn-sum'; sm.append(el('b', null, t)); return sm; };
 const pbar = (p, cls) => { const o = el('div', 'height:12px;border:1.4px solid #555;border-radius:255px 12px 225px 12px/12px 225px 12px 255px;overflow:hidden'), i = el('i', 'display:block;height:100%;width:' + Math.round(Math.min(1, p) * 100) + '%'); i.className = cls; o.append(i); return o; };
