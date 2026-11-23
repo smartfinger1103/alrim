@@ -958,8 +958,8 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
                 <label class="lab" style="width:4em">국어<input type="text" id="snMkor" inputmode="numeric"></label>
                 <label class="lab" style="width:4em">수학<input type="text" id="snMmath" inputmode="numeric"></label>
                 <label class="lab" style="width:4em">영어<input type="text" id="snMeng" inputmode="numeric"></label>
-                <label class="lab" style="width:4em">탐구1<input type="text" id="snMt1" inputmode="numeric"></label>
-                <label class="lab" style="width:4em">탐구2<input type="text" id="snMt2" inputmode="numeric"></label>
+                <label class="lab" style="width:5em">통합사회<input type="text" id="snMt1" inputmode="numeric"></label>
+                <label class="lab" style="width:5em">통합과학<input type="text" id="snMt2" inputmode="numeric"></label>
                 <button type="button" class="small" id="snMAdd">성적 추가</button>
               </div>
               <div id="snMList" style="display:flex;flex-direction:column;gap:4px"></div>
@@ -4593,7 +4593,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     const cur = () => D.students.find(x => x.name === state.cls && x.track === 'suneung');
     const list = () => { const b = $('snMList'); b.textContent = ''; mocks.sort((a, c) => (a.date || '').localeCompare(c.date || '')).forEach((m, i) => { const r = el('div', 'row'); r.style.cssText = 'padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-size:.88rem';
       const x = el('button', 'small danger', '✕'); x.type = 'button'; x.onclick = () => { mocks.splice(i, 1); list(); };
-      r.append(el('b', null, (m.date || '') + ' ' + (m.name || '')), el('span', null, ['국어 ' + (m.kor || '-'), '수학 ' + (m.math || '-'), '영어 ' + (m.eng || '-'), '탐구 ' + (m.t1 || '-') + '/' + (m.t2 || '-')].join(' · ')), x); b.append(r); }); };
+      r.append(el('b', null, (m.date || '') + ' ' + (m.name || '')), el('span', null, ['국어 ' + (m.kor || '-'), '수학 ' + (m.math || '-'), '영어 ' + (m.eng || '-'), '통합사회 ' + (m.t1 || '-'), '통합과학 ' + (m.t2 || '-')].join(' · ')), x); b.append(r); }); };
     const fill = () => { const st = cur(); $('fbSn').hidden = !st; $('tsubSn').hidden = !st; if (!st) return; $('snWho').textContent = st.name;
       $('snDday').value = st.dday || '2027-11-18'; $('snDaily').value = (st.daily || []).join('\n'); mocks = (st.mocks || []).map(m => Object.assign({}, m)); list(); $('snMsg').textContent = '';
       const W = st.wbook || {}, Lb = st.lbook || {}, td = new Date(Date.now() + 9 * 36e5).toISOString().slice(0, 10); newDays = null; $('snWText').value = '';
@@ -5800,7 +5800,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
 
 })();
 </script>
-<script src="github-sync.js?v=20261123-1"></script><script src="suneung.js?v=20261123-9"></script><nav id="mBar" aria-label="빠른 메뉴">
+<script src="github-sync.js?v=20261123-1"></script><script src="suneung.js?v=20261123-10"></script><nav id="mBar" aria-label="빠른 메뉴">
   <button type="button" data-mgo="hWt">📝<span>단어테스트</span></button>
   <button type="button" data-mgo="h2s" class="main">✏️<span>과제적기</span></button>
   <button type="button" data-mbottom>📒<span>알림장보기</span></button>
