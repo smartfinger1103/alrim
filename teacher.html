@@ -1,5 +1,5 @@
 <!doctype html><html><head>
-<meta name="build" content="2026-11-23-hyena">
+<meta name="build" content="2026-11-23-sn">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
@@ -763,6 +763,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
     <button type="button" class="tsub" data-box="fbPron" data-s="발음 단어" title="과제 적기 · 발음 단어로 바로 가기">발음 단어</button>
     <button type="button" class="tsub" data-box="fbL" data-s="듣기" title="과제 적기 · 듣기로 바로 가기">듣기</button>
     <button type="button" class="tsub" data-box="fbPdf" data-s="학습자료" title="과제 적기 · 학습자료(PDF)로 바로 가기">학습자료</button>
+    <button type="button" class="tsub" data-box="fbSn" id="tsubSn" hidden title="과제 적기 · 수능 관리로 바로 가기">🎯 수능</button>
     <button type="button" class="tsub" data-box="fbEtc" data-s="기타" title="과제 적기 · 기타로 바로 가기">기타</button>
     <button type="button" class="tsub" data-box="fSentsBox" data-s="문장 연습" title="과제 적기 · 문장 연습로 바로 가기">문장 연습</button>
     <button type="button" class="tsub" data-box="fbTask" data-s="기타 과목" title="과제 적기 · 기타 과목로 바로 가기">기타 과목</button>
@@ -912,6 +913,29 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             <div id="pdfPics" style="display:flex;flex-wrap:wrap;gap:6px"></div>
             <p class="hint">저장하면 이미지로 GitHub에 올라가고, 학생 화면 그날 과제에 "📄 학습자료 보기" 버튼이 생겨요. 학생은 PDF 앱 없이 쪽 번호로 넘겨 봐요. 저장소가 공개라 링크를 아는 사람은 볼 수 있으니 시판 교재·답지 전체는 올리지 마세요.</p>
             <p class="hint" id="pdfMsg" role="status"></p></div>
+          </div>
+          <div class="fbox" id="fbSn" hidden style="border:2px solid var(--accent)">
+            <div class="fhead"><b>🎯 수능 관리 · <span id="snWho"></span></b><span class="fsp"></span><button type="button" class="small primary" id="snSave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
+            <div class="fbody">
+              <div class="sgrid">
+                <label>수능 날짜<input type="date" id="snDday"></label>
+                <label class="sgrow">매일 고정 과제 (한 줄에 하나)<textarea id="snDaily" rows="4" placeholder="단어 Day 1개 외우기&#10;듣기 1회 풀고 틀린 문제 다시 듣기&#10;독해 5지문 시간 재고 풀기"></textarea></label>
+              </div>
+              <b style="font-size:.9rem">📊 모의고사 성적 (등급)</b>
+              <div class="row" style="align-items:flex-end">
+                <label class="lab" style="width:9.5em">시험 날짜<input type="date" id="snMDate"></label>
+                <label class="lab" style="width:8em">시험 이름<input type="text" id="snMName" placeholder="3월 학평"></label>
+                <label class="lab" style="width:4em">국어<input type="text" id="snMkor" inputmode="numeric"></label>
+                <label class="lab" style="width:4em">수학<input type="text" id="snMmath" inputmode="numeric"></label>
+                <label class="lab" style="width:4em">영어<input type="text" id="snMeng" inputmode="numeric"></label>
+                <label class="lab" style="width:4em">탐구1<input type="text" id="snMt1" inputmode="numeric"></label>
+                <label class="lab" style="width:4em">탐구2<input type="text" id="snMt2" inputmode="numeric"></label>
+                <button type="button" class="small" id="snMAdd">성적 추가</button>
+              </div>
+              <div id="snMList" style="display:flex;flex-direction:column;gap:4px"></div>
+              <p class="hint">학생 화면 맨 위 "수능 도우미"에 D-day, 매일 과제 체크, 과목별 공부 시간, 독해 타이머, 성적 추이가 보여요. 매일 과제 체크와 공부 시간은 학생 기기에만 기록돼요.</p>
+              <p class="hint" id="snMsg" role="status"></p>
+            </div>
           </div>
           <div class="fbox sbox" id="fbEtc" data-subj="기타">
             <div class="fhead"><b>📌 기타</b><span class="fsum" id="fsEtc"></span><span class="fsp"></span><button type="button" class="small primary ssave">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
@@ -2651,7 +2675,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     const J = await lsLoadData(), book = lsBook(J, state.cls || ''), cfg = lsCfg();
     const prevOv = document.body.style.overflow; document.body.style.overflow = 'hidden';
     const ov = el('div', 'ls-ov'), box = el('div', 'ls-box'); ov.append(box); document.body.append(ov);
-    const AU = new Audio(); AU.preload = 'auto';
+    const AU = new Audio(); AU.preload = 'auto'; AU.addEventListener('play', () => { try { AU.playbackRate = parseFloat(localStorage.getItem('alrim:rate')) || 1; } catch (e) {} });
     const close = () => { try { AU.pause(); } catch (e) {} ov.remove(); document.body.style.overflow = prevOv; document.removeEventListener('keydown', onKey); renderNotebook(); };
     const onKey = (ev) => { if (ev.key === 'Escape') close(); };
     document.addEventListener('keydown', onKey);
@@ -4470,6 +4494,25 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       } catch (er) { top.textContent = '❌ 검증 중 오류가 났어요: ' + (er && er.message || er); }
       finally { btn.disabled = false; }
     };
+  })();
+
+  /* ---------- 수능 관리 (track: 'suneung' 학생만) ---------- */
+  (function () {
+    if (!$('fbSn')) return; let shown = null, mocks = [];
+    const cur = () => D.students.find(x => x.name === state.cls && x.track === 'suneung');
+    const list = () => { const b = $('snMList'); b.textContent = ''; mocks.sort((a, c) => (a.date || '').localeCompare(c.date || '')).forEach((m, i) => { const r = el('div', 'row'); r.style.cssText = 'padding:4px 8px;border:1px solid var(--line);border-radius:8px;font-size:.88rem';
+      const x = el('button', 'small danger', '✕'); x.type = 'button'; x.onclick = () => { mocks.splice(i, 1); list(); };
+      r.append(el('b', null, (m.date || '') + ' ' + (m.name || '')), el('span', null, ['국어 ' + (m.kor || '-'), '수학 ' + (m.math || '-'), '영어 ' + (m.eng || '-'), '탐구 ' + (m.t1 || '-') + '/' + (m.t2 || '-')].join(' · ')), x); b.append(r); }); };
+    const fill = () => { const st = cur(); $('fbSn').hidden = !st; $('tsubSn').hidden = !st; if (!st) return; $('snWho').textContent = st.name;
+      $('snDday').value = st.dday || '2027-11-18'; $('snDaily').value = (st.daily || []).join('\n'); mocks = (st.mocks || []).map(m => Object.assign({}, m)); list(); $('snMsg').textContent = ''; };
+    setInterval(() => { if (shown !== state.cls) { shown = state.cls; fill(); } }, 400);
+    $('snMAdd').onclick = () => { const g = (id) => { const v = parseInt($(id).value, 10); return v >= 1 && v <= 9 ? v : ''; };
+      if (!$('snMDate').value) { $('snMsg').textContent = '시험 날짜를 골라 주세요.'; return; }
+      mocks.push({ date: $('snMDate').value, name: $('snMName').value.trim(), kor: g('snMkor'), math: g('snMmath'), eng: g('snMeng'), t1: g('snMt1'), t2: g('snMt2') });
+      ['snMName', 'snMkor', 'snMmath', 'snMeng', 'snMt1', 'snMt2'].forEach(id => $(id).value = ''); list(); $('snMsg').textContent = '성적을 목록에 넣었어요. 위 "저장"을 눌러 주세요.'; };
+    $('snSave').onclick = () => { const st = cur(); if (!st) return;
+      st.dday = $('snDday').value || '2027-11-18'; st.daily = $('snDaily').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean); st.mocks = mocks.map(m => Object.assign({}, m));
+      changed(); $('snMsg').textContent = '✅ 수능 관리 내용을 적었어요. 저장 칸에서 "💾 ' + st.name + '만 저장"을 눌러야 학생 화면에 보여요.'; };
   })();
 
   /* ---------- 단어 뜻(한글) 오타 자동 수정 ---------- */
