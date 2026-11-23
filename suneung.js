@@ -200,9 +200,23 @@ window.addEventListener('alrim:lsdone', e => { if (!lCtx || !me) return; const d
   else LS.ldone[lCtx.today] = { unit: lCtx.unit, total: d.total, wrong: (d.wrong || []).map(w => w.n), retry: '' };
   save(); lCtx = null; setTimeout(render, 300); });
 
-function sec(title) { const d = el('details', 'border-top:1px solid var(--line,#ddd);padding:10px 0 2px'); d.open = LS['open:' + title] !== false; const sm = el('summary', 'cursor:pointer;font-weight:700;font-size:1.02rem', title); d.append(sm); d.addEventListener('toggle', () => { LS['open:' + title] = d.open; save(); }); const body = el('div', 'display:flex;flex-direction:column;gap:8px;padding:8px 0'); d.append(body); return [d, body]; }
+function sec(title) { const d = el('details', 'border-top:1px solid var(--line,#ddd);padding:10px 0 2px;scroll-margin-top:64px'); d.dataset.sec = title; d.open = LS['open:' + title] !== false; const sm = el('summary', 'cursor:pointer;font-weight:700;font-size:1.02rem', title); d.append(sm); d.addEventListener('toggle', () => { LS['open:' + title] = d.open; save(); }); const body = el('div', 'display:flex;flex-direction:column;gap:8px;padding:8px 0'); d.append(body); return [d, body]; }
 
-function render() {
+
+const TABS = [['단어', '#ffd666', '#c9a227', '단어 공부'], ['듣기', '#8cc8f0', '#4a76c4', '듣기 연습'], ['독해', '#aadc96', '#58a060', '📖 독해'], ['타이머', '#f4aaaa', '#d65c60', '#snTimerAnchor'], ['통계', '#c9b3ec', '#926ec4', '#snStatAnchor']];
+function tabTarget(k) { const t = TABS[k][3]; if (t[0] === '#') return card.querySelector(t); return [...card.querySelectorAll('details[data-sec]')].find(d => d.dataset.sec.includes(t.replace('📖 ', ''))); }
+function addTabs() {
+  if (!card) return;
+  if (!document.getElementById('snTabCss')) { const st = document.createElement('style'); st.id = 'snTabCss'; st.textContent = '#snTabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;margin:-14px -14px 8px -28px;padding:10px 10px 0;background:#fffefb;border-radius:12px 12px 0 0}#snTabs button{flex:1;position:relative;font:inherit;font-family:"Poor Story","Gaegu",cursive;font-size:1.15rem;color:#2b2b2b;padding:6px 0 7px;background:var(--c);border:1.5px solid var(--d);border-bottom:none;border-radius:8px 10px 0 0/10px 8px 0 0;transform:rotate(var(--r)) translateY(3px);transform-origin:bottom;cursor:pointer;transition:transform .15s;box-shadow:inset 0 -3px 0 rgba(255,255,255,.35);margin-bottom:-1px}#snTabs button::before{content:"";position:absolute;left:50%;top:-6px;width:30px;height:9px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,255,255,.6);border:1px dashed rgba(0,0,0,.12)}#snTabs button.on{transform:rotate(var(--r)) translateY(-2px);font-weight:700;padding-top:9px}#snTabs{border-bottom:1.5px solid #555}'; document.head.append(st); }
+  const bar = el('div'); bar.id = 'snTabs';
+  TABS.forEach((t, k) => { if (!tabTarget(k)) return; const b = el('button', null, t[0]); b.type = 'button'; b.style.cssText = '--c:' + t[1] + ';--d:' + t[2] + ';--r:' + (k % 2 ? -1.5 : 1.2) + 'deg'; b.dataset.k = k;
+    b.onclick = () => { const x = tabTarget(k); if (!x) return; if (x.tagName === 'DETAILS') x.open = true; x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; bar.append(b); });
+  card.insertBefore(bar, card.firstChild); markTab();
+}
+function markTab() { const bar = document.getElementById('snTabs'); if (!bar || !card) return; let cur = -1; TABS.forEach((t, k) => { const x = tabTarget(k); if (x && x.getBoundingClientRect().top <= 110) cur = k; }); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === cur)); }
+window.addEventListener('scroll', () => markTab(), { passive: true });
+function render() { render0(); addTabs(); }
+function render0() {
   if (!card) return; card.textContent = ''; const today = sday(); lastDay = today;
   /* D-day */
   const dd = me.dday || '2027-11-18', left = Math.ceil((new Date(dd + 'T00:00:00') - new Date(today + 'T00:00:00')) / 864e5);
@@ -284,7 +298,7 @@ function render() {
     const hm = s => { s = Math.round(s / 60); const h = Math.floor(s / 60), m = s % 60; return h ? h + '시간 ' + (m ? m + '분' : '') : m + '분'; };
     const ios = el('div', 'font-family:' + F + ';color:#2b2b2b;padding:18px 18px 18px 30px;border:1.6px solid #555;border-radius:4px 14px 6px 12px/12px 5px 14px 6px;background:linear-gradient(90deg,transparent 21px,#e3b4b4 21px,#e3b4b4 22px,transparent 22px),repeating-linear-gradient(transparent 0 31px,#e4e4e4 31px 32px),#fffefb;display:flex;flex-direction:column;gap:14px');
     /* 과목 시작 칩 */
-    const chips = el('div', 'display:flex;flex-wrap:wrap;gap:8px');
+    const chips = el('div', 'display:flex;flex-wrap:wrap;gap:8px;scroll-margin-top:64px'); chips.id = 'snTimerAnchor';
     SUBJ.forEach(s => { const on = LS.run && !LS.run.ready && LS.run.s === s, c = COL[s] || '#8E8E93';
       const x = el('button', 'font:700 19px ' + F + ';display:flex;align-items:center;gap:6px;padding:4px 14px 5px;cursor:pointer;color:#2b2b2b;background:' + (on ? '#ececec' : 'transparent'));
       x.className = on ? 'sk-b' : 'sk-b2'; x.type = 'button'; x.append(el('span', 'font-size:15px;color:' + ({ '영어': '#4a76c4', '국어': '#e28c34', '수학': '#58a060', '통합과학': '#926ec4', '통합사회': '#d65c60' }[s] || '#555') + (on ? ';animation:snPulse 1.4s infinite' : ''), on ? '✎' : '●'), document.createTextNode(on ? s + ' · 끝내기' : s));
@@ -293,7 +307,7 @@ function render() {
     if (!document.getElementById('snPulseCss')) { const st = document.createElement('style'); st.id = 'snPulseCss'; st.textContent = '@keyframes snPulse{0%,100%{opacity:1}50%{opacity:.35}}'; document.head.append(st); }
     const live = el('div', 'font:400 16px ' + F + ';color:#6b6b6b;margin-top:-6px'); live.id = 'snLive';
     /* 오늘 / 이번 주 */
-    const cal = ymd(), view = LS.tview || 'day', seg = el('div', 'display:flex;gap:18px');
+    const cal = ymd(), view = LS.tview || 'day', seg = el('div', 'display:flex;gap:18px;scroll-margin-top:64px'); seg.id = 'snStatAnchor';
     [['day', '오늘'], ['week', '이번 주']].forEach(([k, t]) => { const s = el('button', 'font:700 19px ' + F + ';border:none;background:transparent;padding:0 2px 2px;cursor:pointer;color:' + (view === k ? '#2b2b2b' : '#9a9a9a') + ';' + (view === k ? 'text-decoration:underline wavy #555 1.5px;text-underline-offset:6px' : ''), t); s.type = 'button'; s.onclick = () => { LS.tview = k; save(); render(); }; seg.append(s); });
     const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), wk = Array.from({ length: 7 }, (_, k) => ymd(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + k)));
     const days = view === 'day' ? [cal] : wk, vals = SUBJ.map(s => days.reduce((a, dd) => a + dayTot(dd, s), 0)), tot = vals.reduce((a, x) => a + x, 0), mx = Math.max(60, ...vals), mn = Math.min(...vals);
@@ -375,6 +389,7 @@ html.sk .ls-opt{border:1.6px solid #555 !important;border-radius:255px 16px 225p
 html.sk .ls-opt:nth-child(5n+1){box-shadow:2px 3px 0 rgba(74,118,196,.5) !important}html.sk .ls-opt:nth-child(5n+2){box-shadow:2px 3px 0 rgba(226,140,52,.5) !important}html.sk .ls-opt:nth-child(5n+3){box-shadow:2px 3px 0 rgba(88,160,96,.5) !important}html.sk .ls-opt:nth-child(5n+4){box-shadow:2px 3px 0 rgba(146,110,196,.5) !important}html.sk .ls-opt:nth-child(5n){box-shadow:2px 3px 0 rgba(214,92,96,.5) !important}
 html.sk .ls-speed button{border:1.4px solid #555 !important;border-radius:255px 12px 225px 12px/12px 225px 12px 255px !important;background:transparent !important;color:#2b2b2b !important}
 html.sk .ls-q{border:1.5px solid #888;border-radius:6px 12px 6px 10px}
+html.sk #snCard #snTabs button{background:var(--c) !important;border:1.5px solid var(--d) !important;border-bottom:none !important;border-radius:8px 10px 0 0/10px 8px 0 0 !important;box-shadow:inset 0 -3px 0 rgba(255,255,255,.35) !important;font-size:1.15rem !important;padding:6px 0 7px !important}html.sk #snCard #snTabs button.on{padding-top:9px !important}
 html.sk #snCard b{font-size:1.15em}
 html.sk #snCard small{font-size:1.02rem !important;color:#6f6f6f !important}
 html.sk #snCard details{border-top:1.4px dashed #bdbdbd !important}
