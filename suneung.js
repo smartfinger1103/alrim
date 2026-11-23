@@ -121,39 +121,27 @@ function render() {
   top.append(el('b', 'font-family:var(--font-display,inherit);font-size:1.7rem;color:var(--accent,#4f46e5)', '🎯 수능 ' + (left > 0 ? 'D-' + left : left === 0 ? 'D-DAY' : 'D+' + (-left))), el('span', 'color:var(--muted,#666);font-size:.9rem', dd.replace(/-/g, '.') + ' · 이번 주 공부 ' + fmt(weekTot())));
   if (TEACH) card.append(el('small', 'color:var(--muted,#666);font-weight:600', '👀 ' + me.name + ' 학생 화면에 보이는 수능 도우미 (미리보기 · 여기서 누른 기록은 학생에게 안 넘어가요)'));
   card.append(top);
-  /* 매일 과제 */
-  const daily = (me.daily || []).filter(Boolean);
-  if (daily.length) { const [d, b] = sec('✅ 오늘의 매일 과제'); const done = LS.daily[today] || {};
-    let streak = 0; for (let i = 1; i < 400; i++) { const k = ymd(new Date(Date.now() - i * 864e5)), v = LS.daily[k] || {}; if (daily.every(t => v[t])) streak++; else break; }
-    const all = daily.every(t => done[t]); if (all) streak++;
-    daily.forEach(t => { const l = el('label', 'display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line,#ddd);border-radius:10px;cursor:pointer;' + (done[t] ? 'opacity:.6;text-decoration:line-through' : '')); const c = el('input', 'width:20px;height:20px'); c.type = 'checkbox'; c.checked = !!done[t];
-      c.onchange = () => { LS.daily[today] = Object.assign({}, LS.daily[today], { [t]: c.checked }); save(); render(); }; l.append(c, el('span', null, t)); b.append(l); });
-    b.append(el('small', 'color:var(--muted,#666)', (all ? '오늘 매일 과제를 다 했어요! ' : daily.filter(t => !done[t]).length + '개 남았어요. ') + (streak ? '🔥 연속 ' + streak + '일' : ''))); card.append(d); }
   /* 매일 단어 */
-  { const P = wPlan(today); if (P) { const [d, b] = sec('📘 매일 단어'); const done = LS.wdone[today];
+  { const P = wPlan(today); if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
       b.append(el('b', 'font-size:1.05rem', (me.wbook.title ? me.wbook.title + ' · ' : '') + (P.over ? '범위를 모두 끝냈어요 🎉' : P.day.n + ' · ' + P.day.w.length + '개')));
       if (P.rev.length) b.append(el('div', 'color:#1E5BD8;font-weight:600;font-size:.92rem', '어제까지 틀린 단어 ' + P.rev.length + '개가 오늘 단어에 같이 나와요'));
       if (done) b.append(el('div', 'font-weight:700;color:' + (done.w ? '#dc2626' : '#15803d'), (done.w ? '오늘 테스트 ' : '✅ 오늘 테스트 ') + (done.t - done.w) + ' / ' + done.t + (done.w ? ' · 틀린 ' + done.w + '개는 내일 다시 나와요' : ' · 만점!')));
       if (P.all.length) { const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); row.append(btn('📖 단어 공부', () => wStudy(P)), btn(done ? '✏️ 테스트 다시 보기' : '✏️ 테스트 보기 (영어 → 뜻)', () => wTest(P, today), 'background:var(--accent,#4f46e5);color:#fff;font-weight:700')); b.append(row); }
       b.append(el('small', 'color:var(--muted,#666)', '매일(주말·공휴일 포함) 다음 Day로 넘어가요. 테스트에서 틀린 단어는 다음 날 파란색으로 다시 나와요.')); card.append(d); } }
   /* 매일 듣기 */
-  { const P = lPlan(today); if (P) { const [d, b] = sec('🎧 매일 듣기'); const done = LS.ldone[today];
+  { const P = lPlan(today), [d, b] = sec('🎧 듣기 연습'); if (!P) b.append(el('div', 'color:var(--muted,#666)', '듣기 책이 정해지면 날마다 1회씩 여기에 떠요.')); if (P) { const done = LS.ldone[today];
       b.append(el('b', 'font-size:1.05rem', P.over ? '범위를 모두 끝냈어요 🎉' : '오늘은 ' + P.unit + '회'));
       if (!P.over) { if (!done || done.unit !== P.unit) b.append(btn('▶ ' + P.unit + '회 풀기 (다 풀면 바로 채점)', () => lOpen(P.unit, null, today), 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'));
         else { b.append(el('div', 'font-weight:700', '채점: ' + (done.total - done.wrong.length) + ' / ' + done.total));
           if (done.wrong.length && !done.retry) b.append(el('div', 'color:#dc2626;font-weight:600', '틀린 ' + done.wrong.join(', ') + '번을 다시 듣고 풀어야 오늘 듣기가 끝나요.'), btn('🔁 틀린 ' + done.wrong.length + '문제 다시 듣고 풀기', () => lOpen(P.unit, done.wrong, today), 'background:#dc2626;border-color:#dc2626;color:#fff;font-weight:700'));
           else b.append(el('div', 'color:#15803d;font-weight:700', done.wrong.length ? '✅ 틀린 문제까지 다시 풀었어요 (' + done.retry + ')' : '✅ 다 맞았어요!'));
           if (done.wrong.length && done.retry) b.append(btn('틀린 문제 한 번 더 듣기', () => lOpen(P.unit, done.wrong, today))); } }
-      card.append(d); } }
-  /* 공부 시간 */
-  { const [d, b] = sec('⏱ 과목별 공부 시간'); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px');
-    SUBJ.forEach(s => { const on = LS.run && LS.run.s === s; const x = btn((on ? '⏸ ' : '▶ ') + s, () => { const was = on; stopRun(); if (!was) { LS.run = { s, t: Date.now() }; save(); } render(); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
-    b.append(row); const live = el('div', 'font-weight:700'); live.id = 'snLive'; b.append(live);
-    const tb = el('div', 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px'); let tot = 0;
-    SUBJ.forEach(s => { const v = dayTot(today, s); tot += v; const c = el('div', 'padding:6px 8px;border-radius:8px;background:var(--soft,#eef);font-size:.88rem'); c.append(el('b', 'display:block', s), el('span', null, fmt(v))); c.dataset.s = s; tb.append(c); });
-    b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 시간이 흘러요. 다시 누르면 멈춰요. 오늘 합계 ' + fmt(tot))); card.append(d); }
+      }
+    let cur = 1; try { cur = parseFloat(localStorage.getItem('alrim:rate')) || 1; } catch (e) {} const sp = el('div', 'display:flex;flex-wrap:wrap;gap:6px;align-items:center'); sp.append(el('small', 'color:var(--muted,#666);font-weight:600', '듣기 속도'));
+    [0.8, 1, 1.2, 1.5].forEach(r => sp.append(btn(r + '배', () => { try { localStorage.setItem('alrim:rate', r); } catch (e) {} render(); }, 'padding:5px 10px;' + (r === cur ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''))));
+    b.append(sp); card.append(d); }
   /* 독해 타이머 */
-  { const [d, b] = sec('📖 독해 타이머 · 오답 이유'); const R = LS.rd;
+  { const [d, b] = sec('📖 독해'); const R = LS.rd;
     if (!R) { b.append(btn('▶ 독해 시작', () => { LS.rd = { n: 1, t: Date.now(), log: [] }; save(); render(); }, 'background:var(--accent,#4f46e5);color:#fff;font-weight:700')); }
     else if (R.ask) { b.append(el('b', null, R.n + '번 지문 · 왜 틀렸나요?')); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); WHY.forEach(w => row.append(btn(w, () => { R.log.push({ s: R.ask, ok: false, why: w }); R.ask = 0; R.n++; R.t = Date.now(); save(); render(); }))); b.append(row); }
     else { const t = el('div', 'font-family:var(--font-display,inherit);font-size:2rem'); t.id = 'snRead'; b.append(el('b', null, R.n + '번 지문'), t);
@@ -167,6 +155,14 @@ function render() {
       const mx = Math.max(1, ...Object.values(cnt)); WHY.forEach(w => { const n = cnt[w] || 0; const r = el('div', 'display:grid;grid-template-columns:8.5em 1fr 2em;gap:6px;align-items:center;font-size:.86rem'); const bar = el('div', 'height:10px;border-radius:5px;background:var(--soft,#eef);overflow:hidden'); bar.append(el('i', 'display:block;height:100%;background:#dc2626;width:' + (n / mx * 100) + '%')); r.append(el('span', null, w), bar, el('b', null, n)); b.append(r); });
       const topWhy = Object.entries(cnt).sort((a, c) => c[1] - a[1])[0]; if (topWhy) b.append(el('small', 'color:var(--muted,#666)', '가장 많은 이유: ' + topWhy[0] + ({ '단어를 몰라서': ' → 지문 단어 정리와 단어 암기를 늘려요.', '해석이 안 돼서': ' → 구문 분석(문장연습)을 더 해요.', '선지가 헷갈려서': ' → 선지의 근거 문장을 지문에서 찾아 표시해요.', '시간이 부족해서': ' → 쉬운 유형부터 풀고, 지문당 1:40을 지켜요.' })[topWhy[0]])); }
     card.append(d); }
+  /* 매일 과제 */
+  const daily = (me.daily || []).filter(Boolean);
+  if (daily.length) { const [d, b] = sec('✅ 오늘의 매일 과제'); const done = LS.daily[today] || {};
+    let streak = 0; for (let i = 1; i < 400; i++) { const k = ymd(new Date(Date.now() - i * 864e5)), v = LS.daily[k] || {}; if (daily.every(t => v[t])) streak++; else break; }
+    const all = daily.every(t => done[t]); if (all) streak++;
+    daily.forEach(t => { const l = el('label', 'display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line,#ddd);border-radius:10px;cursor:pointer;' + (done[t] ? 'opacity:.6;text-decoration:line-through' : '')); const c = el('input', 'width:20px;height:20px'); c.type = 'checkbox'; c.checked = !!done[t];
+      c.onchange = () => { LS.daily[today] = Object.assign({}, LS.daily[today], { [t]: c.checked }); save(); render(); }; l.append(c, el('span', null, t)); b.append(l); });
+    b.append(el('small', 'color:var(--muted,#666)', (all ? '오늘 매일 과제를 다 했어요! ' : daily.filter(t => !done[t]).length + '개 남았어요. ') + (streak ? '🔥 연속 ' + streak + '일' : ''))); card.append(d); }
   /* 모의고사 */
   const mocks = (me.mocks || []).slice().sort((a, c) => (a.date || '').localeCompare(c.date || ''));
   if (mocks.length) { const [d, b] = sec('📊 모의고사 성적'); const cols = [['kor', '국어'], ['math', '수학'], ['eng', '영어'], ['t1', '탐구1'], ['t2', '탐구2']];
@@ -180,10 +176,13 @@ function render() {
       pts.forEach((m, i) => { mk('circle', { cx: x(i), cy: y(+m.eng), r: 3.5, fill: '#4f46e5' }); mk('text', { x: x(i), y: H - 4, 'font-size': 8, 'text-anchor': 'middle', fill: '#666' }).textContent = (m.date || '').slice(5).replace('-', '/'); });
       b.append(el('small', 'color:var(--muted,#666)', '영어 등급 추이 (위로 갈수록 좋은 등급)'), sv); }
     card.append(d); }
-  /* 듣기 속도 */
-  { const [d, b] = sec('🎧 듣기 속도'); let cur = 1; try { cur = parseFloat(localStorage.getItem('alrim:rate')) || 1; } catch (e) {} const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px');
-    [0.8, 1, 1.2, 1.5].forEach(r => row.append(btn(r + '배', () => { try { localStorage.setItem('alrim:rate', r); } catch (e) {} render(); }, r === cur ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : '')));
-    b.append(row, el('small', 'color:var(--muted,#666)', '듣기 과제 음원에 적용돼요. 1.2배로 연습하면 실전이 느리게 들려요.')); card.append(d); }
+  /* 공부 시간 */
+  { const [d, b] = sec('⏱ 과목별 공부 시간'); const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px');
+    SUBJ.forEach(s => { const on = LS.run && LS.run.s === s; const x = btn((on ? '⏸ ' : '▶ ') + s, () => { const was = on; stopRun(); if (!was) { LS.run = { s, t: Date.now() }; save(); } render(); }, on ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : ''); row.append(x); });
+    b.append(row); const live = el('div', 'font-weight:700'); live.id = 'snLive'; b.append(live);
+    const tb = el('div', 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px'); let tot = 0;
+    SUBJ.forEach(s => { const v = dayTot(today, s); tot += v; const c = el('div', 'padding:6px 8px;border-radius:8px;background:var(--soft,#eef);font-size:.88rem'); c.append(el('b', 'display:block', s), el('span', null, fmt(v))); c.dataset.s = s; tb.append(c); });
+    b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 시간이 흘러요. 다시 누르면 멈춰요. 오늘 합계 ' + fmt(tot))); card.append(d); }
   tick();
 }
 function tick() {
