@@ -150,7 +150,7 @@ window.addEventListener('alrim:lsdone', e => { if (!lCtx || !me) return; const d
 function sec(title) { const d = el('details', 'border-top:1px solid var(--line,#ddd);padding:10px 0 2px'); d.open = LS['open:' + title] !== false; const sm = el('summary', 'cursor:pointer;font-weight:700;font-size:1.02rem', title); d.append(sm); d.addEventListener('toggle', () => { LS['open:' + title] = d.open; save(); }); const body = el('div', 'display:flex;flex-direction:column;gap:8px;padding:8px 0'); d.append(body); return [d, body]; }
 
 function render() {
-  if (!card) return; card.textContent = ''; const today = ymd();
+  if (!card) return; card.textContent = ''; const today = sday(); lastDay = today;
   /* D-day */
   const dd = me.dday || '2027-11-18', left = Math.ceil((new Date(dd + 'T00:00:00') - new Date(today + 'T00:00:00')) / 864e5);
   const top = el('div', 'display:flex;align-items:baseline;gap:10px;flex-wrap:wrap');
@@ -166,10 +166,10 @@ function render() {
         if (fin) b.append(el('div', 'color:#15803d;font-weight:700', done && done.w ? '✅ 틀린 단어까지 다시 테스트해서 다 맞았어요. 오늘 단어 끝!' : '✅ 오늘 단어 끝!'));
         else { b.append(el('div', 'font-size:.92rem;color:' + (st.round ? '#dc2626' : 'var(--muted,#666)') + ';font-weight:600', (st.round ? '틀린 단어 ' + st.list.length + '개 · ' : '') + '단어 공부 ' + seenN + ' / ' + st.list.length + ' 봤어요' + (ready ? ' · 이제 테스트를 볼 수 있어요' : '')));
           const row = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); row.append(btn(st.round ? '📖 틀린 단어 다시 공부' : '📖 단어 공부', () => wStudy(P, today), ready ? '' : 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'), btn(st.round ? '✏️ 틀린 단어 다시 테스트' : '✏️ 테스트 보기', () => wTest(P, today), ready ? 'background:var(--accent,#4f46e5);color:#fff;font-weight:700' : 'opacity:.6')); b.append(row); } }
-      b.append(el('small', 'color:var(--muted,#666)', '단어를 끝까지 넘겨 본 뒤 테스트를 봐요. 점수는 테스트가 끝나야 보여요. 첫 테스트에서 틀린 단어는 다음 날 파란색으로 다시 나와요.')); card.append(d); } }
+      b.append(el('small', 'color:var(--muted,#666)', '매일 아침 6시에 새 Day가 자동으로 나와요. 단어를 끝까지 넘겨 본 뒤 테스트를 봐요. 점수는 테스트가 끝나야 보여요. 첫 테스트에서 틀린 단어는 다음 날 파란색으로 다시 나와요.')); card.append(d); } }
   /* 매일 듣기 */
   { const P = lPlan(today), [d, b] = sec('🎧 듣기 연습'); if (!P) b.append(el('div', 'color:var(--muted,#666)', '듣기 책이 정해지면 날마다 1회씩 여기에 떠요.')); if (P) { const done = LS.ldone[today];
-      b.append(el('b', 'font-size:1.05rem', P.over ? '범위를 모두 끝냈어요 🎉' : '오늘은 ' + P.unit + '회'));
+      b.append(el('b', 'font-size:1.05rem', P.over ? '범위를 모두 끝냈어요 🎉' : '오늘은 ' + P.unit + '회 (매일 아침 6시에 다음 회로)'));
       if (!P.over) { if (!done || done.unit !== P.unit) b.append(btn('▶ ' + P.unit + '회 풀기 (다 풀면 바로 채점)', () => lOpen(P.unit, null, today), 'background:var(--accent,#4f46e5);color:#fff;font-weight:700'));
         else { b.append(el('div', 'font-weight:700', '채점: ' + (done.total - done.wrong.length) + ' / ' + done.total));
           if (done.wrong.length && !done.retry) b.append(el('div', 'color:#dc2626;font-weight:600', '틀린 ' + done.wrong.join(', ') + '번을 다시 듣고 풀어야 오늘 듣기가 끝나요.'), btn('🔁 틀린 ' + done.wrong.length + '문제 다시 듣고 풀기', () => lOpen(P.unit, done.wrong, today), 'background:#dc2626;border-color:#dc2626;color:#fff;font-weight:700'));
@@ -232,7 +232,10 @@ function render() {
     b.append(tb, el('small', 'color:var(--muted,#666)', '과목을 누르면 시간이 흘러요. 다시 누르면 멈춰요. 오늘 합계 ' + fmt(tot))); card.append(d); }
   tick();
 }
+/* 하루는 아침 6시에 바뀌어요: 6시 전에는 어제 과제가 그대로 보여요 */
+const sday = () => ymd(new Date(Date.now() - 6 * 36e5)); let lastDay = '';
 function tick() {
+  if (card && lastDay && sday() !== lastDay) { render(); return; }
   if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run ? '⏱ ' + LS.run.s + ' 공부 중 · ' + fmt(runSec()) : '';
   const rd = document.getElementById('snRead'); if (rd && LS.rd && !LS.rd.ask) { const s = (Date.now() - LS.rd.t) / 1000; rd.textContent = mmss(s); rd.style.color = s > 100 ? '#dc2626' : 'inherit'; }
   if (LS.run && runSec() >= 4 * 3600) { stopRun(); render(); }
