@@ -21,7 +21,13 @@
       bx.append(el('div', 'font-size:1.15rem;font-weight:700', '내 답 ' + C[pick - 1] + '  →  정답 ' + C[q.a - 1]));
       const step = (n, t) => el('div', 'font-weight:700;color:#4f46e5;margin-top:4px', n + ' ' + t);
       if (q.key) { bx.append(step('①', '🔑 정답으로 가는 핵심 문장')); bx.append(el('div', 'padding:12px 14px;border-left:5px solid #f59e0b;background:#fffbeb;border-radius:8px;font-size:1.05rem;line-height:1.6;white-space:pre-line', q.key)); }
-      if (q.why) { bx.append(step(q.key ? '②' : '①', '👩‍🏫 선생님 풀이')); bx.append(el('div', 'padding:12px 14px;background:#eef2ff;border-radius:8px;line-height:1.7;white-space:pre-line', q.why)); }
+      if (q.why) { bx.append(step(q.key ? '②' : '①', '👩‍🏫 선생님 풀이'));
+        const wb = el('div', 'padding:12px 14px;background:#eef2ff;border-radius:8px;line-height:1.8;white-space:pre-line'); wb.className = 'rd-why'; let n = 0, hasM = false;
+        String(q.why).split(/(\{\{[\s\S]*?\}\})/).forEach(s => { const m = /^\{\{([\s\S]*)\}\}$/.exec(s); if (m) { hasM = true; n++; const sp = el('span', null, m[1]); sp.className = 'rd-m'; sp.style.cssText = 'background:linear-gradient(transparent 55%,rgba(255,214,102,.85) 55%);border-bottom:2.5px solid #e28c34;font-weight:700'; sp.dataset.n = n; wb.append(sp); } else if (s) { const sp = el('span', null, s); sp.className = 'rd-o'; wb.append(sp); } });
+        if (hasM) { const tg = el('button', B + 'padding:6px 12px;align-self:flex-start', '🖍 핵심 이유만 보기'); tg.type = 'button'; let on = false;
+          tg.onclick = () => { on = !on; tg.textContent = on ? '📖 전체 해설 보기' : '🖍 핵심 이유만 보기'; wb.querySelectorAll('.rd-o').forEach(s => { s.style.opacity = on ? '.12' : '1'; s.style.transition = 'opacity .25s'; }); };
+          bx.append(tg); }
+        bx.append(wb); }
       if (q.ex) bx.append(step('📄', '해설지'), img(q.ex));
       if (!q.key && !q.why && !q.ex) bx.append(el('p', 'color:#666;margin:0', '해설이 아직 없어요. 지문을 다시 읽고, 정답의 근거 문장을 찾아 보세요.'));
       const d = el('details'); d.append(el('summary', 'cursor:pointer;font-weight:600', '지문 다시 보기'), imgs(q.q)); bx.append(d);
@@ -177,11 +183,12 @@ function wTest(P, today) { const st = wSt(today, P), M = wByKey(P);
       el('small', 'color:var(--muted,#666);text-align:center', '틀린 단어를 다 넘겨 보면 틀린 단어만 다시 테스트할 수 있어요.')); };
   ask(); }
 let RB = null, RBid = '';
-function rbLoad(id) { if (RBid === id) return; RBid = id; RB = null; fetch(new URL('data/reading/' + id + '.json', location.href).href + '?_=' + Date.now()).then(r => r.json()).then(j => { RB = j; render(); }).catch(() => { RB = { err: 1 }; render(); }); }
+let RBX = {};
+function rbLoad(id) { if (RBid === id) return; RBid = id; RB = null; fetch(new URL('data/reading/' + id + '.json', location.href).href + '?_=' + Date.now()).then(r => r.json()).then(j => { RB = j; fetch(new URL('data/reading/' + id + '-ex.json', location.href).href + '?_=' + Date.now()).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(x => { RBX = x || {}; render(); }); }).catch(() => { RB = { err: 1 }; render(); }); }
 function rPlan(today) { const B = me.rbook; if (!B || !B.id || !B.start) return null; rbLoad(B.id); const n = dayDiff(B.start, today); if (n < 0) return null;
   if (!RB) return { wait: 1 }; if (RB.err || !RB.ps) return { err: 1 };
   const per = Math.max(1, B.per || 7), s = Math.max(1, B.from || 1) - 1 + n * per, ps = RB.ps.slice(s, s + per);
-  const rd = [].concat(...ps.map(p => p.qs.map(q => ({ q: p.img, a: q.a, lab: p.r + '회 ' + q.n + '번', sub: p.qs.length > 1 ? q.n + '번 문제' : '' }))));
+  const rd = [].concat(...ps.map(p => p.qs.map(q => ({ q: p.img, a: q.a, ...(RBX[p.r + '/' + q.n] || {}), lab: p.r + '회 ' + q.n + '번', sub: p.qs.length > 1 ? q.n + '번 문제' : '' }))));
   return { ps, rd, over: !ps.length, first: s + 1, last: s + ps.length, total: RB.ps.length }; }
 function lPlan(today) { const B = me.lbook; if (!B || !B.id || !B.start) return null; const n = dayDiff(B.start, today); if (n < 0) return null; const unit = (B.from || 1) + n; return { unit, over: unit > (B.to || 24) }; }
 let lCtx = null;
