@@ -38,7 +38,7 @@ if (!teacher) {
         body=validate(await response.json());
       }
       const seed=body.students[id];
-      if(seed.updated!==last) { app.receive(seed); last=seed.updated; }
+      if(seed.updated!==last) { app.receive(seed); last=seed.updated; window.alrimBase=seed.updated; }
       status.textContent='최신 과제를 확인했어요. · 1분마다 자동 확인';
     } catch (_) { status.textContent='최신 과제를 불러오지 못했어요. 현재 표시된 과제를 유지하고 다시 연결할게요.'; }
     finally { busy=false; }
@@ -95,7 +95,8 @@ async function readRemote() {
 readRemote().then(body=>{
   const seed=combine(body);
   let draft=null; try {draft=JSON.parse(localStorage.getItem('alrim2:draft'));}catch(_){}
-  if(!dirty && !(draft && draft.savedAt>seed.updated)) app.receive(seed);
+  if(!dirty && !(draft && draft.base===seed.updated && draft.savedAt>seed.updated)) app.receive(seed);
+  window.alrimBase=seed.updated;
   ready=true; status.textContent='과제 연결 완료. 수정 후 GitHub 저장 권한을 입력하고 저장하세요.';
 }).catch(e=>{status.textContent=e.message;});
 async function save(only){
@@ -127,7 +128,7 @@ async function save(only){
       if(response.status===401||response.status===403)throw new Error('GitHub 권한을 확인해 주세요. alrim 저장소의 Contents 읽기·쓰기 권한이 필요해요.');
       throw new Error('저장하지 못했어요. 연결을 확인하고 다시 눌러 주세요.');
     }
-    const result=await response.json();sha=result.content.sha;if(!only)dirty=false;
+    const result=await response.json();sha=result.content.sha;if(!only)dirty=false;window.alrimBase=Object.values(out).map(x=>x.updated).sort().pop();
     status.textContent=oldStatus.textContent='✅ '+label+'를 GitHub에 저장했어요. 게시가 끝나면 학생 링크에 자동 반영돼요. 보통 몇 분 걸릴 수 있어요.';
   }catch(e){status.textContent=oldStatus.textContent=e.message;}
   finally{saving=false;publish.disabled=false;}
