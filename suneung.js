@@ -249,17 +249,17 @@ window.addEventListener('alrim:lsdone', e => { if (!lCtx || !me) return; const d
 function sec(title) { const d = el('details', 'border-top:1px solid var(--line,#ddd);padding:10px 0 2px;scroll-margin-top:64px'); d.dataset.sec = title; d.open = LS['open:' + title] !== false; const sm = el('summary', 'cursor:pointer;font-weight:700;font-size:1.02rem', title); d.append(sm); d.addEventListener('toggle', () => { LS['open:' + title] = d.open; save(); }); const body = el('div', 'display:flex;flex-direction:column;gap:8px;padding:8px 0'); d.append(body); return [d, body]; }
 
 
-const TABS = [['단어', '#ffd666', '#c9a227', '단어 공부'], ['듣기', '#8cc8f0', '#4a76c4', '듣기 연습'], ['독해', '#aadc96', '#58a060', '📖 독해'], ['소식', '#ffc9a3', '#e28c34', '입시 브리핑'], ['타이머', '#f4aaaa', '#d65c60', '#snTimerAnchor'], ['통계', '#c9b3ec', '#926ec4', '#snStatAnchor']];
-function tabTarget(k) { const t = TABS[k][3]; if (t[0] === '#') return card.querySelector(t); return [...card.querySelectorAll('details[data-sec]')].find(d => d.dataset.sec.includes(t.replace('📖 ', ''))); }
+const TABS = [['홈', '#ffc9a3', '#e28c34', '#snTabs'], ['단어', '#ffd666', '#c9a227', '단어 공부'], ['듣기', '#8cc8f0', '#4a76c4', '듣기 연습'], ['독해', '#aadc96', '#58a060', '📖 독해'], ['타이머', '#f4aaaa', '#d65c60', '#snTimerAnchor'], ['통계', '#c9b3ec', '#926ec4', '#snStatAnchor']];
+function tabTarget(k) { const t = TABS[k][3]; if (t === '#snTabs') return document.getElementById('snTabs') || card; if (t[0] === '#') return card.querySelector(t); return [...card.querySelectorAll('details[data-sec]')].find(d => d.dataset.sec.includes(t.replace('📖 ', ''))); }
 function addTabs() {
   if (!card) return;
   if (!document.getElementById('snTabCss')) { const st = document.createElement('style'); st.id = 'snTabCss'; st.textContent = '#snTabs{position:sticky;top:0;z-index:20;display:flex;gap:6px;margin:-14px -14px 8px -28px;padding:10px 10px 0;background:#fffefb;border-radius:12px 12px 0 0}#snTabs button{flex:1;position:relative;font:inherit;font-family:"Poor Story","Gaegu",cursive;font-size:1.05rem;white-space:nowrap;color:#2b2b2b;padding:6px 0 7px;background:var(--c);border:1.5px solid var(--d);border-bottom:none;border-radius:8px 10px 0 0/10px 8px 0 0;transform:rotate(var(--r)) translateY(3px);transform-origin:bottom;cursor:pointer;transition:transform .15s;box-shadow:inset 0 -3px 0 rgba(255,255,255,.35);margin-bottom:-1px}#snTabs button::before{content:"";position:absolute;left:50%;top:-6px;width:30px;height:9px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,255,255,.6);border:1px dashed rgba(0,0,0,.12)}#snTabs button.on{transform:rotate(var(--r)) translateY(-2px);font-weight:700;padding-top:9px}#snTabs{border-bottom:1.5px solid #555}'; document.head.append(st); }
   const bar = el('div'); bar.id = 'snTabs';
   TABS.forEach((t, k) => { if (!tabTarget(k)) return; const b = el('button', null, t[0]); b.type = 'button'; b.style.cssText = '--c:' + t[1] + ';--d:' + t[2] + ';--r:' + (k % 2 ? -1.5 : 1.2) + 'deg'; b.dataset.k = k;
-    b.onclick = () => { const x = tabTarget(k); if (!x) return; if (x.tagName === 'DETAILS') x.open = true; x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; bar.append(b); });
+    b.onclick = () => { const x = tabTarget(k); if (!x) return; if (x.tagName === 'DETAILS') x.open = true; if (x.id === 'snTabs') { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; } x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; bar.append(b); });
   card.insertBefore(bar, card.firstChild); markTab();
 }
-function markTab() { const bar = document.getElementById('snTabs'); if (!bar || !card) return; let cur = -1; TABS.forEach((t, k) => { const x = tabTarget(k); if (x && x.getBoundingClientRect().top <= 110) cur = k; }); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === cur)); }
+function markTab() { const bar = document.getElementById('snTabs'); if (!bar || !card) return; let cur = -1; TABS.forEach((t, k) => { const x = tabTarget(k); if (x && (k === 0 || x.getBoundingClientRect().top <= 110)) cur = k; }); bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === cur)); }
 window.addEventListener('scroll', () => markTab(), { passive: true });
 const sumBox = (t) => { const sm = el('div', 'display:flex;flex-direction:column;gap:6px;border:1.5px dashed #999;border-radius:10px;padding:10px 12px'); sm.className = 'sn-sum'; sm.append(el('b', null, t)); return sm; };
 const pbar = (p, cls) => { const o = el('div', 'height:12px;border:1.4px solid #555;border-radius:255px 12px 225px 12px/12px 225px 12px 255px;overflow:hidden'), i = el('i', 'display:block;height:100%;width:' + Math.round(Math.min(1, p) * 100) + '%'); i.className = cls; o.append(i); return o; };
@@ -333,6 +333,15 @@ function render0() {
   card.append(top);
   if (!TEACH || true) { const ab = btn('📊 분석하기', analyze, 'align-self:flex-start;padding:6px 14px;font-weight:700'); ab.setAttribute('aria-pressed', 'true'); card.append(ab); }
   /* 매일 단어 */
+  /* 입시 브리핑 (매일 아침 갱신되는 data/briefing.json) */
+  if (BRF === null) { BRF = 0; fetch(new URL('data/briefing.json', location.href).href + '?_=' + Date.now()).then(r => r.ok ? r.json() : null).then(j => { BRF = j || 0; if (j) render(); }).catch(() => {}); }
+  if (BRF && (BRF.items || []).length) { const [d, b] = sec('🏠 홈 · 새 소식'); const dn = BRF.date ? kd(BRF.date) : '';
+    b.append(el('small', 'color:var(--muted,#666)', dn + ' 아침 소식' + (BRF.for ? ' · ' + BRF.for : '')));
+    BRF.items.slice(0, 6).forEach(it => { const bx = el('div', 'display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1.4px dashed #999;border-radius:10px'); bx.className = 'sn-sum';
+      const h = el('div', 'font-weight:700'); if (it.tag) h.append(el('span', 'display:inline-block;margin-right:6px;padding:0 8px;border-radius:8px;background:rgba(140,200,240,.6);font-size:.85em', it.tag)); h.append(document.createTextNode(it.t || '')); bx.append(h);
+      if (it.s) bx.append(el('div', 'line-height:1.4', it.s));
+      if (it.url && /^https:\/\//.test(it.url)) { const a = el('a', 'font-size:.85rem;color:#4a76c4', (it.src || '기사') + ' 원문 보기 ↗'); a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; bx.append(a); } b.append(bx); });
+    if (BRF.note) b.append(el('small', 'color:var(--muted,#666)', BRF.note)); card.append(d); }
   { const P = wPlan(today); if (!P && me.wbook && me.wbook.start && startN(me.wbook.start, today) < 0) { const [d, b] = sec('📘 단어 공부'); b.append(el('b', 'font-size:1.05rem', (me.wbook.title || '단어') + ' · Day ' + Math.max(1, me.wbook.from || 1)), el('div', 'color:var(--muted,#666)', kd(me.wbook.start) + ' 아침 6시부터 시작해요.')); card.append(d); }
     if (P) { const [d, b] = sec('📘 단어 공부'); const done = LS.wdone[today];
       b.append(el('b', 'font-size:1.05rem', (me.wbook.title ? me.wbook.title + ' · ' : '') + (P.over ? '범위를 모두 끝냈어요 🎉' : P.day.n + ' · ' + P.day.w.length + '개')));
@@ -420,15 +429,6 @@ function render0() {
     card.append(d); }
   /* 매일 과제 */
   const daily = (me.daily || []).filter(Boolean);
-  /* 입시 브리핑 (매일 아침 갱신되는 data/briefing.json) */
-  if (BRF === null) { BRF = 0; fetch(new URL('data/briefing.json', location.href).href + '?_=' + Date.now()).then(r => r.ok ? r.json() : null).then(j => { BRF = j || 0; if (j) render(); }).catch(() => {}); }
-  if (BRF && (BRF.items || []).length) { const [d, b] = sec('📰 입시 브리핑'); const dn = BRF.date ? kd(BRF.date) : '';
-    b.append(el('small', 'color:var(--muted,#666)', dn + ' 아침 소식' + (BRF.for ? ' · ' + BRF.for : '')));
-    BRF.items.slice(0, 6).forEach(it => { const bx = el('div', 'display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1.4px dashed #999;border-radius:10px'); bx.className = 'sn-sum';
-      const h = el('div', 'font-weight:700'); if (it.tag) h.append(el('span', 'display:inline-block;margin-right:6px;padding:0 8px;border-radius:8px;background:rgba(140,200,240,.6);font-size:.85em', it.tag)); h.append(document.createTextNode(it.t || '')); bx.append(h);
-      if (it.s) bx.append(el('div', 'line-height:1.4', it.s));
-      if (it.url && /^https:\/\//.test(it.url)) { const a = el('a', 'font-size:.85rem;color:#4a76c4', (it.src || '기사') + ' 원문 보기 ↗'); a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; bx.append(a); } b.append(bx); });
-    if (BRF.note) b.append(el('small', 'color:var(--muted,#666)', BRF.note)); card.append(d); }
   if (daily.length) { const [d, b] = sec('✅ 오늘의 매일 과제'); const done = LS.daily[today] || {};
     let streak = 0; for (let i = 1; i < 400; i++) { const k = ymd(new Date(Date.now() - i * 864e5)), v = LS.daily[k] || {}; if (daily.every(t => v[t])) streak++; else break; }
     const all = daily.every(t => done[t]); if (all) streak++;
