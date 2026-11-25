@@ -542,6 +542,7 @@ html.sk body{background:repeating-linear-gradient(transparent 0 31px,#ededea 31p
 html.sk #nb.nb{--p-bg:#fffefb;--p-ink:#2b2b2b;--p-sub:#777;--p-acc:#3a3a3a;--p-badge:#2b2b2b;--p-chip:transparent;--p-margin:#e3b4b4;--p-line:#e6e6e3;background-color:var(--sk-bg,#fffefb) !important;background-image:repeating-linear-gradient(to bottom,transparent 0 33px,#e6e6e3 33px 34px) !important;border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;box-shadow:2px 3px 0 #e2e2df !important;color:#2b2b2b !important;font-family:var(--sk-font,"Poor Story","Gaegu",cursive) !important}
 html.sk #nb.nb *{font-family:var(--sk-font,"Poor Story","Gaegu",cursive)}
 html.sk #studentView .row{flex-wrap:nowrap !important;gap:6px !important}html.sk #studentView .row button{flex:1 1 0 !important;min-width:0;white-space:normal !important;line-height:1.15 !important;padding:8px 4px !important;font-size:.92rem !important}html.sk #studentView .row #skinBtn{flex:0 0 auto !important;padding:8px 10px !important}html.sk #studentView .skin-row:empty{display:none}
+html.sk body:not(:has(#snCard)) #nb .nb-top,html.sk body:not(:has(#snCard)) #nb .nb-date,html.sk body:not(:has(#snCard)) #nb .nb-meta{display:none !important}
 html.sk #nb.nb::before{background:#e3b4b4 !important;width:1.5px !important}
 html.sk #nb .nb-top{color:#777 !important}
 html.sk #nb .nb-date{color:#c0504d !important;text-decoration:underline wavy rgba(192,80,77,.45) 1.5px;text-underline-offset:7px}
@@ -623,6 +624,14 @@ html.sk #studentView .nb-btn{${PEN}background:#fffefb !important;color:#2b2b2b !
   const skApply = () => { try {
     const R = document.documentElement, row = document.querySelector('#studentView .row'), sb = document.getElementById('skinBtn');
     if (row && sb && sb.parentNode !== row) { row.append(sb); }
+    if (!document.getElementById('snCard')) {   /* 규민·수아 화면만 */
+      if (sb && sb.dataset.gear !== '1') { sb.dataset.gear = '1'; sb.textContent = '⚙️'; sb.title = '꾸미기'; sb.setAttribute('aria-label', '꾸미기'); sb.style.fontSize = '1.25rem'; }
+      const wt = document.getElementById('sWTime'), tx = wt ? wt.textContent.trim() : '';
+      if (wt) wt.style.display = 'none';
+      const old = document.getElementById('skTot');
+      const tgt = [...document.querySelectorAll('#nb small, #nb .nb-t *')].find(e => e.children.length === 0 && /단어 학습/.test(e.textContent) && /최소/.test(e.textContent));
+      if (tx && tgt) { const m = tx.replace(/^.*누적 시간\s*/, ''); const line = '📚 총 누적 시간 ' + m; if (old && old.previousSibling === tgt && old.textContent === line) {} else { if (old) old.remove(); const d = document.createElement('div'); d.id = 'skTot'; d.textContent = line; d.style.cssText = 'font-size:.9rem;color:#555'; tgt.after(d); } }
+    }
     const top = (document.querySelector('#nb .nb-top') || {}).textContent || '', nm = top.split(' · ').pop().trim();
     let k = 'alrim2:skin:' + nm; if (localStorage.getItem(k) === null) k = Object.keys(localStorage).find(x => x.indexOf('alrim2:skin:') === 0) || k;
     const o = JSON.parse(localStorage.getItem(k) || '{}') || {};
