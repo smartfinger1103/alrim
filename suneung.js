@@ -553,6 +553,15 @@ html.sk #nb .nb-btn,html.sk #studentView .row button,html.sk .skin-btn{backgroun
 html.sk #nb .nb-g:nth-of-type(4n+1) .nb-btn{box-shadow:2px 3px 0 rgba(226,160,40,.55) !important}html.sk #nb .nb-g:nth-of-type(4n+3) .nb-btn{box-shadow:2px 3px 0 rgba(88,160,96,.5) !important}html.sk #nb .nb-g:nth-of-type(4n) .nb-btn{box-shadow:2px 3px 0 rgba(214,92,96,.5) !important}
 html.sk #nb .nb-item.done .nb-t,html.sk #nb .done .nb-t{color:#b5b5b5 !important}html.sk #nb .done .nb-btn{color:#d32f2f !important;box-shadow:none !important;border-style:dashed !important}
 html.sk #studentView .row button[aria-pressed="true"],html.sk #studentView .row button.on{background:rgba(255,214,102,.55) !important}
+/* 폰(좁은 화면)에서는 글씨와 여백을 줄여 한 줄에 더 많이 들어가게 */
+html.sk #nb .nb-t{font-size:1.02rem !important;line-height:1.3 !important}
+html.sk #nb .nb-meta,html.sk #nb .nb-meta *{font-size:.82rem !important;line-height:1.25 !important}html.sk #nb .nb-meta{margin-top:2px !important;gap:2px 8px !important}
+html.sk #nb .nb-item{padding:5px 0 !important;gap:6px !important}
+html.sk #nb .nb-btn{font-size:.92rem !important;padding:5px 9px !important}
+html.sk #nb .nb-sub{font-size:1.2rem !important}html.sk #nb .nb-date{font-size:1.7rem !important}html.sk #nb .nb-g{margin-top:12px !important;padding-top:9px !important}
+@media (max-width:520px){html.sk #nb.nb{padding:14px 10px 16px 42px !important}html.sk #nb.nb::before{left:30px !important}html.sk #nb .nb-num{left:-36px !important;width:24px !important;height:24px !important;font-size:.85rem !important}
+html.sk #nb .nb-t{font-size:.95rem !important}html.sk #nb .nb-meta,html.sk #nb .nb-meta *{font-size:.76rem !important}html.sk #nb .nb-btn{font-size:.85rem !important;padding:4px 8px !important}html.sk #nb .nb-date{font-size:1.45rem !important}html.sk #nb .nb-item{grid-template-columns:10px minmax(0,1fr) auto !important}
+html.sk #studentView h1{font-size:1.35rem !important}html.sk #studentView .row button{font-size:.9rem !important;padding:6px 8px !important}}
 html.sk #studentView h1,html.sk #studentView .s-head,html.sk #studentView .s-head *,html.sk #studentView .hint,html.sk #studentView small{font-family:"Poor Story","Gaegu",cursive !important}
 html.sk #snCard{border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;padding-left:34px !important;background:linear-gradient(90deg,transparent 22px,#e3b4b4 22px,#e3b4b4 23px,transparent 23px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;box-shadow:2px 3px 0 #e2e2df !important}
 html.sk #snCard,html.sk #snCard summary,html.sk #snCard b,html.sk #snCard small,html.sk #snCard div,html.sk #snCard span,html.sk #snCard button{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
