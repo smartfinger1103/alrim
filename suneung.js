@@ -553,6 +553,7 @@ function skFont(f) { if (!f) return; const id = 'skf-' + f.replace(/\s/g, ''); i
 let SKSEL = null, skApplyNow = () => {};
 const skHost = () => document.getElementById('snCard') || document.getElementById('nb');
 function skLayer() {
+  { document.querySelectorAll('#skStk').forEach(x => x.remove()); return; }   /* 스티커는 일단 뺐어요 */
   const host = skHost(); if (!host || host.offsetParent === null && getComputedStyle(host).display === 'none') return;
   document.querySelectorAll('#skStk').forEach(x => { if (x.parentNode !== host) x.remove(); });
   let L = host.querySelector(':scope > #skStk'); const o = skxGet(), sig = JSON.stringify(o.stk) + '|' + SKSEL;
@@ -582,9 +583,6 @@ function skToggle() {
     const sw = (title, key) => { P.append(el('b', 'font-size:.95rem', title)); const w = el('div', 'display:flex;flex-wrap:wrap;gap:8px'); const none = btn('기본', () => { skxSet({ [key]: '' }); build(); }, 'padding:0;width:38px;height:38px;border-radius:50%;font-size:.7rem'); none.style.setProperty('background', 'linear-gradient(135deg,#fff 50%,#ddd 50%)', 'important'); if (!o[key]) none.style.outline = '3px solid #333'; w.append(none); SK_PAPER.forEach(([c, nm]) => { const b = btn('', () => { skxSet({ [key]: c }); build(); }, 'padding:0;width:38px;height:38px;border-radius:50%'); b.style.setProperty('background', c, 'important'); b.title = nm; b.setAttribute('aria-label', nm); if (o[key] === c) { b.style.setProperty('outline', '3px solid #333', 'important'); b.textContent = '✓'; } w.append(b); }); P.append(w); };
     sw('종이 색', 'bg'); sw('바탕 색', 'body');
     P.append(el('b', 'font-size:.95rem', '글씨체')); const fw = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); SK_FONTS.forEach(([f, nm]) => { const b = btn(nm, () => { skxSet({ f }); build(); }, 'padding:6px 10px;font-size:1rem' + (f ? ";font-family:'" + f + "',sans-serif" : '')); if ((o.f || '') === f) b.style.setProperty('background', 'rgba(255,214,102,.75)', 'important'); fw.append(b); }); P.append(fw);
-    P.append(el('b', 'font-size:.95rem', '스티커 (누르면 노트에 붙어요 · 끌어서 옮기고, 누르면 크기·삭제)')); const sg = el('div', 'display:flex;flex-wrap:wrap;gap:4px'); SK_STK.forEach(e => sg.append(btn(e, () => skAdd({ e }), 'padding:2px 6px;font-size:1.6rem;border:none;line-height:1.2'))); P.append(sg);
-    const tg = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); SK_TXT.forEach(t => tg.append(btn(t, () => skAdd({ t }), 'padding:4px 10px;font-size:.9rem'))); P.append(tg);
-    P.append(btn('🧹 스티커 모두 지우기', () => { if (confirm('붙인 스티커를 모두 지울까요?')) { SKSEL = null; skxSet({ stk: [] }); } }, 'padding:6px 12px;color:#c0504d;border-color:#c0504d'));
     P.append(el('small', 'color:#777', '이 휴대폰에만 저장돼요.'));
   };
   build(); document.body.append(P);
