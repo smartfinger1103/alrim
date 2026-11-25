@@ -1,10 +1,11 @@
 <!doctype html><html><head>
-<meta name="build" content="20261126-4">
+<meta name="build" content="20261126-5"><style id="skPre">html:not(.sk) #studentView{visibility:hidden}</style><script>setTimeout(function(){var e=document.getElementById("skPre");if(e)e.remove()},4500)</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
+<script>/* 새 버전 자동 확인: 화면을 열 때(처음 열기 · 앱으로 돌아올 때) 새 버전이 있으면 자동으로 새로 불러와요. 공부 중에는 건드리지 않아요. */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261126-4">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261126-4">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+function busy(){if(document.querySelector('#quiz:not([hidden]),.sheet:not([hidden]),#skPanel'))return true;var e=document.querySelectorAll('body > div');for(var i=0;i<e.length;i++){var s=getComputedStyle(e[i]);if(s.position==='fixed'&&e[i].id!=='skStk'&&s.display!=='none'&&s.visibility!=='hidden'&&e[i].offsetHeight>window.innerHeight*0.6)return true}return false}
+function chk(){fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="([^"]*)">/);if(!x||x[1]===m.content||busy())return;var k='rl'+x[1],n=+sessionStorage.getItem(k)||0;if(n>=2)return;sessionStorage.setItem(k,n+1);var q=location.search.replace(/([?&])nc=\d+&?/g,'$1').replace(/[?&]$/,'');location.replace(location.pathname+q+(q?'&':'?')+'nc='+Date.now()+location.hash)}).catch(function(){})}
+chk();document.addEventListener('visibilitychange',function(){if(!document.hidden)chk()})}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
 .wtime b { font-size: 1.05rem; color: #B0570B; }
@@ -3607,7 +3608,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 
 })();
 </script>
-<script src="github-sync.js?v=20261125-4"></script><script src="suneung.js?v=20261126-4"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
+<script src="github-sync.js?v=20261125-4"></script><script src="suneung.js?v=20261126-5"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
 <style>#mTop{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:9999;width:48px;height:48px;border-radius:50%;border:none;background:#4f46e5;color:#fff;font-size:22px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;cursor:pointer}
 #mTop.on{opacity:.92;pointer-events:auto}@media (min-width:821px){#mTop{display:none}}</style>
 <script>(function(){var b=document.getElementById('mTop');function u(){b.classList.toggle('on',(window.scrollY||document.documentElement.scrollTop)>300)}window.addEventListener('scroll',u,{passive:true});u();b.onclick=function(){window.scrollTo({top:0,behavior:'smooth'})}})();</script>
@@ -3643,6 +3644,5 @@ no.onchange=function(){show((parseInt(no.value)||1)-1)};document.getElementById(
 var sx=null;pic.addEventListener('touchstart',function(e){if(e.touches.length===1)sx=e.touches[0].clientX},{passive:true});
 pic.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>60)show(i+(dx<0?1:-1))},{passive:true});
 document.addEventListener('keydown',function(e){if(ov.style.display!=='flex')return;if(e.key==='ArrowRight')show(i+1);if(e.key==='ArrowLeft')show(i-1);if(e.key==='Escape')ov.style.display='none';});})();</script>
-<script>/* 새 버전이 올라오면 위에 알려 줘요 (브라우저에 남은 예전 화면 방지) */
-(function(){var me=(document.querySelector('meta[name="build"]')||{}).content||'';function chk(){fetch(location.pathname+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/name="build" content="([^"]*)"/);if(!m||m[1]===me||document.getElementById('newVer'))return;var b=document.createElement('div');b.id='newVer';b.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:100000;background:#dc2626;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.3);cursor:pointer';b.textContent='🔄 새 버전이 있어요 · 눌러서 새로고침';b.onclick=function(){location.replace(location.pathname+'?v='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})}setTimeout(chk,4000);setInterval(chk,120000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk()})})();</script>
+<script>/* 학생 화면: 공부 중 새 버전 알림은 띄우지 않아요 (위쪽 스크립트가 화면을 열 때 자동 갱신) */</script>
 </body></html>

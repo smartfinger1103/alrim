@@ -357,7 +357,7 @@ function render0() {
     const nav = el('div', 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 4px');
     const mk = (t, dv, dis, lab) => { const x = btn(t, () => { VOFF = Math.min(offMax, Math.max(0, VOFF + dv)); render(); }, 'padding:4px 16px;font-size:1.4rem;font-weight:700;line-height:1'); x.disabled = dis; x.setAttribute('aria-label', lab); x.className = (x.className ? x.className + ' ' : '') + 'sn-an'; return x; };
     const lab = el('b', 'font-size:.95rem;text-align:center;flex:1', (VOFF ? '지난 과제 · ' : '오늘 · ') + kd(today)); if (VOFF) lab.style.color = '#c0504d';
-    nav.append(mk('‹', 1, VOFF >= offMax, '이전 날 과제'), lab, mk('›', -1, VOFF <= 0, '다음 날 과제')); card.append(nav);
+    const gear = btn('⚙️', skToggle, 'padding:2px 8px;font-size:1.2rem;line-height:1.2'); gear.setAttribute('aria-label', '꾸미기'); gear.title = '꾸미기'; nav.append(mk('‹', 1, VOFF >= offMax, '이전 날 과제'), lab, mk('›', -1, VOFF <= 0, '다음 날 과제'), gear); card.append(nav);
   }
   card.append(top);
   if (!TEACH || true) { const ab = btn('📊 분석하기', analyze, 'margin-left:auto;padding:2px 10px;font-weight:700'); ab.className = (ab.className ? ab.className + ' ' : '') + 'sn-an'; ab.setAttribute('aria-pressed', 'true'); top.append(ab); }
@@ -537,6 +537,57 @@ function tick() {
   if (LS.run && !LS.run.ready && Date.now() - (tick.last || 0) > 60000) { tick.last = Date.now(); render(); }
 }
 /* 혜나 화면 전체: 흰색·회색 노트 필기 스타일 */
+
+/* ===== 꾸미기: 종이·바탕 색, 글씨체, 스티커 (세 학생 모두, 이 기기에 저장) ===== */
+const SK_PAPER = [['#fffefb', '하양'], ['#fff6dd', '크림'], ['#fff3b0', '레몬'], ['#ffe9b8', '살구노랑'], ['#ffe0cc', '피치'], ['#ffd6c7', '복숭아'], ['#ffcfcf', '코랄'], ['#ffd6e5', '핑크'], ['#ffe4ec', '벚꽃'], ['#ffc9d6', '체리'], ['#f5d0fe', '분홍보라'], ['#efd9f7', '라일락'], ['#e6dcff', '라벤더'], ['#ddd6fe', '연보라'], ['#d6ecff', '하늘'], ['#dbeafe', '아기파랑'], ['#c9efe9', '청록'], ['#d2f5e8', '민트'], ['#e2f5c8', '연두'], ['#f0f7c2', '라임'], ['#f1e4d6', '모카'], ['#eceff3', '구름']];
+const SK_FONTS = [['', '기본'], ['Jua', '주아체'], ['Gaegu', '개구쟁이'], ['Hi Melody', '하이멜로디'], ['Poor Story', '푸어스토리'], ['Gowun Dodum', '고운돋움'], ['Nanum Pen Script', '나눔펜'], ['Cute Font', '귀여운체'], ['Single Day', '싱글데이'], ['Gamja Flower', '감자꽃'], ['Do Hyeon', '도현'], ['Yeon Sung', '연성']];
+const SK_STK = ['⭐', '🌟', '✨', '💖', '💗', '🎀', '🌸', '🌷', '🌼', '🍀', '🌈', '☁️', '🌙', '☀️', '🐱', '🐶', '🐰', '🐻', '🐼', '🐥', '🐣', '🦄', '🐢', '🦋', '🍓', '🍒', '🍑', '🍰', '🍩', '🍭', '🧸', '🎈', '🎁', '💌', '📚', '✏️', '💯', '👍', '🔥', '💪', '😊', '🥰', '😎', '🤩', '🥳', '😴', '👑', '🎵'];
+const SK_TXT = ['참 잘했어요', '화이팅!', '최고!', '오늘도 힘내자', '해냈다!', '조금만 더!'];
+const skName = () => { const t = ((document.querySelector('#nb .nb-top') || {}).textContent || '').split(' · ').pop().trim(); return (typeof me !== 'undefined' && me && me.name) || t || 'x'; };
+const skKey = () => 'alrim2:skx:' + skName();
+function skxGet() { try { const o = JSON.parse(localStorage.getItem(skKey()) || '{}') || {}; o.stk = o.stk || []; return o; } catch (e) { return { stk: [] }; } }
+function skxSet(p) { try { const o = Object.assign(skxGet(), p); localStorage.setItem(skKey(), JSON.stringify(o)); } catch (e) {} skApplyNow(); }
+function skFont(f) { if (!f) return; const id = 'skf-' + f.replace(/\s/g, ''); if (document.getElementById(id)) return; const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(f).replace(/%20/g, '+') + '&display=swap'; document.head.append(l); }
+let SKSEL = null, skApplyNow = () => {};
+const skHost = () => document.getElementById('snCard') || document.getElementById('nb');
+function skLayer() {
+  const host = skHost(); if (!host || host.offsetParent === null && getComputedStyle(host).display === 'none') return;
+  document.querySelectorAll('#skStk').forEach(x => { if (x.parentNode !== host) x.remove(); });
+  let L = host.querySelector(':scope > #skStk'); const o = skxGet(), sig = JSON.stringify(o.stk) + '|' + SKSEL;
+  if (L && L.dataset.sig === sig) return;
+  if (!L) { L = document.createElement('div'); L.id = 'skStk'; L.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:0;z-index:20;pointer-events:none'; if (getComputedStyle(host).position === 'static') host.style.position = 'relative'; host.append(L); }
+  L.dataset.sig = sig; L.textContent = '';
+  o.stk.forEach((s) => {
+    const e = document.createElement('span'); e.className = 'skst' + (SKSEL === s.id ? ' sel' : ''); e.style.left = s.x + '%'; e.style.top = s.y + 'px';
+    if (s.t) { e.textContent = s.t; e.style.cssText += ';font-size:' + (s.z * 0.42) + 'px;padding:4px 12px;border:1.6px solid #555;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff7b8;color:#2b2b2b;font-weight:700;white-space:nowrap;transform:translate(-50%,-50%) rotate(-4deg)'; } else { e.textContent = s.e; e.style.fontSize = s.z + 'px'; }
+    if (SKSEL === s.id) { const t = document.createElement('span'); t.className = 'skt'; [['➖', -8], ['➕', 8], ['🗑', 0]].forEach(([ic, d]) => { const b = document.createElement('b'); b.textContent = ic; b.onpointerdown = (ev) => ev.stopPropagation(); b.onclick = (ev) => { ev.stopPropagation(); const O = skxGet(); if (!d) { O.stk = O.stk.filter(x => x.id !== s.id); SKSEL = null; } else { const q = O.stk.find(x => x.id === s.id); if (q) q.z = Math.max(18, Math.min(120, q.z + d)); } skxSet({ stk: O.stk }); }; t.append(b); }); e.append(t); }
+    let drag = null;
+    e.onpointerdown = (ev) => { if (ev.target.closest && ev.target.closest('.skt')) return; ev.preventDefault(); const r = host.getBoundingClientRect(); drag = { sx: ev.clientX, sy: ev.clientY, moved: false, r }; try { e.setPointerCapture(ev.pointerId); } catch (x) {} };
+    e.onpointermove = (ev) => { if (!drag) return; if (!drag.moved && Math.hypot(ev.clientX - drag.sx, ev.clientY - drag.sy) < 5) return; drag.moved = true; const r = drag.r; s.x = Math.max(0, Math.min(100, (ev.clientX - r.left) / r.width * 100)); s.y = Math.max(0, ev.clientY - r.top); e.style.left = s.x + '%'; e.style.top = s.y + 'px'; };
+    e.onpointerup = () => { if (!drag) return; const mv = drag.moved; drag = null; if (mv) { const O = skxGet(); const q = O.stk.find(x => x.id === s.id); if (q) { q.x = s.x; q.y = s.y; } try { localStorage.setItem(skKey(), JSON.stringify(Object.assign(O, {}))); } catch (x) {} } else { SKSEL = SKSEL === s.id ? null : s.id; } skApplyNow(); };
+    L.append(e);
+  });
+}
+document.addEventListener('pointerdown', (ev) => { if (SKSEL && !(ev.target.closest && ev.target.closest('.skst'))) { SKSEL = null; skApplyNow(); } }, true);
+function skAdd(item) { const o = skxGet(), h = skHost(); const r = h ? h.getBoundingClientRect() : { top: 0 }; const y = Math.max(70, Math.min(innerHeight * 0.3 - r.top, (h ? h.offsetHeight : 600) - 60)); o.stk.push(Object.assign({ id: 's' + Date.now() + Math.floor(Math.random() * 99), x: 30 + Math.random() * 40, y: y + Math.random() * 40, z: item.t ? 50 : 52 }, item)); SKSEL = o.stk[o.stk.length - 1].id; skxSet({ stk: o.stk }); }
+function skToggle() {
+  let P = document.getElementById('skPanel'); if (P) { P.remove(); return; }
+  SK_FONTS.forEach(f => skFont(f[0]));
+  P = el('div', 'position:fixed;left:0;right:0;bottom:0;z-index:100000;max-height:56vh;overflow:auto;background:#fffefb;color:#2b2b2b;border-top:2px solid #555;border-radius:16px 16px 0 0;padding:10px 14px 18px;box-shadow:0 -6px 20px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:8px'); P.id = 'skPanel'; P.className = 'sk-ui';
+  const build = () => {
+    P.textContent = ''; const o = skxGet();
+    const hd = el('div', 'display:flex;justify-content:space-between;align-items:center'); hd.append(el('b', 'font-size:1.15rem', '⚙️ 꾸미기'), btn('닫기 ✕', () => P.remove(), 'padding:4px 12px')); P.append(hd);
+    const sw = (title, key) => { P.append(el('b', 'font-size:.95rem', title)); const w = el('div', 'display:flex;flex-wrap:wrap;gap:8px'); const none = btn('기본', () => { skxSet({ [key]: '' }); build(); }, 'padding:0;width:34px;height:34px;border-radius:50%;font-size:.7rem;background:linear-gradient(135deg,#fff 50%,#ddd 50%)'); if (!o[key]) none.style.outline = '3px solid #333'; w.append(none); SK_PAPER.forEach(([c, nm]) => { const b = btn('', () => { skxSet({ [key]: c }); build(); }, 'padding:0;width:34px;height:34px;border-radius:50%;background:' + c); b.title = nm; b.setAttribute('aria-label', nm); if (o[key] === c) b.style.outline = '3px solid #333'; w.append(b); }); P.append(w); };
+    sw('종이 색', 'bg'); sw('바탕 색', 'body');
+    P.append(el('b', 'font-size:.95rem', '글씨체')); const fw = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); SK_FONTS.forEach(([f, nm]) => { const b = btn(nm, () => { skxSet({ f }); build(); }, 'padding:6px 10px;font-size:1rem' + (f ? ";font-family:'" + f + "',sans-serif" : '')); if ((o.f || '') === f) b.style.background = 'rgba(255,214,102,.6)'; fw.append(b); }); P.append(fw);
+    P.append(el('b', 'font-size:.95rem', '스티커 (누르면 노트에 붙어요 · 끌어서 옮기고, 누르면 크기·삭제)')); const sg = el('div', 'display:flex;flex-wrap:wrap;gap:4px'); SK_STK.forEach(e => sg.append(btn(e, () => skAdd({ e }), 'padding:2px 6px;font-size:1.6rem;border:none;line-height:1.2'))); P.append(sg);
+    const tg = el('div', 'display:flex;flex-wrap:wrap;gap:6px'); SK_TXT.forEach(t => tg.append(btn(t, () => skAdd({ t }), 'padding:4px 10px;font-size:.9rem'))); P.append(tg);
+    P.append(btn('🧹 스티커 모두 지우기', () => { if (confirm('붙인 스티커를 모두 지울까요?')) { SKSEL = null; skxSet({ stk: [] }); } }, 'padding:6px 12px;color:#c0504d;border-color:#c0504d'));
+    P.append(el('small', 'color:#777', '이 휴대폰에만 저장돼요.'));
+  };
+  build(); document.body.append(P);
+}
+window.alrimSkToggle = skToggle;
 function sketchSkin() {
   if (TEACH || document.getElementById('skSkin')) return;
   const lk = document.createElement('link'); lk.rel = 'stylesheet'; lk.href = 'https://fonts.googleapis.com/css2?family=Poor+Story&display=swap'; document.head.append(lk);
@@ -545,11 +596,12 @@ function sketchSkin() {
   st.textContent = `
 html.sk,html.sk body,html.sk body *{--bg:#fbfbf9 !important;--panel:#fffefb !important;--ink:#2b2b2b !important;--muted:#777 !important;--line:#d6d6d3 !important;--accent:#3a3a3a !important;--accent-ink:#fff !important;--soft:#efefec !important;--warn:#555 !important;--font-display:"Poor Story","Poor Story","Gaegu",cursive !important}html.sk{color-scheme:light}
 html.sk .sk-ui b,html.sk .sk-ui button,html.sk .sk-ui small{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}html.sk .ls-box button,html.sk .ls-box b,html.sk .ls-box h2,html.sk .ls-box h3{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
-html.sk body{background:repeating-linear-gradient(transparent 0 31px,#ededea 31px 32px),#fbfbf9 !important;color:#2b2b2b}
+html.sk body{background:repeating-linear-gradient(transparent 0 31px,#ededea 31px 32px),var(--sk-body,#fbfbf9) !important;color:#2b2b2b}
 /* 다른 학생 알림장(#nb)도 같은 노트 스케치 컨셉 (내용은 그대로, 디자인만) */
 html.sk #nb.nb{--p-bg:#fffefb;--p-ink:#2b2b2b;--p-sub:#777;--p-acc:#3a3a3a;--p-badge:#2b2b2b;--p-chip:transparent;--p-margin:#e3b4b4;--p-line:#e6e6e3;background-color:var(--sk-bg,#fffefb) !important;background-image:repeating-linear-gradient(to bottom,transparent 0 33px,#e6e6e3 33px 34px) !important;border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;box-shadow:2px 3px 0 #e2e2df !important;color:#2b2b2b !important;font-family:var(--sk-font,"Poor Story","Gaegu",cursive) !important}
 html.sk #nb.nb *{font-family:var(--sk-font,"Poor Story","Gaegu",cursive)}
 html.sk #studentView .row{flex-wrap:nowrap !important;gap:6px !important}html.sk #studentView .row button{flex:1 1 0 !important;min-width:0;white-space:normal !important;line-height:1.15 !important;padding:8px 4px !important;font-size:.92rem !important}html.sk #studentView .row #skinBtn{flex:0 0 auto !important;padding:8px 10px !important}html.sk #studentView .skin-row:empty{display:none}
+html.sk #skinBox{display:none !important}html.sk.skf #snCard *:not(.sn-en),html.sk.skf #nb.nb *,html.sk.skf #studentView h1,html.sk.skf #studentView .row button{font-family:var(--sk-font) !important}#skStk .skst{position:absolute;transform:translate(-50%,-50%);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;pointer-events:auto;line-height:1;filter:drop-shadow(1px 2px 1px rgba(0,0,0,.25))}#skStk .skst.sel{outline:2px dashed #e0457b;outline-offset:4px;border-radius:8px}#skStk .skt{position:absolute;left:50%;top:-44px;transform:translateX(-50%);display:flex;gap:4px;background:#fffefb;border:1.5px solid #555;border-radius:999px;padding:3px 6px;font-size:16px;white-space:nowrap;filter:none;cursor:default}#skStk .skt b{cursor:pointer;padding:0 6px;font-size:18px}
 html.sk body:not(:has(#snCard)) #nb .nb-top,html.sk body:not(:has(#snCard)) #nb .nb-date,html.sk body:not(:has(#snCard)) #nb .nb-meta{display:none !important}
 html.sk #nb.nb::before{background:#e3b4b4 !important;width:1.5px !important}
 html.sk #nb .nb-top{color:#777 !important}
@@ -576,7 +628,7 @@ html.sk #nb .nb-sub{font-size:1.2rem !important}html.sk #nb .nb-date{font-size:1
 html.sk #nb .nb-t{font-size:.95rem !important}html.sk #nb .nb-meta,html.sk #nb .nb-meta *{font-size:.76rem !important}html.sk #nb .nb-btn{font-size:.85rem !important;padding:4px 8px !important}html.sk #nb .nb-date{font-size:1.45rem !important}html.sk #nb .nb-item{grid-template-columns:10px minmax(0,1fr) auto !important}
 html.sk #studentView h1{font-size:1.35rem !important}html.sk #studentView .row button{font-size:.9rem !important;padding:6px 8px !important}}
 html.sk #studentView h1,html.sk #studentView .s-head,html.sk #studentView .s-head *,html.sk #studentView .hint,html.sk #studentView small{font-family:"Poor Story","Gaegu",cursive !important}
-html.sk #snCard{border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;padding-left:34px !important;background:linear-gradient(90deg,transparent 22px,#e3b4b4 22px,#e3b4b4 23px,transparent 23px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;box-shadow:2px 3px 0 #e2e2df !important}
+html.sk #snCard{border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;padding-left:34px !important;background:linear-gradient(90deg,transparent 22px,#e3b4b4 22px,#e3b4b4 23px,transparent 23px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),var(--sk-bg,#fffefb) !important;box-shadow:2px 3px 0 #e2e2df !important}
 html.sk #snCard,html.sk #snCard summary,html.sk #snCard b,html.sk #snCard small,html.sk #snCard div,html.sk #snCard span,html.sk #snCard button{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
 html.sk #snCard summary{font-size:1.3rem !important;font-weight:700;list-style:none}
 html.sk #snCard summary::-webkit-details-marker{display:none}
@@ -633,20 +685,20 @@ html.sk #studentView .nb-btn{${PEN}background:#fffefb !important;color:#2b2b2b !
     const R = document.documentElement, row = document.querySelector('#studentView .row'), sb = document.getElementById('skinBtn');
     if (row && sb && sb.parentNode !== row) { row.append(sb); }
     if (!document.getElementById('snCard')) {   /* 규민·수아 화면만 */
-      if (sb && sb.dataset.gear !== '1') { sb.dataset.gear = '1'; sb.textContent = '⚙️'; sb.title = '꾸미기'; sb.setAttribute('aria-label', '꾸미기'); sb.style.fontSize = '1.25rem'; }
+      if (sb && sb.dataset.gear !== '1') { sb.dataset.gear = '1'; sb.textContent = '⚙️'; sb.title = '꾸미기'; sb.setAttribute('aria-label', '꾸미기'); sb.style.fontSize = '1.25rem'; sb.onclick = (e) => { e.preventDefault(); skToggle(); }; }
       const wt = document.getElementById('sWTime'), tx = wt ? wt.textContent.trim() : '';
       if (wt) wt.style.display = 'none';
       const old = document.getElementById('skTot');
       const tgt = [...document.querySelectorAll('#nb small, #nb .nb-t *')].find(e => e.children.length === 0 && /단어 학습/.test(e.textContent) && /최소/.test(e.textContent));
       if (tx && tgt) { const m = tx.replace(/^.*누적 시간\s*/, ''); const line = '📚 총 누적 시간 ' + m; if (old && old.previousSibling === tgt && old.textContent === line) {} else { if (old) old.remove(); const d = document.createElement('div'); d.id = 'skTot'; d.textContent = line; d.style.cssText = 'font-size:.9rem;color:#555'; tgt.after(d); } }
     }
-    const top = (document.querySelector('#nb .nb-top') || {}).textContent || '', nm = top.split(' · ').pop().trim();
-    let k = 'alrim2:skin:' + nm; if (localStorage.getItem(k) === null) k = Object.keys(localStorage).find(x => x.indexOf('alrim2:skin:') === 0) || k;
-    const o = JSON.parse(localStorage.getItem(k) || '{}') || {};
-    if (o.h) { R.style.setProperty('--sk-bg', 'hsl(' + o.h + ' ' + Math.round(80 * (o.k || 1)) + '% 93%)'); } else R.style.removeProperty('--sk-bg');
-    if (o.f) { R.style.setProperty('--sk-font', "'" + o.f + "', 'Poor Story', cursive"); } else R.style.removeProperty('--sk-font');
+    const o = skxGet();
+    if (o.bg) R.style.setProperty('--sk-bg', o.bg); else R.style.removeProperty('--sk-bg');
+    if (o.body) R.style.setProperty('--sk-body', o.body); else R.style.removeProperty('--sk-body');
+    if (o.f) { skFont(o.f); R.style.setProperty('--sk-font', "'" + o.f + "', 'Poor Story', cursive"); R.classList.add('skf'); } else { R.style.removeProperty('--sk-font'); R.classList.remove('skf'); }
+    skLayer();
   } catch (e) {} };
-  skApply(); setInterval(skApply, 600);
+  skApplyNow = skApply; skApply(); setInterval(skApply, 600);
 }
 /* 단어 공부·테스트 같은 창도 연필 버튼으로 */
 new MutationObserver(ms => { if (!document.documentElement.classList.contains('sk')) return; ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1 && n.parentNode === document.body && /position:\s*fixed/.test(n.getAttribute('style') || '') && !n.id) n.classList.add('sk-ui'); })); }).observe(document.body, { childList: true });
