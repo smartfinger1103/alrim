@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261125-10">
+<meta name="build" content="20261125-11">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-10">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-10">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-11">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-11">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -2004,6 +2004,8 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     const fb = box.querySelector('.ffold'); if (fb) { fb.textContent = on ? '펼치기 ▼' : '접기 ▲'; fb.setAttribute('aria-expanded', on ? 'false' : 'true'); }
   }
   $$('.fbox').forEach(box => {
+    /* 덜 쓰는 칸(학습자료·독해문제·기타·문장 연습·기타 과목·시험 내기)은 처음에 접어 둬요 */
+    if (['fbPdf', 'fbRd', 'fbEtc', 'fSentsBox', 'fbTask', 'fbExam'].includes(box.id) && store.get('foldDef1:' + box.id) !== '1') { store.set('foldDef1:' + box.id, '1'); store.set('fold:' + box.id, '1'); }
     setFold(box, store.get('fold:' + box.id) === '1');
     const fb = box.querySelector('.ffold'); if (fb) fb.onclick = () => { const on = !box.classList.contains('folded'); setFold(box, on); store.set('fold:' + box.id, on ? '1' : '0'); };
   });
