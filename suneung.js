@@ -88,7 +88,9 @@ const el = (t, css, txt) => { const e = document.createElement(t); if (css) e.st
 const btn = (txt, on, css) => { const b = el('button', 'font:inherit;padding:8px 12px;border-radius:10px;border:1.5px solid var(--accent,#4f46e5);background:transparent;color:var(--ink,#111);cursor:pointer;' + (css || ''), txt); b.type = 'button'; b.onclick = on; return b; };
 let me = null, LS = {}, card = null, sig = '';
 const key = () => 'alrim:sn:' + (me ? me.name : '') + (TEACH ? ':teacher' : '');
-const load = () => { try { LS = JSON.parse(localStorage.getItem(key()) || '{}'); } catch (e) { LS = {}; } LS.daily = LS.daily || {}; LS.time = LS.time || {}; LS.read = LS.read || []; LS.wwrong = LS.wwrong || {}; LS.wdone = LS.wdone || {}; LS.ldone = LS.ldone || {}; };
+const load = () => { try { LS = JSON.parse(localStorage.getItem(key()) || '{}'); } catch (e) { LS = {}; } LS.daily = LS.daily || {}; LS.time = LS.time || {}; LS.read = LS.read || []; LS.wwrong = LS.wwrong || {}; LS.wdone = LS.wdone || {}; LS.ldone = LS.ldone || {};
+  /* 선생님이 진도를 처음부터 다시 시작시키면(resetAt) 그 전의 단어·듣기·독해 기록을 한 번 비워요. 공부 시간 기록은 남겨요. */
+  if (me && me.resetAt && LS.resetAt !== me.resetAt) { LS.wwrong = {}; LS.wdone = {}; LS.wst = {}; LS.wsec = {}; LS.ldone = {}; LS.read = []; LS.resetAt = me.resetAt; try { Object.keys(localStorage).filter(k => /^alrim:rdres:sn-rd-/.test(k)).forEach(k => localStorage.removeItem(k)); localStorage.setItem(key(), JSON.stringify(LS)); } catch (e) {} } };
 const save = () => { try { localStorage.setItem(key(), JSON.stringify(LS)); } catch (e) {} };
 function student() { try { const s = app.snapshot(), d = JSON.parse(s.data); if (TEACH) { const c = document.getElementById('cls'); return d.students.find(x => x.name === (c && c.value)) || null; } return d.students.find(x => x.name === s.fixed) || d.students[0]; } catch (e) { return null; } }
 
