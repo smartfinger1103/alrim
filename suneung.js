@@ -539,8 +539,9 @@ html.sk,html.sk body,html.sk body *{--bg:#fbfbf9 !important;--panel:#fffefb !imp
 html.sk .sk-ui b,html.sk .sk-ui button,html.sk .sk-ui small{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}html.sk .ls-box button,html.sk .ls-box b,html.sk .ls-box h2,html.sk .ls-box h3{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
 html.sk body{background:repeating-linear-gradient(transparent 0 31px,#ededea 31px 32px),#fbfbf9 !important;color:#2b2b2b}
 /* 다른 학생 알림장(#nb)도 같은 노트 스케치 컨셉 (내용은 그대로, 디자인만) */
-html.sk #nb.nb{--p-bg:#fffefb;--p-ink:#2b2b2b;--p-sub:#777;--p-acc:#3a3a3a;--p-badge:#2b2b2b;--p-chip:transparent;--p-margin:#e3b4b4;--p-line:#e6e6e3;background-color:#fffefb !important;background-image:repeating-linear-gradient(to bottom,transparent 0 33px,#e6e6e3 33px 34px) !important;border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;box-shadow:2px 3px 0 #e2e2df !important;color:#2b2b2b !important;font-family:"Poor Story","Gaegu",cursive !important}
-html.sk #nb.nb *{font-family:"Poor Story","Gaegu",cursive}
+html.sk #nb.nb{--p-bg:#fffefb;--p-ink:#2b2b2b;--p-sub:#777;--p-acc:#3a3a3a;--p-badge:#2b2b2b;--p-chip:transparent;--p-margin:#e3b4b4;--p-line:#e6e6e3;background-color:var(--sk-bg,#fffefb) !important;background-image:repeating-linear-gradient(to bottom,transparent 0 33px,#e6e6e3 33px 34px) !important;border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;box-shadow:2px 3px 0 #e2e2df !important;color:#2b2b2b !important;font-family:var(--sk-font,"Poor Story","Gaegu",cursive) !important}
+html.sk #nb.nb *{font-family:var(--sk-font,"Poor Story","Gaegu",cursive)}
+html.sk #studentView .row{flex-wrap:nowrap !important;gap:6px !important}html.sk #studentView .row button{flex:1 1 0 !important;min-width:0;white-space:normal !important;line-height:1.15 !important;padding:8px 4px !important;font-size:.92rem !important}html.sk #studentView .row #skinBtn{flex:0 0 auto !important;padding:8px 10px !important}html.sk #studentView .skin-row:empty{display:none}
 html.sk #nb.nb::before{background:#e3b4b4 !important;width:1.5px !important}
 html.sk #nb .nb-top{color:#777 !important}
 html.sk #nb .nb-date{color:#c0504d !important;text-decoration:underline wavy rgba(192,80,77,.45) 1.5px;text-underline-offset:7px}
@@ -618,6 +619,17 @@ html.sk h1,html.sk h2{font-family:"Poor Story","Poor Story","Gaegu",cursive !imp
 html.sk #studentView .nb-btn{${PEN}background:#fffefb !important;color:#2b2b2b !important;font-family:"Poor Story","Gaegu",cursive !important;font-weight:700 !important;font-size:1.05rem !important}
 `; document.head.append(st);
   document.documentElement.classList.add('sk'); document.documentElement.dataset.theme = 'light';
+  /* 꾸미기: 위쪽 박스 3개를 한 줄로, 고른 종이 색·글씨체는 스케치 디자인에도 적용 */
+  const skApply = () => { try {
+    const R = document.documentElement, row = document.querySelector('#studentView .row'), sb = document.getElementById('skinBtn');
+    if (row && sb && sb.parentNode !== row) { row.append(sb); }
+    const top = (document.querySelector('#nb .nb-top') || {}).textContent || '', nm = top.split(' · ').pop().trim();
+    let k = 'alrim2:skin:' + nm; if (localStorage.getItem(k) === null) k = Object.keys(localStorage).find(x => x.indexOf('alrim2:skin:') === 0) || k;
+    const o = JSON.parse(localStorage.getItem(k) || '{}') || {};
+    if (o.h) { R.style.setProperty('--sk-bg', 'hsl(' + o.h + ' ' + Math.round(80 * (o.k || 1)) + '% 93%)'); } else R.style.removeProperty('--sk-bg');
+    if (o.f) { R.style.setProperty('--sk-font', "'" + o.f + "', 'Poor Story', cursive"); } else R.style.removeProperty('--sk-font');
+  } catch (e) {} };
+  skApply(); setInterval(skApply, 600);
 }
 /* 단어 공부·테스트 같은 창도 연필 버튼으로 */
 new MutationObserver(ms => { if (!document.documentElement.classList.contains('sk')) return; ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1 && n.parentNode === document.body && /position:\s*fixed/.test(n.getAttribute('style') || '') && !n.id) n.classList.add('sk-ui'); })); }).observe(document.body, { childList: true });
