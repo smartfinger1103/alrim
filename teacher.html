@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261125-7">
+<meta name="build" content="20261125-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-7">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-7">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-8">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-8">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -886,6 +886,12 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
             <p class="hint">찾은 단어는 위 칸에 들어가요. 직접 쓰거나 엑셀에서 복사해 붙여넣어도 돼요. 한글(hwp)은 PDF나 워드로 저장해서 올려 주세요. 넣은 단어는 학생 화면에서 이 과제의 단어 공부로 나와요.</p>
             </div>
           </div>
+          <details class="wordbox fbox" id="waBox" style="padding:10px 12px">
+            <summary style="cursor:pointer;font-weight:700">📚 암기할 단어 전체 (누적) · 철자와 뜻 한 번에 고치기 <span class="hint" id="waCount"></span></summary>
+            <div class="row" style="gap:8px;margin:8px 0;align-items:center"><input id="waQ" placeholder="단어나 뜻으로 찾기" style="flex:1;min-width:120px"><label style="white-space:nowrap"><input type="checkbox" id="waSus"> 철자 의심만</label><button type="button" class="primary" id="waSave" hidden>💾 고친 것 저장</button></div>
+            <p class="hint" id="waMsg">칸을 눌러 철자나 뜻을 고치고 다른 곳을 누르면 바로 반영돼요. 저장을 눌러야 학생 화면에 올라가요.</p>
+            <div id="waList" style="display:grid;gap:6px;max-height:520px;overflow:auto"></div>
+          </details>
           <div class="pronbox fbox" id="fbPron">
             <div class="fhead"><b>🎤 발음 단어 (선택)</b><span class="hint" id="fpCount"></span><span class="fsp"></span><button type="button" class="small primary fsave" data-kind="p">저장</button><button type="button" class="small ffold" aria-expanded="true">접기 ▲</button></div>
             <div class="fbody">
@@ -3184,6 +3190,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       renderTabs(); renderStudents();
       if (state.tab) { $('fWho').value = state.tab; if (!$('ttText').value) $('ttWho').value = state.tab; if ($('wordWho').value !== state.tab) { $('wordWho').value = state.tab; loadWordEdit(); } }
       renderEntries(); renderOverview(); renderImpFiles(); renderWT(); renderTT();
+      try { waUpd(); } catch (e) {}
     }
     if (state.auto) state.date = autoDate();
     setupQuiz();
@@ -3444,6 +3451,55 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     return bx;
   }
   const PVW_OPEN = new Set();
+  /* ---------- 암기할 단어 전체(누적): 왼쪽 과제 적기에서 철자·뜻을 한 번에 고쳐요 ---------- */
+  let WA_DIRTY = false, WA_WHO = '';
+  function waKnown(w) { const D2 = HC.SP; if (!D2 || !Object.keys(D2).length) return true; if (w.length < 3 || D2[w]) return true;
+    return [w.replace(/'s$/, ''), w.replace(/s$/, ''), w.replace(/es$/, ''), w.replace(/ies$/, 'y'), w.replace(/ed$/, ''), w.replace(/ed$/, 'e'), w.replace(/ied$/, 'y'), w.replace(/ing$/, ''), w.replace(/ing$/, 'e'), w.replace(/ly$/, ''), w.replace(/ily$/, 'y'), w.replace(/er$/, ''), w.replace(/est$/, ''), w.replace(/ness$/, ''), w.replace(/^un/, ''), w.replace(/^re/, ''), w.replace(/^non/, ''), w.replace(/^mis/, ''), w.replace(/^over/, ''), w.replace(/ise$/, 'ize'), w.replace(/our$/, 'or'), w.replace(/re$/, 'er')].some(x => x.length > 2 && D2[x]); }
+  function waSus(en) { return (String(en || '').split('/')[0].replace(/\([^)]*\)|\[[^\]]*\]/g, ' ').toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) || []).some(tk => !['sth', 'sb', 'ing', 'etc', 'vs'].includes(tk) && !waKnown(tk)); }
+  function waUpd(force) {
+    const box = $('waBox'), list = $('waList'); if (!box || !list) return;
+    if (!force && list.contains(document.activeElement)) return;   // 고치는 중에는 다시 그리지 않아요
+    const who = state.tab || state.cls || '';
+    const ents = D.entries.filter(e => e.words && forWho(e.who, who) && !isPron(e)).sort((a, b) => a.date < b.date ? 1 : -1);
+    let total = 0; ents.forEach(e => { total += parseWords(e.words, '').length; });
+    $('waCount').textContent = who ? `${shortName(who)} · ${ents.length}번 과제 · ${total}개` : '';
+    if (WA_WHO !== who) { WA_WHO = who; WA_DIRTY = false; }
+    $('waSave').hidden = !WA_DIRTY;
+    if (!box.open) { list.textContent = ''; return; }
+    if (!HC.SP && !HC.spLoading) { HC.spLoading = true; fetch('data/ipa.json').then(x => x.json()).then(j => { HC.SP = j; waUpd(); }).catch(() => { HC.SP = {}; }); }
+    const q = $('waQ').value.trim().toLowerCase(), onlySus = $('waSus').checked;
+    list.textContent = ''; let shown = 0;
+    ents.forEach((e, ei) => {
+      const lines = String(e.words).split(/\r?\n/), rows = [];
+      lines.forEach((ln, li) => { const p = parseWords(ln, '')[0]; if (!p) return; const sus = waSus(p.en);
+        if (onlySus && !sus) return; if (q && !(p.en.toLowerCase().includes(q) || p.ko.toLowerCase().includes(q))) return; rows.push({ li, p, sus }); });
+      if (!rows.length) return;
+      const dt = el('details'), sm = el('summary', null, `${kShort(e.date)} · ${String(e.task || '').split('\n')[0].slice(0, 26)} (${rows.length}개)`); sm.style.cssText = 'cursor:pointer;font-weight:600;padding:4px 0';
+      dt.open = !!(q || onlySus) || shown < 1; dt.style.cssText = 'border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff'; dt.append(sm);
+      const body = el('div'); body.style.cssText = 'display:grid;gap:4px;margin-top:4px'; dt.append(body);
+      const fill = () => { if (body.childElementCount) return; rows.forEach(({ li, p, sus }, n) => {
+          const rw = el('div'); rw.style.cssText = 'display:grid;grid-template-columns:2.2em minmax(0,1fr) minmax(0,1.5fr);gap:6px;align-items:center';
+          const en = el('input'), ko = el('input'); en.value = p.en; ko.value = p.ko; en.spellcheck = false; en.autocapitalize = 'off';
+          en.style.cssText = 'font:inherit;padding:5px 7px;border-radius:8px;border:1.5px solid ' + (sus ? '#dc2626;background:#fef2f2' : 'var(--line)'); ko.style.cssText = 'font:inherit;padding:5px 7px;border-radius:8px;border:1.5px solid var(--line)';
+          if (sus) en.title = '사전에 없는 철자예요. 확인해 주세요.';
+          const apply = () => { const ne = en.value.trim(), nk = ko.value.trim(); if (!ne || !nk) { en.value = p.en; ko.value = p.ko; return; } if (ne === p.en && nk === p.ko) return;
+            const ent = D.entries.find(x => x.id === e.id); if (!ent) return; const ls = String(ent.words).split(/\r?\n/); let ln = ls[li]; if (ln == null) return;
+            const cur = parseWords(ln, '')[0]; if (!cur || cur.en !== p.en) return;
+            if (ne !== p.en) { const k = ln.indexOf(p.en); if (k < 0) return; ln = ln.slice(0, k) + ne + ln.slice(k + p.en.length); }
+            if (nk !== p.ko) { const k = ln.lastIndexOf(p.ko); if (k < 0) return; ln = ln.slice(0, k) + nk + ln.slice(k + p.ko.length); }
+            const chk = parseWords(ln, '')[0]; if (!chk || chk.en !== ne || chk.ko !== nk) { $('waMsg').textContent = '이 줄은 여기서 고칠 수 없는 형식이에요. 지난 과제에서 "수정"으로 고쳐 주세요.'; en.value = p.en; ko.value = p.ko; return; }
+            ls[li] = ln; ent.words = ls.join('\n'); p.en = ne; p.ko = nk; WA_DIRTY = true; $('waSave').hidden = false; $('waMsg').textContent = '고쳤어요: ' + ne + ' — ' + nk + ' · 💾 저장을 눌러야 학생 화면에 올라가요.';
+            const s2 = waSus(ne); en.style.borderColor = s2 ? '#dc2626' : 'var(--line)'; en.style.background = s2 ? '#fef2f2' : '';
+            try { saveDraft(); } catch (x) {} try { render(); } catch (x) {} try { pvWordsUpd(); } catch (x) {} };
+          en.onchange = ko.onchange = apply; en.onkeydown = ko.onkeydown = (ev) => { if (ev.key === 'Enter') ev.target.blur(); };
+          rw.append(el('small', 'hint', (n + 1) + '.'), en, ko); body.append(rw); }); };
+      if (dt.open) fill(); dt.addEventListener('toggle', () => { if (dt.open) fill(); }); list.append(dt); shown++;
+    });
+    if (!shown) list.append(el('p', 'hint', who ? (onlySus ? '철자가 의심되는 단어가 없어요.' : '암기할 단어 과제가 없어요.') : '위에서 학생을 골라 주세요.'));
+  }
+  setTimeout(() => { const b = $('waBox'); if (!b) return; b.addEventListener('toggle', () => waUpd(true)); $('waQ').oninput = () => waUpd(true); $('waSus').onchange = () => waUpd(true);
+    $('waSave').onclick = () => { const sid = ({ '김규민': 'gyumin', '조수아': 'sua', '유혜나': 'hyena' })[state.tab || state.cls], sv = $('waSave'); if (!window.alrimSaveOne || !sid) { $('waMsg').textContent = '저장 연결을 불러오지 못했어요. 아래 저장 칸의 ⬆️ 올리기를 눌러 주세요.'; return; }
+      sv.disabled = true; sv.textContent = '저장하는 중…'; Promise.resolve(window.alrimSaveOne(sid)).then((stx) => { sv.disabled = false; sv.textContent = '💾 고친 것 저장'; if (/^✅/.test(stx || '')) { WA_DIRTY = false; sv.hidden = true; $('waMsg').textContent = '✅ 저장했어요. 몇 분 뒤 학생 화면에 반영돼요.'; } else $('waMsg').textContent = stx || '저장하지 못했어요. 아래 저장 칸을 확인해 주세요.'; }); }; }, 1200);
   let PVW_DIRTY = false;
   function pvWordsUpd() {   /* 미리보기 위: 그날 단어·발음 과제마다 [단어 보기] */
     const box = $('pvWords'); if (!box) return; box.textContent = '';
@@ -3458,7 +3514,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       const bt = el('button', 'small', (PVW_OPEN.has(k) ? '▲ 닫기' : '단어 보기 (' + ws.length + '개)')); bt.type = 'button';
       const ul = el('div', 'pw-list'); ul.hidden = !PVW_OPEN.has(k);
       ws.forEach((w, n) => { const sp = el('span', null, (n + 1) + '. ' + w.en + (w.ko ? ' — ' + w.ko : ''));
-        if (!pr && w.ko) { sp.style.cursor = 'pointer'; sp.title = '눌러서 뜻 고치기'; sp.append(el('small', null, ' ✏️'));
+        if (false && !pr && w.ko) { sp.style.cursor = 'pointer'; sp.title = '눌러서 뜻 고치기'; sp.append(el('small', null, ' ✏️'));
           sp.onclick = () => { if (sp.dataset.ed) return; sp.dataset.ed = 1; sp.textContent = (n + 1) + '. ' + w.en + ' — ';
             const inp = el('input'); inp.value = w.ko; inp.style.cssText = 'width:100%;font:inherit;padding:4px 6px;margin:3px 0;border:1.5px solid #3F4FB8;border-radius:8px';
             const ok = el('button', 'small primary', '고치기'), no = el('button', 'small', '취소'); ok.type = no.type = 'button'; const bar = el('span'); bar.style.cssText = 'display:flex;gap:6px'; bar.append(ok, no); sp.append(inp, bar); inp.focus();
