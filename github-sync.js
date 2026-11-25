@@ -103,7 +103,8 @@ async function readRemote() {
 readRemote().then(body=>{
   const seed=combine(body);
   let draft=null; try {draft=JSON.parse(localStorage.getItem('alrim2:draft'));}catch(_){}
-  if(!dirty && !(draft && draft.base===seed.updated && draft.savedAt>seed.updated)) app.receive(seed);
+  /* 임시저장본은 '지금 저장소 내용 위에서 고친 것'일 때만 살려요. 아니면 항상 저장소 내용을 불러와요. */
+  if(!(draft && draft.v===2 && draft.base===seed.updated && draft.savedAt>seed.updated)) { app.receive(seed); dirty=false; }
   window.alrimBase=seed.updated;
   ready=true; status.textContent='과제 연결 완료. 수정 후 GitHub 저장 권한을 입력하고 저장하세요.';
 }).catch(e=>{status.textContent=e.message;});

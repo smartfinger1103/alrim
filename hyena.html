@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261125-1">
+<meta name="build" content="20261125-2">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-1">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-1">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-2">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-2">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
 .wtime b { font-size: 1.05rem; color: #B0570B; }
@@ -2899,11 +2899,13 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
       const top = el('div', 'pr-top'); top.append(el('b', null, `🎤 발음 연습 · ${dn.size}/${ws.length} 완성`)); const x = el('button', null, '×'); x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.onclick = close; top.append(x); box.append(top);
       box.append(el('div', 'pr-word', w.en), el('div', 'pr-ipa', prIpa(w.en)), el('div', 'pr-stars', '★'.repeat(n) + '☆'.repeat(NEED - n)));
       const bt = el('div', 'pr-btns'), lb = el('button', 'pr-listen', '🔊 듣기'), rb = el('button', 'pr-rec', '🎙️ 녹음'); lb.type = rb.type = 'button';
-      lb.onclick = () => speak(w.en);
+      /* 녹음 중에는 듣기 소리가 마이크로 들어가 통과되지 않게, 듣기와 녹음은 동시에 안 돼요 */
+      lb.onclick = () => { if (busy) return; speak(w.en); };
       rb.onclick = () => {
         if (!SR) { draw('이 브라우저는 발음 인식이 안 돼요. 크롬(안드로이드)이나 사파리(아이폰)로 열어 주세요.', 'no'); return; }
         if (busy) { try { rec.stop(); } catch (e) {} return; }
         try { speechSynthesis.cancel(); } catch (e) {}
+        lb.disabled = true; lb.style.opacity = '.35'; [...box.querySelectorAll('.pr-nav button, .pr-list button')].forEach(b => { b.disabled = true; b.style.opacity = '.45'; });
         rec = new SR(); rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 5; busy = true; rb.classList.add('on'); rb.textContent = '⏺ 듣는 중… (말해 보세요)';
         let got = false;
         rec.onresult = (ev) => {
@@ -2915,15 +2917,15 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
         };
         rec.onerror = (ev) => { busy = false; draw(ev.error === 'not-allowed' ? '마이크 권한을 허용해 주세요.' : ev.error === 'no-speech' ? '소리가 안 들렸어요. 다시 해 봐요.' : 'NO PASS ❌ 다시 해 봐요', 'no'); };
         rec.onend = () => { if (busy && !got) { busy = false; draw('소리가 안 들렸어요. 다시 해 봐요.', 'no'); } };
-        try { rec.start(); } catch (e) { busy = false; draw('녹음을 시작하지 못했어요.', 'no'); }
+        const go = () => { try { rec.start(); } catch (e) { busy = false; draw('녹음을 시작하지 못했어요.', 'no'); } }; setTimeout(go, 350);   /* 듣기 소리가 완전히 멎은 뒤에 녹음 시작 */
       };
       bt.append(lb, rb); box.append(bt);
       box.append(el('div', 'pr-res' + (cls ? ' ' + cls : ''), msg || ''), el('div', 'pr-heard', heard || '🔊으로 듣고 🎙️을 눌러 따라 말해요'));
       const nv = el('div', 'pr-nav'), pv = el('button', null, '◀ 이전'), nx = el('button', null, '다음 ▶'); pv.type = nx.type = 'button';
-      pv.onclick = () => { i = (i - 1 + ws.length) % ws.length; draw(); speak(ws[i].en); };
-      nx.onclick = () => { const d2 = memSet(key); let j = i; for (let t = 1; t <= ws.length; t++) { const q = (i + t) % ws.length; if (!d2.has(wkey(ws[q]))) { j = q; break; } if (t === ws.length) j = (i + 1) % ws.length; } i = j; draw(); speak(ws[i].en); };
+      pv.onclick = () => { i = (i - 1 + ws.length) % ws.length; draw(); if (!busy) speak(ws[i].en); };
+      nx.onclick = () => { const d2 = memSet(key); let j = i; for (let t = 1; t <= ws.length; t++) { const q = (i + t) % ws.length; if (!d2.has(wkey(ws[q]))) { j = q; break; } if (t === ws.length) j = (i + 1) % ws.length; } i = j; draw(); if (!busy) speak(ws[i].en); };
       nv.append(pv, el('small', null, `${i + 1} / ${ws.length}`), nx); box.append(nv);
-      const ls = el('div', 'pr-list'); ws.forEach((w2, j) => { const b = el('button', (dn.has(wkey(w2)) ? 'done' : '') + (j === i ? ' cur' : ''), (dn.has(wkey(w2)) ? '✓ ' : '') + w2.en); b.type = 'button'; b.onclick = () => { i = j; draw(); speak(w2.en); }; ls.append(b); }); box.append(ls);
+      const ls = el('div', 'pr-list'); ws.forEach((w2, j) => { const b = el('button', (dn.has(wkey(w2)) ? 'done' : '') + (j === i ? ' cur' : ''), (dn.has(wkey(w2)) ? '✓ ' : '') + w2.en); b.type = 'button'; b.onclick = () => { i = j; draw(); if (!busy) speak(w2.en); }; ls.append(b); }); box.append(ls);
     }
     draw(); setTimeout(() => speak(ws[i].en), 300);
   }
@@ -3596,7 +3598,7 @@ a.btn.submit { display: block; text-align: center; text-decoration: none; backgr
 
 })();
 </script>
-<script src="github-sync.js?v=20261123-3"></script><script src="suneung.js?v=20261125-1"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
+<script src="github-sync.js?v=20261125-1"></script><script src="suneung.js?v=20261125-1"></script><button type="button" id="mTop" aria-label="맨 위로" title="맨 위로">↑</button>
 <style>#mTop{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:9999;width:48px;height:48px;border-radius:50%;border:none;background:#4f46e5;color:#fff;font-size:22px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s;cursor:pointer}
 #mTop.on{opacity:.92;pointer-events:auto}@media (min-width:821px){#mTop{display:none}}</style>
 <script>(function(){var b=document.getElementById('mTop');function u(){b.classList.toggle('on',(window.scrollY||document.documentElement.scrollTop)>300)}window.addEventListener('scroll',u,{passive:true});u();b.onclick=function(){window.scrollTo({top:0,behavior:'smooth'})}})();</script>
