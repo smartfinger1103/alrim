@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261125-12">
+<meta name="build" content="20261125-14">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-12">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-12">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-14">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-14">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -3009,12 +3009,20 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       row.append(tx);
       if (only.length) {
         const done = D.entries.some(x => x.who === r.who && x.lsRetake && x.date === $('lsDate').value && ((x.listen && x.listen.sets) || []).some(st => st.test === n && (st.only || []).join(',') === only.join(',')));
-        const b = el('button', 'small' + (done ? '' : ' primary'), done ? '넘김 ✓' : '틀린 문제 다음 과제로'); b.type = 'button'; b.disabled = done;
-        b.onclick = () => lsCarry(r.who, n, only);
+        const b = el('button', 'small' + (done ? '' : ' primary'), done ? '넘김 ✓ · 빼기' : '틀린 문제 다음 과제로'); b.type = 'button'; b.title = done ? '다시 누르면 다음 과제에서 빠져요' : '';
+        b.onclick = () => done ? lsUncarry(r.who, n) : lsCarry(r.who, n, only);
         row.append(b);
       }
       box.append(row);
     });
+  }
+  function lsUncarry(who, test) {   /* 넘겼던 틀린 문제를 다음 과제에서 다시 빼요 (그 회차만, 남는 회차가 없으면 과제도 지워요) */
+    const date = $('lsDate').value || todayStr(), e = D.entries.find(x => x.date === date && x.who === who && x.lsRetake); if (!e) return;
+    const sets = ((e.listen && e.listen.sets) || []).filter(st => st.test !== test);
+    if (sets.length) { e.listen.sets = sets; e.range = sets.map(st => `${st.test}회 ${st.only.join(', ')}번`).join(' · '); }
+    else D.entries = D.entries.filter(x => x !== e);
+    const cm = `${who} ${kShort(date)} 과제에서 듣기 ${test}회 틀린 문제를 뺐어요.` + (sets.length ? '' : ' (틀린 문제 다시 듣기 과제도 지웠어요)');
+    changed(); lsLoad().then(() => { $('lsMsg').textContent = cm; });
   }
   function lsCarry(who, test, only) {
     if (!names().includes(who)) { $('lsMsg').textContent = `"${who}" 학생이 목록에 없어요. 학생 이름을 확인해 주세요.`; return; }
@@ -5926,7 +5934,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
 
 })();
 </script>
-<script src="github-sync.js?v=20261125-2"></script><script src="suneung.js?v=20261125-3"></script><nav id="mBar" aria-label="빠른 메뉴">
+<script src="github-sync.js?v=20261125-2"></script><script src="suneung.js?v=20261125-4"></script><nav id="mBar" aria-label="빠른 메뉴">
   <button type="button" data-mgo="hWt">📝<span>단어테스트</span></button>
   <button type="button" data-mgo="h2s" class="main">✏️<span>과제적기</span></button>
   <button type="button" data-mbottom>📒<span>알림장보기</span></button>
