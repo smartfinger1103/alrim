@@ -535,6 +535,25 @@ function sketchSkin() {
 html.sk,html.sk body,html.sk body *{--bg:#fbfbf9 !important;--panel:#fffefb !important;--ink:#2b2b2b !important;--muted:#777 !important;--line:#d6d6d3 !important;--accent:#3a3a3a !important;--accent-ink:#fff !important;--soft:#efefec !important;--warn:#555 !important;--font-display:"Poor Story","Poor Story","Gaegu",cursive !important}html.sk{color-scheme:light}
 html.sk .sk-ui b,html.sk .sk-ui button,html.sk .sk-ui small{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}html.sk .ls-box button,html.sk .ls-box b,html.sk .ls-box h2,html.sk .ls-box h3{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
 html.sk body{background:repeating-linear-gradient(transparent 0 31px,#ededea 31px 32px),#fbfbf9 !important;color:#2b2b2b}
+/* 다른 학생 알림장(#nb)도 같은 노트 스케치 컨셉 (내용은 그대로, 디자인만) */
+html.sk #nb.nb{--p-bg:#fffefb;--p-ink:#2b2b2b;--p-sub:#777;--p-acc:#3a3a3a;--p-badge:#2b2b2b;--p-chip:transparent;--p-margin:#e3b4b4;--p-line:#e6e6e3;background-color:#fffefb !important;background-image:repeating-linear-gradient(to bottom,transparent 0 33px,#e6e6e3 33px 34px) !important;border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;box-shadow:2px 3px 0 #e2e2df !important;color:#2b2b2b !important;font-family:"Poor Story","Gaegu",cursive !important}
+html.sk #nb.nb *{font-family:"Poor Story","Gaegu",cursive}
+html.sk #nb.nb::before{background:#e3b4b4 !important;width:1.5px !important}
+html.sk #nb .nb-top{color:#777 !important}
+html.sk #nb .nb-date{color:#c0504d !important;text-decoration:underline wavy rgba(192,80,77,.45) 1.5px;text-underline-offset:7px}
+html.sk #nb .nb-count{color:#555 !important;margin-top:6px}
+html.sk #nb .nb-g{border-top:2px solid #555;border-radius:255px 15px 225px 15px/3px 2px 3px 2px;padding-top:12px}
+html.sk #nb .nb-num{top:12px;background:transparent !important;color:#2b2b2b !important;border:1.6px solid #555;border-radius:50% 46% 52% 48%/48% 52% 46% 50%;font-weight:700}
+html.sk #nb .nb-g:nth-of-type(4n+1) .nb-num{background:rgba(255,214,102,.7) !important}html.sk #nb .nb-g:nth-of-type(4n+2) .nb-num{background:rgba(140,200,240,.65) !important}html.sk #nb .nb-g:nth-of-type(4n+3) .nb-num{background:rgba(170,220,150,.7) !important}html.sk #nb .nb-g:nth-of-type(4n) .nb-num{background:rgba(244,170,170,.65) !important}
+html.sk #nb .nb-sub{color:#2b2b2b !important;border-bottom:none !important;font-size:1.4rem !important;font-weight:700 !important;width:fit-content;padding:0 8px 0 2px;background:linear-gradient(176deg,transparent 58%,rgba(255,214,102,.6) 58%,rgba(255,214,102,.6) 90%,transparent 90%) no-repeat}
+html.sk #nb .nb-g:nth-of-type(4n+2) .nb-sub{background:linear-gradient(176deg,transparent 58%,rgba(140,200,240,.55) 58%,rgba(140,200,240,.55) 90%,transparent 90%) no-repeat}html.sk #nb .nb-g:nth-of-type(4n+3) .nb-sub{background:linear-gradient(176deg,transparent 58%,rgba(170,220,150,.6) 58%,rgba(170,220,150,.6) 90%,transparent 90%) no-repeat}html.sk #nb .nb-g:nth-of-type(4n) .nb-sub{background:linear-gradient(176deg,transparent 58%,rgba(244,170,170,.55) 58%,rgba(244,170,170,.55) 90%,transparent 90%) no-repeat}
+html.sk #nb .nb-t{font-size:1.2rem !important;color:#2b2b2b}
+html.sk #nb .nb-item{border-bottom:1px dashed #cfcfcc}html.sk #nb .nb-item:last-child{border-bottom:none}
+html.sk #nb .nb-btn,html.sk #studentView .row button,html.sk .skin-btn{background:#fffefb !important;color:#2b2b2b !important;border:1.5px solid #555 !important;border-radius:255px 16px 225px 16px/16px 225px 16px 255px !important;font-family:"Poor Story","Gaegu",cursive !important;font-size:1.05rem !important;box-shadow:2px 3px 0 rgba(74,118,196,.45) !important}
+html.sk #nb .nb-g:nth-of-type(4n+1) .nb-btn{box-shadow:2px 3px 0 rgba(226,160,40,.55) !important}html.sk #nb .nb-g:nth-of-type(4n+3) .nb-btn{box-shadow:2px 3px 0 rgba(88,160,96,.5) !important}html.sk #nb .nb-g:nth-of-type(4n) .nb-btn{box-shadow:2px 3px 0 rgba(214,92,96,.5) !important}
+html.sk #nb .nb-item.done .nb-t,html.sk #nb .done .nb-t{color:#b5b5b5 !important}html.sk #nb .done .nb-btn{color:#d32f2f !important;box-shadow:none !important;border-style:dashed !important}
+html.sk #studentView .row button[aria-pressed="true"],html.sk #studentView .row button.on{background:rgba(255,214,102,.55) !important}
+html.sk #studentView h1,html.sk #studentView .s-head,html.sk #studentView .s-head *,html.sk #studentView .hint,html.sk #studentView small{font-family:"Poor Story","Gaegu",cursive !important}
 html.sk #snCard{border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;padding-left:34px !important;background:linear-gradient(90deg,transparent 22px,#e3b4b4 22px,#e3b4b4 23px,transparent 23px),repeating-linear-gradient(transparent 0 31px,#e6e6e3 31px 32px),#fffefb !important;box-shadow:2px 3px 0 #e2e2df !important}
 html.sk #snCard,html.sk #snCard summary,html.sk #snCard b,html.sk #snCard small,html.sk #snCard div,html.sk #snCard span,html.sk #snCard button{font-family:"Poor Story","Poor Story","Gaegu",cursive !important}
 html.sk #snCard summary{font-size:1.3rem !important;font-weight:700;list-style:none}
@@ -593,7 +612,7 @@ new MutationObserver(ms => { if (!document.documentElement.classList.contains('s
 function sync() {
   const st = student(), view = TEACH ? (document.querySelector('#teacherView aside.preview .canvas-box') || document.getElementById('hcPanel')) : document.getElementById('studentView'); if (!view) return;
   if (card && st && me && st.name !== me.name) { card.remove(); card = null; }
-  if (!st || st.track !== 'suneung') { if (card) { card.remove(); card = null; } return; }
+  if (!st || st.track !== 'suneung') { if (card) { card.remove(); card = null; } if (st && !TEACH) sketchSkin(); return; }
   sketchSkin();
   const s2 = JSON.stringify([st.name, (st.newsBan || []).length, st.dday, st.daily, st.mocks, st.lbook, st.rbook, st.wbook && [st.wbook.title, st.wbook.from, st.wbook.to, st.wbook.start, (st.wbook.days || []).length]]);
   if (!card) { me = st; load(); card = el('section', 'background:var(--panel,#fff);border:2px solid var(--accent,#4f46e5);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px'); card.id = 'snCard';
