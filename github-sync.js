@@ -22,29 +22,25 @@ function validate(body) {
 if (!teacher) {
   const id=location.pathname.split('/').pop().replace('.html','');
   document.getElementById('studentView').append(status);
-  let last=JSON.parse(document.getElementById('seed').textContent).updated, busy=false;
+  let last=JSON.parse(document.getElementById('seed').textContent).updated, busy=false, n=0;
   async function refresh() {
     if (busy || document.hidden) return;
     busy=true;
     try {
       let body;
-      try {
-        const response=await fetch(dataUrl.href+'?t='+Date.now(), {cache:'no-store'});
-        if (!response.ok) throw new Error();
-        body=validate(await response.json());
-      } catch (_) {
-        const response=await fetch(endpoint+'?ref=main&t='+Date.now(), {cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
-        if (!response.ok) throw new Error();
-        body=validate(decode((await response.json()).content));
-      }
+      const viaApi=async()=>{ const response=await fetch(endpoint+'?ref=main&t='+Date.now(), {cache:'no-store',headers:{Accept:'application/vnd.github+json'}}); if (!response.ok) throw new Error(); return validate(decode((await response.json()).content)); };
+      const viaPages=async()=>{ const response=await fetch(dataUrl.href+'?t='+Date.now(), {cache:'no-store'}); if (!response.ok) throw new Error(); return validate(await response.json()); };
+      /* 화면을 열거나 다시 볼 때는 GitHub에서 바로 읽어 방금 올린 과제도 곧바로 보여요. 1분마다 하는 자동 확인은 게시된 사본으로 해요(조회 한도 때문). */
+      const direct=(n++%10===0);
+      try { body=await (direct?viaApi():viaPages()); } catch (_) { body=await (direct?viaPages():viaApi()); }
       const seed=body.students[id];
-      if(seed.updated!==last) { app.receive(seed); last=seed.updated; window.alrimBase=seed.updated; }
+      if(seed.updated>last) { app.receive(seed); last=seed.updated; window.alrimBase=seed.updated; }   /* 더 예전 사본으로는 절대 되돌아가지 않아요 */
       status.textContent='최신 과제를 확인했어요. · 1분마다 자동 확인';
     } catch (_) { status.textContent='최신 과제를 불러오지 못했어요. 현재 표시된 과제를 유지하고 다시 연결할게요.'; }
     finally { busy=false; }
   }
   refresh(); setInterval(refresh,60000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden) refresh();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){ n=0; refresh(); }});
   return;
 }
 document.title='교사용 알림장';
@@ -109,14 +105,17 @@ function barShow(body,note){ const last=id=>{ try{ const ds=JSON.parse(body.stud
   barTx.textContent='저장소 과제 · '+Object.entries(roster).map(([id,name])=>name.slice(1)+' 마지막 과제 '+last(id)+' (저장 '+kt(body.students[id].updated)+')').join(' · ')+(note?' · '+note:''); }
 let fromPages=false;
 async function loadRemote(force){
-  const body=await readRemote(), seed=combine(body);
+  let body=await readRemote(); const mx=b=>Object.values(b.students).map(x=>x.updated).sort().pop();
+  /* 이 기기에서 마지막으로 올린 내용의 사본을 항상 갖고 있다가, 저장소에서 읽은 것이 그보다 예전이면 사본을 써요 */
+  try{ const mine=JSON.parse(localStorage.getItem('alrim2:saved')||'null'); if(mine && mine.students){ let used=false; for(const id of Object.keys(mine.students)){ if(body.students[id] && mine.students[id].updated>body.students[id].updated){ body.students[id]=mine.students[id]; used=true; } } if(used) window.alrimFromCopy=true; else window.alrimFromCopy=false; } }catch(_){}
+  const seed=combine(body);
   let draft=null; try {draft=JSON.parse(localStorage.getItem('alrim2:draft'));}catch(_){}
   /* 이 기기에서 고치던 내용(임시저장)은 ① 지금 저장소 내용 위에서 고친 것이거나 ② 저장소 사본이 아직 예전 것일 때(방금 저장했는데 게시가 덜 됨)만 살려요. 그 밖에는 저장소 내용을 불러와요. */
   const v2=draft && draft.v===2 && draft.base;
   const keep=!force && v2 && ((draft.base===seed.updated && draft.savedAt>seed.updated) || draft.base>seed.updated);
   let note='';
   if(keep){ note=draft.base>seed.updated?'⚠ 저장소 사본이 아직 예전 내용이라 이 기기의 최신 내용을 보여 줘요':'이 기기에서 고치던 내용을 이어서 보여 줘요 (아직 안 올림)'; if(draft.base<=seed.updated) window.alrimBase=seed.updated; else window.alrimBase=draft.base; }
-  else { if(force){ try{ localStorage.removeItem('alrim2:draft'); }catch(_){} } app.receive(seed); dirty=false; window.alrimBase=seed.updated; note='저장소 내용을 불러왔어요'; }
+  else { if(force){ try{ localStorage.removeItem('alrim2:draft'); }catch(_){} } app.receive(seed); dirty=false; window.alrimBase=seed.updated; note=window.alrimFromCopy?'이 기기에서 마지막으로 올린 내용을 보여 줘요 (저장소 사본은 곧 따라와요)':'저장소 내용을 불러왔어요'; }
   /* 이 기기가 전에 본 것보다 예전 내용이 오면(게시가 덜 됨) 알려 주고 30초 뒤 다시 읽어요 */
   try{ const seen=localStorage.getItem('alrim2:seen')||''; if(seed.updated<seen && !keep){ note='⚠ 저장소 사본이 아직 예전 내용이에요. 30초 뒤 자동으로 다시 불러와요'; if(!dirty) setTimeout(()=>{ if(!dirty) loadRemote(false).catch(()=>{}); },30000); } else if(seed.updated>seen) localStorage.setItem('alrim2:seen',seed.updated); }catch(_){}
   barShow(body,note);
@@ -153,7 +152,7 @@ async function save(only){
       if(response.status===401||response.status===403)throw new Error('GitHub 권한을 확인해 주세요. alrim 저장소의 Contents 읽기·쓰기 권한이 필요해요.');
       throw new Error('저장하지 못했어요. 연결을 확인하고 다시 눌러 주세요.');
     }
-    const result=await response.json();sha=result.content.sha;if(!only)dirty=false;window.alrimBase=Object.values(out).map(x=>x.updated).sort().pop();try{ localStorage.setItem('alrim2:seen',window.alrimBase); barShow({students:out},'방금 저장했어요'); }catch(_){}
+    const result=await response.json();sha=result.content.sha;if(!only)dirty=false;window.alrimBase=Object.values(out).map(x=>x.updated).sort().pop();try{ localStorage.setItem('alrim2:seen',window.alrimBase); barShow({students:out},'방금 저장했어요'); }catch(_){} try{ localStorage.setItem('alrim2:saved',JSON.stringify({students:out})); }catch(_){}
     status.textContent=oldStatus.textContent='✅ '+label+'를 GitHub에 저장했어요. 게시가 끝나면 학생 링크에 자동 반영돼요. 보통 몇 분 걸릴 수 있어요.';
   }catch(e){status.textContent=oldStatus.textContent=e.message;}
   finally{saving=false;publish.disabled=false;}
