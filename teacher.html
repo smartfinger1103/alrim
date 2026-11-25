@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261125-5">
+<meta name="build" content="20261125-6">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-5">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-5">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-6">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-6">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -3438,6 +3438,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     return bx;
   }
   const PVW_OPEN = new Set();
+  let PVW_DIRTY = false;
   function pvWordsUpd() {   /* 미리보기 위: 그날 단어·발음 과제마다 [단어 보기] */
     const box = $('pvWords'); if (!box) return; box.textContent = '';
     const list = state.mode === 'teacher' ? currentItems().filter(it => it.words && !state.off.has(it.id)) : [];
@@ -3450,10 +3451,22 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       hd.append(el('b', null, (pr ? '🎤 ' : '📘 ') + String(it.task || '').split('\n')[0].slice(0, 30)));
       const bt = el('button', 'small', (PVW_OPEN.has(k) ? '▲ 닫기' : '단어 보기 (' + ws.length + '개)')); bt.type = 'button';
       const ul = el('div', 'pw-list'); ul.hidden = !PVW_OPEN.has(k);
-      ws.forEach((w, n) => ul.append(el('span', null, (n + 1) + '. ' + w.en + (w.ko ? ' — ' + w.ko : ''))));
+      ws.forEach((w, n) => { const sp = el('span', null, (n + 1) + '. ' + w.en + (w.ko ? ' — ' + w.ko : ''));
+        if (!pr && w.ko) { sp.style.cursor = 'pointer'; sp.title = '눌러서 뜻 고치기'; sp.append(el('small', null, ' ✏️'));
+          sp.onclick = () => { if (sp.dataset.ed) return; sp.dataset.ed = 1; sp.textContent = (n + 1) + '. ' + w.en + ' — ';
+            const inp = el('input'); inp.value = w.ko; inp.style.cssText = 'width:100%;font:inherit;padding:4px 6px;margin:3px 0;border:1.5px solid #3F4FB8;border-radius:8px';
+            const ok = el('button', 'small primary', '고치기'), no = el('button', 'small', '취소'); ok.type = no.type = 'button'; const bar = el('span'); bar.style.cssText = 'display:flex;gap:6px'; bar.append(ok, no); sp.append(inp, bar); inp.focus();
+            const done = (save) => { const v = inp.value.trim(); if (save && v && v !== w.ko) { const ent = D.entries.find(e => e.id === it.id); if (ent) { const ls = String(ent.words).split(/\r?\n/); let hit = false;
+                  for (let q = 0; q < ls.length; q++) { const p = parseWords(ls[q], '')[0]; if (p && p.en === w.en && ls[q].includes(w.ko)) { ls[q] = ls[q].replace(w.ko, v); hit = true; break; } }
+                  if (!hit) for (let q = 0; q < ls.length; q++) { const t0 = ls[q].trim(); if (t0.toLowerCase().startsWith(w.en.toLowerCase()) && t0.includes(w.ko)) { ls[q] = ls[q].replace(w.ko, v); hit = true; break; } }
+                  if (hit) { ent.words = ls.join('\n'); PVW_DIRTY = true; changed(); render(); return; } alert('이 단어 줄을 찾지 못했어요. 과제 적기의 단어 칸에서 고쳐 주세요.'); } }
+              pvWordsUpd(); };
+            ok.onclick = (e) => { e.stopPropagation(); done(true); }; no.onclick = (e) => { e.stopPropagation(); done(false); }; inp.onclick = (e) => e.stopPropagation(); inp.onkeydown = (e) => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); }; }; }
+        ul.append(sp); });
       bt.onclick = () => { if (PVW_OPEN.has(k)) PVW_OPEN.delete(k); else PVW_OPEN.add(k); ul.hidden = !PVW_OPEN.has(k); bt.textContent = PVW_OPEN.has(k) ? '▲ 닫기' : '단어 보기 (' + ws.length + '개)'; };
       hd.append(bt); row.append(hd, ul); box.append(row);
     });
+    if (PVW_DIRTY) { const sid = ({ '김규민': 'gyumin', '조수아': 'sua', '유혜나': 'hyena' })[state.cls], sv = el('button', 'primary', '💾 고친 뜻 저장 (학생 화면에 반영)'); sv.type = 'button'; sv.onclick = () => { if (!window.alrimSaveOne || !sid) { alert('저장 연결을 불러오지 못했어요. 아래 저장 칸의 ⬆️ 올리기를 눌러 주세요.'); return; } sv.disabled = true; sv.textContent = '저장하는 중…'; Promise.resolve(window.alrimSaveOne(sid)).then((stx) => { stx = stx || ''; if (/^✅/.test(stx)) { PVW_DIRTY = false; pvWordsUpd(); } else { sv.disabled = false; sv.textContent = '💾 다시 저장'; alert(stx || '저장하지 못했어요. 아래 저장 칸을 확인해 주세요.'); } }).catch(() => { sv.disabled = false; sv.textContent = '💾 다시 저장'; }); }; box.append(sv, el('small', 'hint', '뜻을 고쳤어요. 저장을 눌러야 학생 화면에 반영돼요.')); }
   }
   function renderHC() {   /* 미리보기 위 자동 점검 칸 */
     const box = $('hcPanel'); if (!box) return; box.textContent = '';
@@ -5846,7 +5859,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
 
 })();
 </script>
-<script src="github-sync.js?v=20261125-1"></script><script src="suneung.js?v=20261125-2"></script><nav id="mBar" aria-label="빠른 메뉴">
+<script src="github-sync.js?v=20261125-2"></script><script src="suneung.js?v=20261125-2"></script><nav id="mBar" aria-label="빠른 메뉴">
   <button type="button" data-mgo="hWt">📝<span>단어테스트</span></button>
   <button type="button" data-mgo="h2s" class="main">✏️<span>과제적기</span></button>
   <button type="button" data-mbottom>📒<span>알림장보기</span></button>

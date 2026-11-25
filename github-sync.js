@@ -143,6 +143,6 @@ async function save(only){
   finally{saving=false;publish.disabled=false;}
 }
 publish.onclick=()=>save(null);
-window.alrimSaveOne=id=>save(id);
+window.alrimSaveOne=async id=>{await save(id);return status.textContent;};
 })();
 
