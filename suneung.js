@@ -338,9 +338,11 @@ function analyze() { const S = sheet('📊 학습 분석'), B = S.body, mmss2 = 
     todo.push('독해: 답을 누르기 전에 근거 문장에 펜으로 밑줄 긋기' + (all.length && all.reduce((a, x) => a + x.s, 0) / all.length > 110 ? ' · 한 지문 1분 40초 넘으면 표시하고 넘어가기' : ''));
     todo.forEach((t, k) => P((k + 1) + '. ' + t)); if (!lds.length && !all.length) P('기록이 3일 이상 쌓이면 약한 유형에 맞춘 방법이 나와요.', '#666'); } }
 /* 단어 학습 총 누적 시간: 위쪽 상자(#sWTime)는 숨기고, 그 내용을 단어 칸에 글자로만 보여요 */
-function wtSync(t) { t = t || document.getElementById('snWT'); if (!t) return; const box = document.getElementById('sWTime'), x = box ? box.textContent.trim() : ''; if (t.textContent !== x) t.textContent = x; t.style.display = x ? '' : 'none'; }
+function wtSync(t) { t = t || document.getElementById('snWT'); if (!t) return; const box = document.getElementById('sWTime'), x = box ? box.textContent.trim() : ''; if (t.textContent !== x) t.textContent = x; t.style.display = 'none'; }   /* 혜나는 매일 리셋: 오늘 학습 시간 줄만 보여요 */
 setInterval(() => wtSync(), 1000);
-function render() { render0(); addTabs(); }
+function pruneSecs() { if (!card || !me) return; const bad = []; if (!(me.lbook && me.lbook.id)) bad.push('듣기 연습'); if (!(me.rbook && me.rbook.id)) bad.push('📖 독해');
+  [...card.querySelectorAll('details[data-sec]')].forEach(d => { if (bad.some(t => d.dataset.sec.includes(t))) d.remove(); }); }
+function render() { render0(); pruneSecs(); addTabs(); }
 /* 선생님이 따로 적은 과제가 없는 날에는 빈 알림장("과제가 없어요")을 숨겨요 */
 setInterval(() => { if (TEACH || !card || !me) return; const nb = document.getElementById('nb'); if (!nb) return; const c = nb.querySelector('.nb-count'), empty = !!c && /과제가 없어요/.test(c.textContent);
   [nb, (document.getElementById('sCur') || {}).parentNode, document.querySelector('#studentView .skin-row')].forEach(x => { if (x && x.style) x.style.display = empty ? 'none' : ''; }); }, 800);
@@ -601,7 +603,7 @@ html.sk body{background:repeating-linear-gradient(transparent 0 31px,#ededea 31p
 html.sk #nb.nb{--p-bg:#fffefb;--p-ink:#2b2b2b;--p-sub:#777;--p-acc:#3a3a3a;--p-badge:#2b2b2b;--p-chip:transparent;--p-margin:#e3b4b4;--p-line:#e6e6e3;background-color:var(--sk-bg,#fffefb) !important;background-image:repeating-linear-gradient(to bottom,transparent 0 33px,#e6e6e3 33px 34px) !important;border:1.6px solid #555 !important;border-radius:4px 14px 6px 12px/12px 5px 14px 6px !important;box-shadow:2px 3px 0 #e2e2df !important;color:#2b2b2b !important;font-family:var(--sk-font,"Poor Story","Gaegu",cursive) !important}
 html.sk #nb.nb *{font-family:var(--sk-font,"Poor Story","Gaegu",cursive)}
 html.sk #studentView .row{flex-wrap:nowrap !important;gap:6px !important}html.sk #studentView .row button{flex:1 1 0 !important;min-width:0;white-space:normal !important;line-height:1.15 !important;padding:8px 4px !important;font-size:.92rem !important}html.sk #studentView .row #skinBtn{flex:0 0 auto !important;padding:8px 10px !important}html.sk #studentView .skin-row:empty{display:none}
-html.sk #skinBox{display:none !important}html.sk.skf #snCard *:not(.sn-en),html.sk.skf #nb.nb *,html.sk.skf #studentView h1,html.sk.skf #studentView .row button{font-family:var(--sk-font) !important}#skStk .skst{position:absolute;transform:translate(-50%,-50%);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;pointer-events:auto;line-height:1;filter:drop-shadow(1px 2px 1px rgba(0,0,0,.25))}#skStk .skst.sel{outline:2px dashed #e0457b;outline-offset:4px;border-radius:8px}#skStk .skt{position:absolute;left:50%;top:-44px;transform:translateX(-50%);display:flex;gap:4px;background:#fffefb;border:1.5px solid #555;border-radius:999px;padding:3px 6px;font-size:16px;white-space:nowrap;filter:none;cursor:default}#skStk .skt b{cursor:pointer;padding:0 6px;font-size:18px}
+html.sk #skinBox{display:none !important}html.sk,html.sk body{overflow-x:hidden !important;max-width:100vw}html.sk #studentView{max-width:100%;overflow-x:hidden}html.sk.skf #snCard *:not(.sn-en),html.sk.skf #nb.nb *,html.sk.skf #studentView h1,html.sk.skf #studentView .row button{font-family:var(--sk-font) !important}#skStk .skst{position:absolute;transform:translate(-50%,-50%);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;pointer-events:auto;line-height:1;filter:drop-shadow(1px 2px 1px rgba(0,0,0,.25))}#skStk .skst.sel{outline:2px dashed #e0457b;outline-offset:4px;border-radius:8px}#skStk .skt{position:absolute;left:50%;top:-44px;transform:translateX(-50%);display:flex;gap:4px;background:#fffefb;border:1.5px solid #555;border-radius:999px;padding:3px 6px;font-size:16px;white-space:nowrap;filter:none;cursor:default}#skStk .skt b{cursor:pointer;padding:0 6px;font-size:18px}
 html.sk body:not(:has(#snCard)) #nb .nb-top,html.sk body:not(:has(#snCard)) #nb .nb-date,html.sk body:not(:has(#snCard)) #nb .nb-meta{display:none !important}
 html.sk #nb.nb::before{background:#e3b4b4 !important;width:1.5px !important}
 html.sk #nb .nb-top{color:#777 !important}
@@ -690,7 +692,7 @@ html.sk #studentView .nb-btn{${PEN}background:#fffefb !important;color:#2b2b2b !
       if (wt) wt.style.display = 'none';
       const old = document.getElementById('skTot');
       const tgt = [...document.querySelectorAll('#nb small, #nb .nb-t *')].find(e => e.children.length === 0 && /단어 학습/.test(e.textContent) && /최소/.test(e.textContent));
-      if (tx && tgt) { const m = tx.replace(/^.*누적 시간\s*/, ''); const line = '📚 총 누적 시간 ' + m; if (old && old.previousSibling === tgt && old.textContent === line) {} else { if (old) old.remove(); const d = document.createElement('div'); d.id = 'skTot'; d.textContent = line; d.style.cssText = 'font-size:.9rem;color:#555'; tgt.after(d); } }
+      if (old) old.remove(); if (false && tx && tgt) { const m = tx.replace(/^.*누적 시간\s*/, ''); const line = '📚 총 누적 시간 ' + m; if (old && old.previousSibling === tgt && old.textContent === line) {} else { if (old) old.remove(); const d = document.createElement('div'); d.id = 'skTot'; d.textContent = line; d.style.cssText = 'font-size:.9rem;color:#555'; tgt.after(d); } }
     }
     const o = skxGet();
     if (o.bg) R.style.setProperty('--sk-bg', o.bg); else R.style.removeProperty('--sk-bg');
