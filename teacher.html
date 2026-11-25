@@ -1,10 +1,10 @@
 <!doctype html><html><head>
-<meta name="build" content="20261125-4">
+<meta name="build" content="20261125-5">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* 새 버전 자동 확인: 예전 화면이 캐시에 남아 있으면 한 번 새로 불러와요 */
 (function(){try{var m=document.querySelector('meta[name=build]');if(!m||!location.protocol.startsWith('http'))return;
-fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-4">/);
-if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-4">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
+fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-5">/);
+if(x&&x[1]!==m.content&&!sessionStorage.getItem('rl'+x[1])){sessionStorage.setItem('rl'+x[1],'1');location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)}}).catch(function(){});/* 화면을 켜 둔 동안에도 1분마다 새 버전 확인 → 위쪽에 새로고침 버튼 */setInterval(function(){if(document.hidden)return;fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var x=t.match(/<meta name="build" content="20261125-5">/);if(!x||x[1]===m.content||document.getElementById('newVerBar'))return;var b=document.createElement('button');b.id='newVerBar';b.type='button';b.textContent='🔄 새 버전이 나왔어요. 눌러서 새로고침 (쓰던 내용은 먼저 저장하세요)';b.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:999px;border:0;background:#E8590C;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';b.onclick=function(){location.replace(location.pathname+location.search+'?nc='+Date.now()+location.hash)};document.body.appendChild(b)}).catch(function(){})},60000)}catch(e){}})();</script>
 <meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.nb-carry { display: block; color: #B0570B; font-weight: 600; }
 .hwc-st .carry { border-color: #E3A15C; color: #B0570B; } .hwc-st .carry.on { background: #FFF1E0; font-weight: 700; }
 .wtime { margin: 6px 0 10px; padding: 10px 14px; border-radius: 12px; background: #FFF6E5; border: 1px solid #F3D9A4; color: #6B4A12; font-size: 0.92rem; line-height: 1.5; }
@@ -3568,8 +3568,11 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
   Object.assign(THEMES.note, { lv1: '#1E5BD8', lv2: '#C62828', lv3: '#7B2FBE' });
   Object.assign(THEMES.board, { lv1: '#9CC3FF', lv2: '#FF9A8A', lv3: '#D3B0FF' });
   Object.assign(THEMES.memo, { lv1: '#1E4FC0', lv2: '#B3261E', lv3: '#7B2FBE' });
-  const FD = 'Jua, "IBM Plex Sans KR", sans-serif';
-  const FB = '"Gowun Dodum", "IBM Plex Sans KR", sans-serif';
+  const FD = '"Poor Story", Jua, "IBM Plex Sans KR", sans-serif';
+  const FB = '"Poor Story", "Gowun Dodum", "IBM Plex Sans KR", sans-serif';
+  /* 알림장 이미지도 학생 화면과 같은 노트 스케치 컨셉 */
+  const SKT = { sk: true, bg: '#fffefb', line: '#e6e6e3', margin: '#e3b4b4', ink: '#2b2b2b', sub: '#777777', accent: '#3a3a3a', badgeInk: '#2b2b2b', chipBg: 'rgba(0,0,0,0)', box: '#f4f4f0', hot: '#d32f2f' };
+  const SKC = ['rgba(255,214,102,.75)', 'rgba(140,200,240,.7)', 'rgba(170,220,150,.75)', 'rgba(244,170,170,.7)'];
   function wrap(ctx, text, maxW) {
     const lines = [];
     const fits = (s) => ctx.measureText(s).width <= maxW;
@@ -3608,6 +3611,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       for (let y = 64; y < H; y += 64) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
       ctx.strokeStyle = T.margin; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(118, 0); ctx.lineTo(118, H); ctx.stroke();
+      if (T.sk) { ctx.strokeStyle = '#555'; ctx.lineWidth = 5; rr(ctx, 6, 6, W - 12, H - 12, 22); ctx.stroke(); }
     }
     ctx.textBaseline = 'alphabetic';
     let y = 112;
@@ -3619,7 +3623,7 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       y += 18;
     }
     ctx.font = '84px ' + FD; ctx.fillStyle = T.ink;
-    for (const l of wrap(ctx, kLong(state.date), CW)) { y += 68; if (draw) ctx.fillText(l, X, y); y += 24; }
+    for (const l of wrap(ctx, kLong(state.date), CW)) { y += 68; if (draw) { if (T.sk) ctx.fillStyle = '#c0504d'; ctx.fillText(l, X, y); if (T.sk) { const w = ctx.measureText(l).width; ctx.strokeStyle = 'rgba(192,80,77,.5)'; ctx.lineWidth = 3; ctx.beginPath(); for (let k = 0; k <= w; k += 4) { const yy = y + 16 + Math.sin(k / 9) * 4; k ? ctx.lineTo(X + k, yy) : ctx.moveTo(X + k, yy); } ctx.stroke(); } } y += 24; }
     // 회차 + 과제 수
     const sess = state.cls ? sessionAt(state.cls, state.date) : null;
     const lbl = state.mode === 'student' && state.date === studentDates().prev ? '지난 과제'
@@ -3643,13 +3647,14 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
       const top = y;
       const allDone = state.mode === 'student' && g.items.every(isDone);
       if (draw) {
-        ctx.fillStyle = T.accent; ctx.beginPath(); ctx.arc(66, top + 24, 28, 0, Math.PI * 2); ctx.fill();
+        if (T.sk) { ctx.strokeStyle = '#555'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(X - 6, top - 12); ctx.quadraticCurveTo(X + CW / 2, top - 17, X + CW, top - 11); ctx.stroke(); }
+        ctx.fillStyle = T.sk ? SKC[gi % 4] : T.accent; ctx.beginPath(); ctx.arc(66, top + 24, 28, 0, Math.PI * 2); ctx.fill(); if (T.sk) { ctx.strokeStyle = '#555'; ctx.lineWidth = 3; ctx.stroke(); }
         if (allDone) {
           ctx.strokeStyle = T.badgeInk; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
           ctx.beginPath(); ctx.moveTo(52, top + 25); ctx.lineTo(62, top + 35); ctx.lineTo(81, top + 13); ctx.stroke();
         } else { ctx.fillStyle = T.badgeInk; ctx.font = '34px ' + FD; ctx.textAlign = 'center'; ctx.fillText(String(gi + 1), 66, top + 36); ctx.textAlign = 'left'; }
         // 과목 이름 + 밑줄
-        ctx.font = '44px ' + FD; ctx.fillStyle = T.accent; ctx.fillText(g.subject, X, top + 40);
+        ctx.font = (T.sk ? 'bold 48px ' : '44px ') + FD; if (T.sk) { ctx.fillStyle = SKC[gi % 4]; ctx.fillRect(X - 6, top + 18, ctx.measureText(g.subject).width + 22, 28); } ctx.fillStyle = T.accent; ctx.fillText(g.subject, X, top + 40);
         const sw = ctx.measureText(g.subject).width;
         ctx.font = '30px ' + FD; ctx.fillStyle = T.sub; ctx.fillText(g.items.length > 1 ? g.items.length + '개' : '', X + sw + 16, top + 40);
         ctx.fillStyle = T.chipBg; ctx.fillRect(X, top + 54, CW, 4);
@@ -3726,11 +3731,11 @@ ${JSON.stringify(aiToJson(), null, 0)}`;
     try { pvNavUpd(); } catch (e) {}
     try { pvWordsUpd(); } catch (e) {}
     const list = currentItems().filter(it => state.mode === 'student' || !state.off.has(it.id));
-    const T = stuTheme(THEMES[state.theme] || THEMES.note);
+    const T = Object.assign({}, stuTheme(THEMES[state.theme] || THEMES.note), SKT);
     const S = parseFloat($('size').value) || 1;
     const W = 1080 / S;
     const allText = [$('heading').value, $('message').value, $('sign').value, kLong(state.date), state.cls, '오늘의 이번 다음 지난 과제개단어알림장링크에서공부기타없어요범위준비물제출까지내일푹쉬고수업에만나요회차월일0123456789/·—', ...list.map(i => [i.subject, i.task, i.range, i.note].join(' '))].join(' ');
-    try { await Promise.all([document.fonts.load('84px Jua', allText), document.fonts.load('44px "Gowun Dodum"', allText)]); } catch (e) {}
+    try { await Promise.all([document.fonts.load('84px "Poor Story"', allText), document.fonts.load('84px Jua', allText), document.fonts.load('44px "Gowun Dodum"', allText)]); } catch (e) {}
     if (seq !== renderSeq) return;
     const cv = $('cv'), ctx = cv.getContext('2d');
     cv.width = 1080; cv.height = 1350;
