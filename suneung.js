@@ -345,12 +345,20 @@ function render() { render0(); addTabs(); }
 setInterval(() => { if (TEACH || !card || !me) return; const nb = document.getElementById('nb'); if (!nb) return; const c = nb.querySelector('.nb-count'), empty = !!c && /과제가 없어요/.test(c.textContent);
   [nb, (document.getElementById('sCur') || {}).parentNode, document.querySelector('#studentView .skin-row')].forEach(x => { if (x && x.style) x.style.display = empty ? 'none' : ''; }); }, 800);
 function render0() {
-  if (!card) return; card.textContent = ''; const today = sday(); lastDay = today;
+  if (!card) return; card.textContent = ''; const real = sday(); lastDay = real;
+  const today = VOFF ? ymd(new Date(new Date(real + 'T00:00:00').getTime() - VOFF * 864e5)) : real;
   /* D-day */
-  const dd = me.dday || '2027-11-18', left = Math.ceil((new Date(dd + 'T00:00:00') - new Date(today + 'T00:00:00')) / 864e5);
+  const dd = me.dday || '2027-11-18', left = Math.ceil((new Date(dd + 'T00:00:00') - new Date(real + 'T00:00:00')) / 864e5);
   const top = el('div', 'display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap');
   top.append(el('b', 'font-family:var(--font-display,inherit);font-size:1.25rem;color:var(--accent,#4f46e5)', '🎯 수능 ' + (left > 0 ? 'D-' + left : left === 0 ? 'D-DAY' : 'D+' + (-left))), el('span', 'color:var(--muted,#666);font-size:.8rem', dd.replace(/-/g, '.') + ' · 이번 주 공부 ' + fmt(weekTot())));
   if (TEACH) card.append(el('small', 'color:var(--muted,#666);font-weight:600', '👀 ' + me.name + ' 학생 화면에 보이는 수능 도우미 (미리보기 · 여기서 누른 기록은 학생에게 안 넘어가요)'));
+  { /* 지난 과제 보기: 좌우 꺾은괄호 */
+    const earliest = (me.wbook && me.wbook.start) || me.start || real, offMax = Math.max(0, Math.round((new Date(real + 'T00:00:00') - new Date(earliest + 'T00:00:00')) / 864e5));
+    const nav = el('div', 'display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 4px');
+    const mk = (t, dv, dis, lab) => { const x = btn(t, () => { VOFF = Math.min(offMax, Math.max(0, VOFF + dv)); render(); }, 'padding:4px 16px;font-size:1.4rem;font-weight:700;line-height:1'); x.disabled = dis; x.setAttribute('aria-label', lab); x.className = (x.className ? x.className + ' ' : '') + 'sn-an'; return x; };
+    const lab = el('b', 'font-size:.95rem;text-align:center;flex:1', (VOFF ? '지난 과제 · ' : '오늘 · ') + kd(today)); if (VOFF) lab.style.color = '#c0504d';
+    nav.append(mk('‹', 1, VOFF >= offMax, '이전 날 과제'), lab, mk('›', -1, VOFF <= 0, '다음 날 과제')); card.append(nav);
+  }
   card.append(top);
   if (!TEACH || true) { const ab = btn('📊 분석하기', analyze, 'margin-left:auto;padding:2px 10px;font-weight:700'); ab.className = (ab.className ? ab.className + ' ' : '') + 'sn-an'; ab.setAttribute('aria-pressed', 'true'); top.append(ab); }
   /* 매일 단어 */
@@ -519,7 +527,7 @@ function render0() {
   tick();
 }
 /* 하루는 아침 6시에 바뀌어요: 6시 전에는 어제 과제가 그대로 보여요 */
-const sday = () => ymd(new Date(Date.now() - 6 * 36e5)); let lastDay = '';
+const sday = () => ymd(new Date(Date.now() - 6 * 36e5)); let lastDay = ''; let VOFF = 0;   /* 지난 과제 보기: 오늘에서 며칠 전인지 */
 function tick() {
   if (card && lastDay && sday() !== lastDay) { render(); return; }
   if (!card) return; const lv = document.getElementById('snLive'); if (lv) lv.textContent = LS.run && !LS.run.ready ? LS.run.s + ' 공부 중 · 한 번 더 누르면 끝나요' : ''; runFloat();
